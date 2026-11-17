@@ -1,0 +1,251 @@
+﻿@{
+    ViewData["Title"] = "Workspace";
+
+    // Fallbacks if ViewBag is empty - ensure you pass these from your Controller!
+    var userName = ViewBag.UserName ?? User.Identity?.Name ?? "User";
+}
+
+<style>
+    /* --- Professional Enterprise UI Variables --- */
+    :root {
+        --bg-light: #F4F6F8;
+        --card-bg: #FFFFFF;
+        --border-color: #E5E7EB;
+        --text-main: #111827;
+        --text-muted: #6B7280;
+        --accent-subtle: #F9FAFB;
+    }
+
+    body {
+        background-color: var(--bg-light);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    .dashboard-wrapper {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* --- Clean Welcome Header --- */
+    .welcome-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+        .welcome-header h3 {
+            margin: 0 0 0.25rem 0;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 1.5rem;
+        }
+
+        .welcome-header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+    /* --- Enterprise Card --- */
+    .enterprise-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        margin-bottom: 1.5rem;
+        height: 100%;
+    }
+
+    .card-title-subtle {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* --- Quick Actions Grid --- */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+
+    .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem 1rem;
+        background-color: var(--accent-subtle);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-main);
+        text-decoration: none;
+        transition: all 0.15s ease-in-out;
+    }
+
+        .action-btn:hover {
+            background-color: #F3F4F6;
+            border-color: #D1D5DB;
+            color: #0F172A;
+        }
+
+        .action-btn i {
+            font-size: 1.5rem;
+            color: #6B7280;
+            margin-bottom: 0.5rem;
+        }
+
+    /* --- List Views --- */
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        background-color: var(--accent-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .activity-details p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+
+    .activity-details small {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+</style>
+
+<div class="container-fluid pb-5 px-0">
+    <div class="dashboard-wrapper">
+
+        <!-- Minimalist Welcome Header -->
+        <div class="welcome-header">
+            <div>
+                <h3>Welcome, @userName</h3>
+                <p>Here is your daily workspace overview.</p>
+            </div>
+            <div class="d-none d-md-block text-end">
+                <span class="text-muted" style="font-size: 0.9rem; font-weight: 500;">
+                    <i class="bi bi-calendar3 me-2"></i>@DateTime.Now.ToString("dddd, MMMM dd, yyyy")
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- LEFT COLUMN -->
+            <div class="col-lg-8">
+
+                <!-- Quick Actions Panel -->
+                <div class="enterprise-card mb-4" style="height: auto;">
+                    <div class="card-title-subtle">
+                        <i class="bi bi-lightning-charge"></i> Quick Actions
+                    </div>
+                    <div class="quick-actions-grid">
+                        <a href="@Url.Action("Create", "Account")" class="action-btn">
+                            <i class="bi bi-building-add"></i>
+                            <span style="font-size: 0.85rem; font-weight: 500;">New Account</span>
+                        </a>
+                        <a href="@Url.Action("Create", "Lead")" class="action-btn">
+                            <i class="bi bi-person-plus"></i>
+                            <span style="font-size: 0.85rem; font-weight: 500;">Add Lead</span>
+                        </a>
+                        <a href="@Url.Action("Create", "SalesCall")" class="action-btn">
+                            <i class="bi bi-telephone-plus"></i>
+                            <span style="font-size: 0.85rem; font-weight: 500;">Log Call</span>
+                        </a>
+                        <a href="@Url.Action("Create", "EventMaster")" class="action-btn">
+                            <i class="bi bi-calendar-plus"></i>
+                            <span style="font-size: 0.85rem; font-weight: 500;">Schedule Event</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Feed -->
+                <div class="enterprise-card">
+                    <div class="card-title-subtle">
+                        <i class="bi bi-clock-history"></i> Recent Activity
+                    </div>
+                    <ul class="activity-list">
+                        <!-- Placeholder Data: You can replace this with a foreach loop from your database later -->
+                        <li class="activity-item">
+                            <div class="activity-icon"><i class="bi bi-building"></i></div>
+                            <div class="activity-details">
+                                <p><strong>New Account Created:</strong> Global Tech Industries</p>
+                                <small>Today at 10:42 AM</small>
+                            </div>
+                        </li>
+                        <li class="activity-item">
+                            <div class="activity-icon"><i class="bi bi-telephone"></i></div>
+                            <div class="activity-details">
+                                <p><strong>Sales Call Logged:</strong> Follow up with Sarah Jenkins</p>
+                                <small>Yesterday at 04:15 PM</small>
+                            </div>
+                        </li>
+                        <li class="activity-item">
+                            <div class="activity-icon"><i class="bi bi-funnel"></i></div>
+                            <div class="activity-details">
+                                <p><strong>Lead Status Updated:</strong> Mark Cuban moved to 'Qualified'</p>
+                                <small>Yesterday at 02:30 PM</small>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="col-lg-4">
+
+                <!-- My Tasks Panel -->
+                <div class="enterprise-card">
+                    <div class="card-title-subtle">
+                        <i class="bi bi-check2-square"></i> Upcoming Tasks
+                    </div>
+
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox d-block mb-3" style="font-size: 2.5rem; opacity: 0.5;"></i>
+                        <p style="font-size: 0.9rem;">No pending tasks for today.</p>
+                        <button class="btn btn-sm btn-outline-secondary mt-2" style="font-size: 0.8rem;">+ Add Task</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

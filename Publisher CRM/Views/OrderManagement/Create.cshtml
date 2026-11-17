@@ -1,0 +1,604 @@
+﻿@model Publisher_CRM.Models.OrderManagementViewModel
+@{
+    ViewData["Title"] = "Register Business Order";
+}
+
+<!-- SELECT2 CSS & BOOTSTRAP 5 THEME -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', sans-serif;
+        color: #334155;
+    }
+
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 0 auto 2rem auto;
+        overflow: hidden;
+        max-width: 1400px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .crm-header {
+        background: #ffffff;
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .crm-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+    .section-title {
+        color: #4f46e5;
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 2px solid #e0e7ff;
+        padding-bottom: 8px;
+        display: inline-block;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 25px 30px;
+    }
+
+    .form-section-alt {
+        background-color: #f8fafc;
+        padding: 25px 30px;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    .table-titles th {
+        background-color: #f1f5f9;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #475569;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .table-titles td {
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="container my-4">
+    <div class="crm-card">
+        <div class="crm-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-lg bg-green-50 d-flex align-items-center justify-content-center text-green-600 border border-green-100 shadow-sm" style="width: 40px; height: 40px;">
+                    <i class="bi bi-cart-check-fill fs-5"></i>
+                </div>
+                <h2 class="m-0">Log Order</h2>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-success px-3 py-2 text-[12px] shadow-sm">ID: @Model.OrderId</span>
+                <a asp-action="Index" class="btn btn-light fw-bold rounded-lg px-4 shadow-sm text-dark border"><i class="bi bi-arrow-left me-2"></i>Back</a>
+            </div>
+        </div>
+
+        <form id="orderForm" asp-action="Create" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="OrderId" />
+            <input type="hidden" asp-for="OrderTitlesJson" id="OrderTitlesJson" value="[]" />
+            <div asp-validation-summary="ModelOnly" class="text-danger px-4 pt-3 fw-bold"></div>
+
+            <!-- SECTION 1: CORE ORDER DETAILS -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="bi bi-building me-2"></i>1. Client & Routing</h4>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-5">
+                        <label asp-for="AccountNameId" class="form-label">Customer Name <span class="text-danger">*</span></label>
+                        <select asp-for="AccountNameId" id="AccountNameId" class="form-select" asp-items="Model.AccountsList" required style="width: 100%;">
+                            <option value="">-- Select Customer --</option>
+                        </select>
+                        <span asp-validation-for="AccountNameId" class="text-danger small fw-bold"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="SalesCallId" class="form-label">Linked Sales Call (Optional)</label>
+                        <select asp-for="SalesCallId" id="SalesCallId" class="form-select" style="width: 100%;">
+                            <option value="">-- Select Sales Call --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="ContactNameId" class="form-label">Contact Person</label>
+                        <select asp-for="ContactNameId" id="ContactNameId" class="form-select" style="width: 100%;">
+                            <option value="">-- Select Contact --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <label asp-for="OrderType" class="form-label">Order Type <span class="text-danger">*</span></label>
+                        <select asp-for="OrderType" id="OrderType" class="form-select border-indigo-300 text-indigo-700 fw-bold" asp-items="Model.OrderTypesList" required>
+                            <option value="">-- Select Type --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Stage" class="form-label">Status</label>
+                        <select asp-for="Stage" class="form-select border-primary text-primary fw-bold" asp-items="Model.StatusList"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="OrderManagementOwnerId" class="form-label">Order Owner</label>
+                        <select asp-for="OrderManagementOwnerId" class="form-select" asp-items="Model.OwnersList" required></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="ProjectParked" class="form-label">Project Parked?</label>
+                        <select asp-for="ProjectParked" class="form-select">
+                            <option value="false">No (Active)</option>
+                            <option value="true">Yes (Parked)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: FINANCIAL & DELIVERY -->
+            <div class="form-section-alt">
+                <h4 class="section-title text-secondary"><i class="bi bi-currency-dollar me-2"></i>2. Delivery & Financials</h4>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <label asp-for="TentativeDispatchDate" class="form-label">Tentative Dispatch Date</label>
+                        <input asp-for="TentativeDispatchDate" type="date" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Currency" class="form-label">Currency</label>
+                        <select asp-for="Currency" id="Currency" class="form-select" asp-items="Model.CurrencyList"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="OrderValue" class="form-label">Order Value (Auto-calculated from Titles)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted fw-bold border-end-0" id="currencySymbol">₹</span>
+                            <input asp-for="OrderValue" id="OrderValue" type="number" step="0.01" class="form-control border-start-0 fw-bold text-success" readonly placeholder="0.00" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BcSoNo" class="form-label">BC SO No.</label>
+                        <input asp-for="BcSoNo" class="form-control" placeholder="Business Central Order Number" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BcSoDate" class="form-label">BC SO Date</label>
+                        <input asp-for="BcSoDate" type="date" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: PROJECT MANAGEMENT & AGREEMENTS -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="bi bi-file-earmark-text me-2"></i>3. Agreements & Coordination</h4>
+                
+                <div id="missingAgreementAlert" class="alert alert-danger fw-bold d-none shadow-sm mb-4">
+                    <i class="bi bi-shield-exclamation me-2"></i> Missing Agreement: OEM and White Labeling orders require an Agreement / PO document to be uploaded.
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <label asp-for="CustomerProjectCoordinatorId" class="form-label">Customer Project Coordinator</label>
+                        <select asp-for="CustomerProjectCoordinatorId" id="CustomerProjectCoordinatorId" class="form-select" style="width: 100%;">
+                            <option value="">-- Select Coordinator --</option>
+                        </select>
+                        <small class="text-muted" style="font-size:10px;">Select customer first to load contacts.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="TitleStatus" class="form-label">Title Status</label>
+                        <select asp-for="TitleStatus" class="form-select" asp-items="Model.TitleStatusList"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="AgreementPoFile" class="form-label text-indigo-700">Upload Agreement / PO</label>
+                        <input asp-for="AgreementPoFile" id="AgreementPoFile" class="form-control border-indigo-300" type="file" />
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label asp-for="CommercialTerms" class="form-label">Commercial Terms</label>
+                        <textarea asp-for="CommercialTerms" class="form-control" rows="3" placeholder="Enter terms of agreement..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Remarks" class="form-label">General Remarks</label>
+                        <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: OEM / WL TITLE MASTER GRID -->
+            <div class="form-section-alt">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="section-title m-0"><i class="bi bi-journal-plus me-2"></i>4. Add Titles (Order Matrix)</h4>
+                    <button class="btn btn-sm btn-indigo fw-bold text-white px-3 shadow-sm" style="background-color: #4f46e5;" type="button" data-bs-toggle="modal" data-bs-target="#titleMasterModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Title to Order
+                    </button>
+                </div>
+
+                <div class="table-responsive rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <table class="table table-hover table-titles mb-0" id="titlesTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">ISBN</th>
+                                <th style="width: 20%;">Title Name</th>
+                                <th style="width: 10%;">Type</th>
+                                <th style="width: 15%;">Primary Item</th>
+                                <th style="width: 10%;">Qty</th>
+                                <th style="width: 15%;">Net Price</th>
+                                <th style="width: 15%; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="titlesTableBody">
+                            <tr id="emptyStateRow">
+                                <td colspan="7" class="text-center py-5 text-muted fw-bold">
+                                    <i class="bi bi-box-seam fs-1 d-block mb-2 text-gray-300"></i>
+                                    No titles added to this order yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 border-top text-end">
+                <a asp-action="Index" class="btn btn-light border fw-bold px-4 py-2 shadow-sm me-2 text-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success fw-bold px-5 py-2 shadow-sm" id="btnSaveOrder"><i class="bi bi-check2-all me-2"></i> Create Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= ADD TITLE MODAL (OEM/WL MASTER) ================= -->
+<div class="modal fade" id="titleMasterModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-indigo-600 text-white border-0 py-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus me-2"></i>Add Title (OEM/WL Master)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light p-4">
+                <form id="frmAddTitle">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Type *</label>
+                            <select id="modType" class="form-select form-select-sm" required>
+                                <option value="OEM">OEM</option>
+                                <option value="White Labeling">White Labeling</option>
+                                <option value="Distribution">Distribution</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">ISBN / Barcode *</label>
+                            <input type="text" id="modIsbn" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Title Name *</label>
+                            <input type="text" id="modTitleName" class="form-control form-control-sm" required />
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-3 border-top pt-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Primary Item No.</label>
+                            <input type="text" id="modItemNo" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Primary Item Name</label>
+                            <input type="text" id="modItemName" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 border-top pt-3">
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Language</label>
+                            <input type="text" id="modLanguage" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Pages</label>
+                            <input type="number" id="modPages" class="form-control form-control-sm" value="0" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">ISBN Issuer</label>
+                            <select id="modIssuer" class="form-select form-select-sm">
+                                <option value="Company">Company</option>
+                                <option value="Customer">Customer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">BC Code</label>
+                            <input type="text" id="modBcCode" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 border-top pt-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Book Info</label>
+                            <input type="text" id="modBook" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Toy Info</label>
+                            <input type="text" id="modToy" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Adaptations</label>
+                            <input type="text" id="modAdapt" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 border-top pt-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Tech Specs</label>
+                            <textarea id="modTechSpecs" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-[10px] text-muted text-uppercase mb-1">Inclusions</label>
+                            <textarea id="modInclusions" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 border-top pt-3 bg-white rounded p-2 border shadow-sm">
+                        <div class="col-md-6">
+                            <label class="form-label text-success fw-bold text-uppercase mb-1">Quantity *</label>
+                            <input type="number" id="modQty" class="form-control form-control-lg fw-bold text-center" min="1" value="1" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-success fw-bold text-uppercase mb-1">Net Price *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted">₹</span>
+                                <input type="number" id="modNetPrice" class="form-control form-control-lg fw-bold" step="0.01" value="0.00" required />
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-indigo fw-bold px-5 text-white shadow-sm" style="background-color: #4f46e5;" id="btnConfirmAddTitle"><i class="bi bi-plus-circle me-1"></i> Add to Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // SAFELY Load JSON Data (prevents crashes on validation reload)
+        let titlesData = @Html.Raw(string.IsNullOrWhiteSpace(Model.OrderTitlesJson) ? "[]" : Model.OrderTitlesJson);
+
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            // Initialize Dropdowns
+            $('#AccountNameId').select2({ theme: 'bootstrap-5' });
+            $('#SalesCallId').select2({ theme: 'bootstrap-5' });
+            $('#ContactNameId').select2({ theme: 'bootstrap-5' });
+            $('#CustomerProjectCoordinatorId').select2({ theme: 'bootstrap-5' });
+
+            // Currency Symbol Sync
+            $('#Currency').on('change', function () {
+                let sym = '₹';
+                if ($(this).val() === 'USD') sym = '$';
+                if ($(this).val() === 'EUR') sym = '€';
+                if ($(this).val() === 'GBP') sym = '£';
+                $('#currencySymbol').text(sym);
+                $('#titleMasterModal .input-group-text').text(sym);
+            });
+            $('#Currency').trigger('change');
+
+            // Order Type Agreement Validation Rules
+            $('#OrderType, #AgreementPoFile').on('change', validateAgreement);
+
+            // Fetch Linked Data when Customer is chosen
+            $('#AccountNameId').on('change', function () {
+                let val = $(this).val();
+                let contactDrop = $('#ContactNameId');
+                let coordDrop = $('#CustomerProjectCoordinatorId');
+                let salesDrop = $('#SalesCallId');
+
+                // Safely grab existing values if the page reloaded due to a validation error
+                let existingContact = "@Html.Raw(Model.ContactNameId ?? "")";
+                let existingCoord = "@Html.Raw(Model.CustomerProjectCoordinatorId ?? "")";
+                let existingSalesCall = "@Html.Raw(Model.SalesCallId?.ToString() ?? "")";
+
+                contactDrop.empty().append('<option value="">-- Select Contact --</option>');
+                coordDrop.empty().append('<option value="">-- Select Coordinator --</option>');
+                salesDrop.empty().append('<option value="">-- Select Sales Call --</option>');
+
+                if (val) {
+                    // Fetch Contacts
+                    $.get('/OrderManagement/GetContactsByAccount?accountName=' + encodeURIComponent(val), function (data) {
+                        if (data && data.length > 0) {
+                            data.forEach(c => {
+                                let cSelected = (c === existingContact) ? 'selected' : '';
+                                let coordSelected = (c === existingCoord) ? 'selected' : '';
+                                contactDrop.append(`<option value="${c}" ${cSelected}>${c}</option>`);
+                                coordDrop.append(`<option value="${c}" ${coordSelected}>${c}</option>`);
+                            });
+                        }
+                        // CRITICAL: Refresh Select2 UI
+                        contactDrop.trigger('change');
+                        coordDrop.trigger('change');
+                    });
+
+                    // Fetch Sales Calls
+                    $.get('/OrderManagement/GetSalesCallsByAccount?accountName=' + encodeURIComponent(val), function (data) {
+                        if (data && data.length > 0) {
+                            data.forEach(s => {
+                                let sSelected = (s.value === existingSalesCall) ? 'selected' : '';
+                                salesDrop.append(`<option value="${s.value}" ${sSelected}>${s.text}</option>`);
+                            });
+                        }
+                        // CRITICAL: Refresh Select2 UI
+                        salesDrop.trigger('change');
+                    });
+                } else {
+                    contactDrop.trigger('change');
+                    coordDrop.trigger('change');
+                    salesDrop.trigger('change');
+                }
+            });
+
+            // Trigger the change on page load in case a customer was passed in via URL / validation fail
+            setTimeout(() => {
+                if ($('#AccountNameId').val()) {
+                    $('#AccountNameId').trigger('change');
+                }
+            }, 100);
+
+            // --- TITLE GRID LOGIC ---
+            function renderTitles() {
+                let tbody = $('#titlesTableBody');
+                if (titlesData.length === 0) {
+                    tbody.html('<tr id="emptyStateRow"><td colspan="7" class="text-center py-5 text-muted fw-bold"><i class="bi bi-box-seam fs-1 d-block mb-2 text-gray-300"></i>No titles added to this order yet.</td></tr>');
+                    $('#OrderValue').val('0.00');
+                    $('#OrderTitlesJson').val('[]');
+                    return;
+                }
+
+                tbody.empty();
+                let totalValue = 0;
+
+                titlesData.forEach((t, index) => {
+                    let rowTotal = (t.Qty * t.NetPrice);
+                    totalValue += rowTotal;
+                        
+                    let badgeColor = t.Type === 'OEM' ? 'primary' : (t.Type === 'Distribution' ? 'success' : 'dark');
+
+                    tbody.append(`
+                                <tr>
+                                    <td class="font-mono text-muted">${t.Isbn}</td>
+                                    <td class="fw-bold text-indigo-700">${t.TitleName}</td>
+                                    <td><span class="badge bg-${badgeColor} shadow-sm">${t.Type}</span></td>
+                                    <td>${t.PrimaryItemNo || '-'}</td>
+                                    <td><input type="number" class="form-control form-control-sm grid-qty" data-idx="${index}" value="${t.Qty}" min="1"></td>
+                                    <td><input type="number" class="form-control form-control-sm grid-price" data-idx="${index}" value="${t.NetPrice}" step="0.01"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-light text-primary border shadow-sm me-1" onclick="viewTitle(${index})"><i class="bi bi-eye"></i></button>
+                                        <button type="button" class="btn btn-sm btn-light text-danger border shadow-sm" onclick="removeTitle(${index})"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `);
+                });
+
+                $('#OrderValue').val(totalValue.toFixed(2));
+                $('#OrderTitlesJson').val(JSON.stringify(titlesData));
+
+                // FIXED: Corrupted || characters replaced
+                $('.grid-qty').on('change', function () {
+                    titlesData[$(this).data('idx')].Qty = parseInt($(this).val()) || 1;
+                    renderTitles();
+                });
+                $('.grid-price').on('change', function () {
+                    titlesData[$(this).data('idx')].NetPrice = parseFloat($(this).val()) || 0;
+                    renderTitles();
+                });
+            }
+
+            // Render immediately on load
+            renderTitles();
+
+            window.removeTitle = function (index) {
+                titlesData.splice(index, 1);
+                renderTitles();
+            };
+
+            window.viewTitle = function (index) {
+                alert(`Viewing all data for: ${titlesData[index].TitleName}\n(Tech Specs: ${titlesData[index].TechSpecs || 'None'})`);
+            };
+
+            // Process Modal Add
+            $('#btnConfirmAddTitle').click(function () {
+                let f = document.getElementById('frmAddTitle');
+                if (!f.checkValidity()) { f.reportValidity(); return; }
+
+                titlesData.push({
+                    Type: $('#modType').val(),
+                    Isbn: $('#modIsbn').val().trim(),
+                    TitleName: $('#modTitleName').val().trim(),
+                    PrimaryItemNo: $('#modItemNo').val().trim(),
+                    PrimaryItemName: $('#modItemName').val().trim(),
+                    Language: $('#modLanguage').val().trim(),
+                    Pages: parseInt($('#modPages').val()) || 0,
+                    IsbnIssuer: $('#modIssuer').val(),
+                    BcCode: $('#modBcCode').val().trim(),
+                    Book: $('#modBook').val().trim(),
+                    Toy: $('#modToy').val().trim(),
+                    Adaptations: $('#modAdapt').val().trim(),
+                    TechSpecs: $('#modTechSpecs').val().trim(),
+                    Inclusions: $('#modInclusions').val().trim(),
+                    Qty: parseInt($('#modQty').val()) || 1,
+                    NetPrice: parseFloat($('#modNetPrice').val()) || 0
+                });
+
+                $('#titleMasterModal').modal('hide');
+                f.reset();
+                $('#modType').val($('#OrderType').val() || 'OEM'); // Pre-select based on order type
+                renderTitles();
+            });
+
+            // Auto-sync modal type with order type
+            $('#OrderType').on('change', function () {
+                $('#modType').val($(this).val());
+            });
+
+            // Form Validation before submit
+            function validateAgreement() {
+                let type = $('#OrderType').val();
+                let files = $('#AgreementPoFile')[0].files;
+                let alertBox = $('#missingAgreementAlert');
+
+                if ((type === 'OEM' || type === 'White Labeling') && files.length === 0) {
+                    alertBox.removeClass('d-none');
+                    return false;
+                } else {
+                    alertBox.addClass('d-none');
+                    return true;
+                }
+            }
+
+            $('#orderForm').on('submit', function (e) {
+                if (!validateAgreement()) {
+                    alert("A Missing Agreement was detected. OEM and White Labeling orders require an Agreement / PO document.");
+                    e.preventDefault();
+                    return false;
+                }
+                $('#btnSaveOrder').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
+            });
+        });
+    </script>
+}

@@ -1,0 +1,935 @@
+﻿@using System.Security.Claims
+@using System.Text.Json
+@model Publisher_CRM.Models.Salescall
+@{
+    ViewData["Title"] = "Edit Sales Call Action";
+    
+    var usersList = ViewBag.OwnerList as List<SelectListItem> ?? new List<SelectListItem>();
+    var allUsers = ViewBag.AllUsers as List<Publisher_CRM.Models.Users> ?? new List<Publisher_CRM.Models.Users>();
+    var accountsList = ViewBag.Accounts as List<string> ?? new List<string>();
+    var eventsList = ViewBag.Events as List<SelectListItem> ?? new List<SelectListItem>();
+    var attachments = ViewBag.Attachments as List<Publisher_CRM.Models.Files> ?? new List<Publisher_CRM.Models.Files>();
+    
+    string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+    string savedEnquiriesJson = string.IsNullOrEmpty(ViewBag.SavedEnquiriesJson as string) ? "[]" : (string)ViewBag.SavedEnquiriesJson;
+}
+
+<!-- SELECT2 CSS & BOOTSTRAP 5 THEME -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', sans-serif;
+        color: #334155;
+    }
+
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 0 auto 2rem auto;
+        overflow: hidden;
+        max-width: 1300px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .crm-header {
+        background: #ffffff;
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .crm-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+    .section-title {
+        color: #4f46e5;
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 800;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+    
+    /* Dynamic Routing Panels */
+    .routing-panel {
+        display: none;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 15px;
+        border-left: 4px solid #4f46e5;
+    }
+    
+    .custom-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="container my-4">
+    <div class="crm-card">
+        <div class="crm-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-lg bg-amber-50 d-flex align-items-center justify-content-center text-amber-600 border border-amber-100 shadow-sm" style="width: 40px; height: 40px;">
+                    <i class="bi bi-pencil-square fs-5"></i>
+                </div>
+                <h2 class="m-0">Edit Action (Sales Call)</h2>
+            </div>
+            <a asp-action="Index" class="btn btn-light fw-bold rounded-lg px-4 shadow-sm text-dark border"><i class="bi bi-arrow-left me-2"></i>Back</a>
+        </div>
+
+        <div class="p-4">
+            <form id="salesCallForm" asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" name="EnquiryDataJson" id="EnquiryDataJson" value="" />
+                
+                <!-- SECTION 1: CORE ROUTING (The Brains) -->
+                <div class="form-section shadow-sm bg-amber-50/10">
+                    <h4 class="section-title text-amber-600 border-amber-200"><i class="bi bi-diagram-2 me-2"></i>1. Call Routing & Logistics</h4>
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <label asp-for="CallDateTime" class="form-label">Date & Time <span class="text-danger">*</span></label>
+                            <input name="CallDateTime" type="datetime-local" class="form-control" value="@Model.CallDateTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label asp-for="CallType" class="form-label">Call Type <span class="text-danger">*</span></label>
+                            <select asp-for="CallType" id="CallType" class="form-select border-indigo-300 text-indigo-700" required onchange="window.handleRouting()">
+                                <option value="">Select Type...</option>
+                                <option value="Virtual">Virtual</option>
+                                <option value="Phone">Phone</option>
+                                <option value="Physical">Physical</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="CallSubType" class="form-label">Call Action <span class="text-danger">*</span></label>
+                            <select asp-for="CallSubType" id="CallSubType" class="form-select border-teal-300 text-teal-700" required onchange="window.handleRouting()">
+                                <option value="">Select Action...</option>
+                                <option value="Enquiry">Enquiry</option>
+                                <option value="Order">Order</option>
+                                <option value="Complaint">Complaint</option>
+                                <option value="Merchandising">Merchandising</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Dynamic Event Box (Only shows if Physical) -->
+                        <div class="col-md-3" id="eventRoutingBox" style="display:none;">
+                            <label class="form-label text-amber-600">Link to Event (Optional)</label>
+                            <select name="EventId" id="EventId" class="form-select border-amber-300" asp-items="eventsList" onchange="window.handleRouting()">
+                                <option value="">-- No Event --</option>
+                            </select>
+                            <small class="text-muted" style="font-size:10px;">Selecting an event makes Customer selection optional.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: DYNAMIC ACTION PANELS -->
+                <div id="actionPanelsWrapper">
+                    
+                    <!-- ENQUIRY PANEL -->
+                    <div id="panelEnquiry" class="routing-panel">
+                        <h6 class="fw-bold text-indigo-700 mb-2"><i class="bi bi-file-earmark-text me-2"></i>Enquiry Master Open</h6>
+                        <p class="text-muted small mb-3">Open the Enquiry Master to select inventory and build an enquiry document for this call.</p>
+                        <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm px-4" id="btnEnquiryDoc"><i class="bi bi-search me-1"></i> Edit Enquiry Master</button>
+                        <span id="enquiryStatusBadge" class="badge bg-success ms-3 d-none">Items Saved!</span>
+                    </div>
+
+                    <!-- ORDER PANEL -->
+                    <div id="panelOrder" class="routing-panel border-success">
+                        <h6 class="fw-bold text-success mb-3"><i class="bi bi-cart-check me-2"></i>Order Master</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="OrderType" class="form-label">Order Type <span class="text-danger">*</span></label>
+                                <select asp-for="OrderType" id="OrderTypeInput" class="form-select">
+                                    <option value="">Select Type...</option>
+                                    <option value="Stock">Stock</option>
+                                    <option value="OEM">OEM</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8 pt-4">
+                                <span class="text-muted small"><i class="bi bi-info-circle me-1"></i> This record is linked to an Open Order in the Order Management module.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPLAINT PANEL -->
+                    <div id="panelComplaint" class="routing-panel border-danger">
+                        <h6 class="fw-bold text-danger mb-2"><i class="bi bi-exclamation-triangle me-2"></i>Complaint Master</h6>
+                        <p class="text-muted small">This interaction has been escalated to the Complaints module. Updating Remarks will update the complaint log.</p>
+                    </div>
+
+                    <!-- MERCHANDISING PANEL -->
+                    <div id="panelMerchandising" class="routing-panel border-info">
+                        <h6 class="fw-bold text-info mb-3"><i class="bi bi-camera me-2"></i>Merchandising Table Check</h6>
+                        <div class="p-3 bg-white rounded border border-info">
+                            
+                            @if (attachments.Any())
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Existing Photos</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var file in attachments)
+                                        {
+                                            <div class="bg-light border rounded px-2 py-1 d-flex align-items-center gap-2" id="file-@file.Id">
+                                                <i class="bi bi-image text-info"></i>
+                                                <span class="small text-truncate" style="max-width: 150px;" title="@file.FileName">@file.FileName</span>
+                                                <a href="@Url.Action("DownloadFile", new { id = file.Id })" class="text-primary"><i class="bi bi-download"></i></a>
+                                                <button type="button" class="btn btn-sm text-danger p-0 ms-1 border-0" onclick="window.deleteAttachment(@file.Id)"><i class="bi bi-trash"></i></button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <label class="form-label text-dark">Upload Additional Photos</label>
+                            <input type="file" name="UploadedFiles" id="MerchFiles" class="form-control" multiple accept="image/*" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECTION 3: PERSONNEL & REMARKS -->
+                <div class="form-section shadow-sm mt-4">
+                    <h4 class="section-title"><i class="bi bi-people me-2"></i>2. Details & Personnel</h4>
+                    <div class="row g-4">
+                        <div class="col-md-12">
+                            <label asp-for="Remarks" class="form-label">Remarks / Meeting Notes <span class="text-danger">*</span></label>
+                            <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Enter essential notes about this action..." required></textarea>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Sales Person <span class="text-danger">*</span></label>
+                            <select asp-for="Owner" class="form-select" asp-items="usersList" required>
+                                <option value="">Select Sales Person...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Associates</label>
+                            <select name="SelectedAssociates" id="SelectedAssociates" class="form-select" multiple data-placeholder="Select Associates...">
+                                @foreach (var user in allUsers)
+                                {
+                                    <option value="@user.FirstName @user.LastName">@user.FirstName @user.LastName</option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label asp-for="FollowUpDate" class="form-label">Follow-Up Date</label>
+                            <input asp-for="FollowUpDate" type="date" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: MULTI-SELECT CUSTOMERS & CONTACTS (Lazy Load UX) -->
+                <div class="form-section shadow-sm">
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <h4 class="section-title m-0"><i class="bi bi-building me-2"></i>3. Customer & Contact Mapping</h4>
+                        <span id="eventWarningBadge" class="badge bg-amber-100 text-amber-800 border border-amber-200 d-none"><i class="bi bi-info-circle me-1"></i>Event Selected: Customer is optional</span>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <!-- Customers List (Lazy Load) -->
+                        <div class="col-md-6">
+                            <div class="bg-indigo-50/30 border border-indigo-100 rounded-2xl p-4 h-100 d-flex flex-column">
+                                <h6 class="font-extrabold text-indigo-700 text-uppercase tracking-wider text-xs mb-3"><i class="bi bi-shop me-2"></i>Customers <span class="text-danger req-star">*</span></h6>
+                                <input type="text" id="modalCustSearch" class="form-control rounded-lg shadow-sm border-indigo-200 mb-3 text-sm" placeholder="Search accounts (min 2 chars)..." onkeyup="window.searchBackendCustomers()">
+                                
+                                <div id="customerListContainer" onscroll="window.handleCustomerScroll()" class="flex-grow-1 custom-scroll bg-white rounded-xl border border-indigo-100 p-2" style="max-height: 250px; min-height: 250px; overflow-y: auto;">
+                                    <div id="custSearchHelp" class="text-center py-10 text-gray-400 font-bold text-sm">
+                                        <i class="bi bi-search fs-3 d-block mb-2 text-gray-300"></i>
+                                        Type at least 2 characters to search accounts...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contacts List -->
+                        <div class="col-md-6">
+                            <div class="bg-teal-50/30 border border-teal-100 rounded-2xl p-4 h-100 d-flex flex-column">
+                                <h6 class="font-extrabold text-teal-700 text-uppercase tracking-wider text-xs mb-3"><i class="bi bi-person-lines-fill me-2"></i>Contacts</h6>
+                                <input type="text" id="modalContactSearch" class="form-control rounded-lg shadow-sm border-teal-200 mb-3 text-sm" placeholder="Search contacts within selected accounts..." onkeyup="window.filterContacts()">
+                                
+                                <div id="modalContactList" class="flex-grow-1 custom-scroll bg-white rounded-xl border border-teal-100 p-2" style="max-height: 250px; min-height: 250px; overflow-y: auto;">
+                                    <div class="text-center py-10 text-gray-400 font-bold text-sm">
+                                        <i class="bi bi-arrow-left-circle fs-3 d-block mb-2 text-gray-300"></i>
+                                        Select customers on the left to view their contacts.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4 pt-2 border-top">
+                    <a asp-action="Index" class="btn btn-light px-4 py-2 me-2 border fw-bold text-secondary shadow-sm">Cancel</a>
+                    <button type="submit" class="btn btn-warning fw-bold px-5 py-2 shadow-sm" id="btnSubmitForm"><i class="bi bi-check2-circle me-2"></i> Update Action</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ================= ENQUIRY DOCUMENT MODAL ================= -->
+<div class="modal fade" id="enquiryDocModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-xl-down modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-indigo-600 text-white border-0 py-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Enquiry Master</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 bg-light">
+                <!-- FILTER SECTION -->
+                <div class="p-3 bg-white border-bottom shadow-sm">
+                    <div class="d-flex flex-wrap gap-2 align-items-end">
+                        <div class="flex-grow-1" style="min-width: 150px;">
+                            <label class="form-label text-[10px] fw-bold text-muted text-uppercase mb-1">Brand Name</label>
+                            <select id="filterBrandName" class="form-select form-select-sm"><option value="">-- All Brands --</option></select>
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 150px;">
+                            <label class="form-label text-[10px] fw-bold text-muted text-uppercase mb-1">Series Name</label>
+                            <select id="filterSeriesName" class="form-select form-select-sm"><option value="">-- All Series --</option></select>
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 200px;">
+                            <label class="form-label text-[10px] fw-bold text-muted text-uppercase mb-1">Title</label>
+                            <input type="text" id="filterTitle" class="form-control form-control-sm" placeholder="Search title..." />
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 150px;">
+                            <label class="form-label text-[10px] fw-bold text-muted text-uppercase mb-1">ISBN</label>
+                            <input type="text" id="filterIsbn" class="form-control form-control-sm" placeholder="Search ISBN..." />
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-light border fw-bold shadow-sm" id="btnResetFilters">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOADING SPINNER -->
+                <div class="text-center py-5 d-none" id="loadingSpinner">
+                    <div class="spinner-border text-indigo-500" role="status"></div>
+                    <p class="mt-2 text-muted fw-bold text-sm">Loading enquiry master data...</p>
+                </div>
+
+                <!-- TABLE SECTION -->
+                <div class="table-responsive bg-white" style="max-height: 60vh;">
+                    <table class="table table-bordered table-hover align-middle mb-0 text-nowrap" id="enquiryTable" style="min-width: 1800px;">
+                        <thead class="table-light sticky-top shadow-sm" style="z-index: 5;">
+                            <tr class="align-middle text-center bg-white text-[11px] text-muted text-uppercase tracking-widest">
+                                <th style="width: 40px;"><input class="form-check-input" type="checkbox" id="selectAllEnquiries"></th>
+                                <th style="width: 120px;">Brand Name</th>
+                                <th style="width: 120px;">Series Name</th>
+                                <th style="width: 200px;">Title</th>
+                                <th style="width: 110px;">ISBN</th>
+                                <th style="width: 70px;">Cover</th>
+                                <th style="width: 80px;">Quantity</th>
+                                <th style="width: 100px;">Target Price</th>
+                                <th style="width: 100px;">Offered Price</th>
+                                <th style="width: 100px;">Unit Cost</th>
+                                <th style="width: 150px;">Specification</th>
+                                <th style="width: 150px;">Internal Remark</th>
+                                <th style="width: 150px;">External Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody id="enquiryTableBody" class="bg-white text-sm">
+                            <tr><td colspan="13" class="text-center py-5 text-gray-400 fw-bold">Select filters and click load to display data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top py-2">
+                <button type="button" class="btn btn-light border fw-bold px-4" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-indigo fw-bold px-5 text-white shadow-sm" style="background-color: #4f46e5;" id="btnSaveEnquiry"><i class="bi bi-check2-circle me-1"></i> Save Selected Items</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // Safely parse the saved comma-separated strings into JS arrays
+        const savedCustomers = @Html.Raw(JsonSerializer.Serialize(Model.AccountName?.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)) ?? new List<string>()));
+        const savedContacts = @Html.Raw(JsonSerializer.Serialize(Model.Contacts?.Split(',').Select(c => c.Trim()).Where(c => !string.IsNullOrEmpty(c)) ?? new List<string>()));
+        const savedAssociates = @Html.Raw(JsonSerializer.Serialize(Model.Associates?.Split(',').Select(a => a.Trim()).Where(a => !string.IsNullOrEmpty(a)) ?? new List<string>()));
+        
+        // Parse Enquiry JSON securely
+        const savedEnquiryJsonObj = @Html.Raw(savedEnquiriesJson);
+
+        document.addEventListener("DOMContentLoaded", function () {
+            
+                    // 1. Load Existing Enquiry JSON into Hidden field
+                    \$('#EnquiryDataJson').val(JSON.stringify(savedEnquiryJsonObj));
+
+                    // 2. Init Select2 for Associates & Set Values
+                    \$('#SelectedAssociates').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Associates...',
+            allowClear: true,
+            width: '100%'
+        });
+                    \$('#SelectedAssociates').val(savedAssociates).trigger('change');
+
+            // 3. Init Routing Flags
+            window.handleRouting();
+            
+            // 4. Pre-fill Customers Container and Trigger Contact Fetch
+            let custContainer = \$('#customerListContainer');
+            if (savedCustomers.length > 0) {
+                custContainer.empty();
+                savedCustomers.forEach(name => {
+                    let safeId = name.replace(/[^a-zA-Z0-9]/g, '');
+                    custContainer.append(`
+                                <div class="modal-cust-item mb-1 selected-cust">
+                                    <div class="form-check custom-control px-3 py-2 border-indigo-400 bg-indigo-50/50 shadow-sm rounded-lg transition-colors border">
+                                        <input name="SelectedCustomers" class="form-check-input modal-customer-check cursor-pointer mt-1" type="checkbox" value="${name.replace(/"/g, '&quot;')}" id="modal_cust_${safeId}" checked onchange="window.handleModalCustomerChange(this)">
+                                        <label class="form-check-label font-bold text-gray-800 w-100 cursor-pointer text-sm leading-tight" for="modal_cust_${safeId}">
+                                            ${name}
+                                        </label>
+                                    </div>
+                                </div>
+                            `);
+                });
+                window.fetchContactsForSelectedCustomers(savedContacts);
+            } else {
+                window.accountSearchTerm = "";
+                window.loadAccounts(true);
+            }
+        });
+
+        // ==========================================
+        // ROUTING ENGINE (The Brains)
+        // ==========================================
+        window.handleRouting = function () {
+            let type = \$('#CallType').val();
+            let subType = \$('#CallSubType').val();
+            let eventId = \$('#EventId').val();
+
+            if (type === 'Physical') {
+                        \$('#eventRoutingBox').slideDown(200);
+            } else {
+                        \$('#eventRoutingBox').slideUp(200);
+                        \$('#EventId').val('');
+                eventId = '';
+            }
+
+            if (eventId && type === 'Physical') {
+                $('.req-star').hide(); $('#eventWarningBadge').removeClass('d-none');
+                window.isCustomerMandatory = false;
+            } else {
+                $('.req-star').show(); $('#eventWarningBadge').addClass('d-none');
+                window.isCustomerMandatory = true;
+            }
+
+                    \$('.routing-panel').hide();
+            if (subType === 'Enquiry') {
+                        \$('#panelEnquiry').fadeIn(200);
+                if (savedEnquiryJsonObj.length > 0) \$('#enquiryStatusBadge').removeClass('d-none');
+            }
+            if (subType === 'Order') \$('#panelOrder').fadeIn(200);
+            if (subType === 'Complaint') \$('#panelComplaint').fadeIn(200);
+            if (subType === 'Merchandising') \$('#panelMerchandising').fadeIn(200);
+        };
+
+        // ==========================================
+        // FILE DELETION (AJAX)
+        // ==========================================
+        window.deleteAttachment = function (fileId) {
+            if (confirm("Are you sure you want to delete this photo?")) {
+                        \$.post('@Url.Action("DeleteFile", "SalesCall")', { id: fileId }, function (res) {
+                if (res.success) {
+                                \$('#file-' + fileId).fadeOut();
+                } else {
+                    alert(res.message);
+                }
+            });
+            }
+        };
+
+        // ==========================================
+        // CUSTOMER / CONTACT LAZY LOAD ENGINE
+        // ==========================================
+        window.custSearchTimer = null;
+        window.accountSkip = 0;
+        window.accountSearchTerm = "";
+        window.isLoadingAccounts = false;
+        window.hasMoreAccounts = true;
+
+        window.searchBackendCustomers = function () {
+            clearTimeout(window.custSearchTimer);
+            window.custSearchTimer = setTimeout(function () {
+                window.accountSearchTerm = \$('#modalCustSearch').val().trim().toLowerCase();
+                window.loadAccounts(true);
+            }, 400);
+        };
+
+        window.loadAccounts = function (reset = false) {
+            let container = \$('#customerListContainer');
+
+            if (reset) {
+                window.accountSkip = 0;
+                window.hasMoreAccounts = true;
+                container.find('.modal-cust-item:not(.selected-cust)').remove();
+            }
+
+            if (window.isLoadingAccounts || !window.hasMoreAccounts) return;
+            window.isLoadingAccounts = true;
+            
+            container.append('<div id="accLoading" class="text-center py-2 text-indigo-400"><div class="spinner-border spinner-border-sm"></div></div>');
+
+            let fetchUrl = '@Url.Action("SearchAccounts", "BeatRoute")' + '?searchTerm=' + encodeURIComponent(window.accountSearchTerm) + '&skip=' + window.accountSkip;
+            
+                    \$.get(fetchUrl, function (data) {
+                        \$('#accLoading').remove();
+                
+                if (data && data.length > 0) {
+                            \$('#custSearchHelp').hide();
+                    data.forEach(cust => {
+                        let safeId = cust.accountName.replace(/[^a-zA-Z0-9]/g, '');
+                        if (\$(`#modal_cust_${safeId}`).length === 0) {
+                        container.append(`
+                                        <div class="modal-cust-item mb-1">
+                                            <div class="form-check custom-control px-3 py-2 hover:bg-indigo-50/50 rounded-lg transition-colors border border-transparent">
+                                                <input name="SelectedCustomers" class="form-check-input modal-customer-check cursor-pointer mt-1" type="checkbox" value="${cust.accountName.replace(/"/g, '&quot;')}" id="modal_cust_${safeId}" onchange="window.handleModalCustomerChange(this)">
+                                                <label class="form-check-label font-bold text-gray-800 w-100 cursor-pointer text-sm leading-tight" for="modal_cust_${safeId}">
+                                                    ${cust.accountName}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    `);
+                    }
+                });
+                    
+            window.accountSkip += data.length;
+            if (data.length < 50) window.hasMoreAccounts = false;
+        } else {
+            window.hasMoreAccounts = false;
+            if (window.accountSkip === 0 && container.find('.modal-cust-item').length === 0) {
+                container.html('<div class="text-center py-10 text-gray-400 font-bold text-sm">No accounts found.</div>');
+            }
+        }
+        window.isLoadingAccounts = false;
+                    }).fail(function () {
+                        \$('#accLoading').remove();
+            window.isLoadingAccounts = false;
+        });
+                };
+
+        window.handleCustomerScroll = function () {
+            let el = document.getElementById('customerListContainer');
+            if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                window.loadAccounts();
+            }
+        };
+
+        window.handleModalCustomerChange = function (element) {
+            if (element.checked) {
+                $(element).closest('.custom-control').addClass('border-indigo-400 bg-indigo-50/50 shadow-sm'); $(element).closest('.modal-cust-item').addClass('selected-cust');
+            } else {
+                $(element).closest('.custom-control').removeClass('border-indigo-400 bg-indigo-50/50 shadow-sm'); $(element).closest('.modal-cust-item').removeClass('selected-cust');
+            }
+            window.fetchContactsForSelectedCustomers([]);
+        };
+
+        window.fetchContactsForSelectedCustomers = function (preselectedContactNames = []) {
+            let selectedCustNames = [];
+                    \$('.modal-customer-check:checked').each(function () {
+                selectedCustNames.push(\$(this).val());
+            });
+
+            let contactContainer = \$('#modalContactList');
+            
+            if (selectedCustNames.length === 0) {
+                contactContainer.html('<div class="text-center py-10 text-gray-400 font-bold text-sm"><i class="bi bi-arrow-left-circle fs-3 d-block mb-2 text-gray-300"></i>Select customers on the left to view their contacts.</div>');
+                return;
+            }
+
+            contactContainer.html('<div class="text-center py-10"><div class="spinner-border text-teal-500"></div></div>');
+
+            let fetchUrl = '@Url.Action("GetContactsByAccountNames", "BeatRoute")' + '?accountNames=' + encodeURIComponent(selectedCustNames.join(','));
+
+                    \$.get(fetchUrl, function (data) {
+                contactContainer.empty();
+                if (!data || data.length === 0) {
+                    contactContainer.html('<div class="text-center py-10 text-amber-500 font-bold text-sm"><i class="bi bi-exclamation-circle fs-3 d-block mb-2 text-amber-300"></i>No contacts found for selected customers.</div>');
+                    return;
+                }
+                
+                data.forEach(function (c) {
+                    let isChecked = preselectedContactNames.includes(c.name) ? 'checked' : '';
+                    let borderClass = isChecked ? 'border-teal-400 bg-teal-50/50 shadow-sm' : 'border-transparent';
+                    
+                    contactContainer.append(`
+                                <div class="modal-contact-item mb-1">
+                                    <div class="form-check custom-control px-3 py-2 hover:bg-teal-50/50 rounded-lg transition-colors border ${borderClass}">
+                                        <input name="SelectedContacts" class="form-check-input modal-contact-check cursor-pointer mt-1" type="checkbox" value="${c.name.replace(/"/g, '&quot;')}" id="mcont_${c.id}" ${isChecked} onchange="window.handleContactChange(this)">
+                                        <label class="form-check-label font-bold text-gray-800 w-100 cursor-pointer text-sm leading-tight" for="mcont_${c.id}">
+                                            ${c.name} <br><span class="text-[10px] text-gray-400 font-normal uppercase">${c.accountName}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            `);
+                });
+            });
+        };
+
+        window.handleContactChange = function (element) {
+            if (element.checked) $(element).closest('.custom-control').addClass('border-teal-400 bg-teal-50/50 shadow-sm');
+            else $(element).closest('.custom-control').removeClass('border-teal-400 bg-teal-50/50 shadow-sm');
+        };
+
+        window.filterContacts = function () {
+            let term = $('#modalContactSearch').val().toLowerCase();
+            $('.modal-contact-item').each(function () {
+                let text = $(this).text().toLowerCase();
+                $(this).css('display', text.includes(term) ? 'block' : 'none');
+            });
+        };
+
+        // ==========================================
+        // FORM SUBMISSION VALIDATION
+        // ==========================================
+        $('#salesCallForm').on('submit', function (e) {
+            let subType = $('#CallSubType').val();
+            
+            // Merchandising Validation (Only require new files if no existing files)
+            if (subType === 'Merchandising') {
+                let existingFiles = @attachments.Count;
+                let newFiles = $('#MerchFiles')[0].files.length;
+                if (existingFiles === 0 && newFiles === 0) {
+                    alert("Merchandising Check requires at least one photo upload.");
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            // Order Validation
+            if (subType === 'Order' && !$('#OrderTypeInput').val()) {
+                alert("Please specify the Order Type.");
+                e.preventDefault();
+                return false;
+            }
+
+            // Customer Validation
+            if (window.isCustomerMandatory) {
+                let checkedCusts = $('.modal-customer-check:checked').length;
+                if (checkedCusts === 0) {
+                    alert("Please select at least one Customer to log this action.");
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            $('#btnSubmitForm').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...');
+        });
+
+        // ==========================================
+        // ENQUIRY MASTER MODAL & API LOGIC
+        // ==========================================
+        let allEnquiryData = [];
+        let filteredEnquiryData = [];
+
+        $('#btnEnquiryDoc').click(function () {
+            $('#enquiryDocModal').modal('show');
+
+            $('#filterBrandName, #filterSeriesName, #filterTitle').select2({
+                theme: 'bootstrap-5',
+                placeholder: "-- Select --",
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#enquiryDocModal')
+            });
+
+            if (allEnquiryData.length === 0) loadEnquiryDataFromAPI();
+        });
+
+        function loadEnquiryDataFromAPI() {
+            $('#loadingSpinner').removeClass('d-none');
+            $('#enquiryTableBody').empty();
+
+            $.ajax({
+                url: '/SalesCall/GetMarketingData',
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    let rawData = response.data ? response.data : response;
+                    allEnquiryData = [];
+
+                    rawData.forEach(item => {
+                        if (item.titles && Array.isArray(item.titles) && item.titles.length > 0) {
+                            item.titles.forEach(nestedTitle => {
+                                allEnquiryData.push({
+                                    id: nestedTitle.titleId || nestedTitle.isbn || '',
+                                    brandName: (item.brandName || item.BrandName || '').trim(),
+                                    seriesName: (item.seriesName || item.SeriesName || '').trim(),
+                                    title: (nestedTitle.titleName || '').trim(),
+                                    isbn: (nestedTitle.isbn || '').trim(),
+                                    category: item.category || item.Category || '',
+                                    targetPrice: nestedTitle.targetPrice || item.targetPrice || '',
+                                    unitCost: nestedTitle.unitCost || item.unitCost || '',
+                                    rawItem: nestedTitle,
+                                    parentItem: item
+                                });
+                            });
+                        } else {
+                            allEnquiryData.push({
+                                id: item.id || item.Id || item.isbn || '',
+                                brandName: (item.brandName || item.BrandName || '').trim(),
+                                seriesName: (item.seriesName || item.SeriesName || '').trim(),
+                                title: (item.title || item.titleName || item.Title || '').trim(),
+                                isbn: (item.isbn || item.ISBN || '').trim(),
+                                category: item.category || item.Category || '',
+                                targetPrice: item.targetPrice || item.TargetPrice || '',
+                                unitCost: item.unitCost || item.UnitCost || '',
+                                rawItem: item,
+                                parentItem: item
+                            });
+                        }
+                    });
+
+                    filteredEnquiryData = allEnquiryData;
+                    updateDropdownOptions();
+                    renderEnquiryTable(filteredEnquiryData);
+                    $('#loadingSpinner').addClass('d-none');
+                },
+                error: function (xhr, status, error) {
+                    console.error('API Error:', error);
+                    $('#enquiryTableBody').html('<tr><td colspan="13" class="text-center py-4 text-danger fw-bold">Failed to load API data. Make sure the backend server (192.168.0.88) is running.</td></tr>');
+                    $('#loadingSpinner').addClass('d-none');
+                }
+            });
+        }
+
+        $('#filterBrandName, #filterSeriesName, #filterTitle').on('change', function () {
+            applyFiltersAndUpdateCascades();
+        });
+
+        $('#filterIsbn').on('keyup', function () {
+            applyFiltersAndUpdateCascades();
+        });
+
+        function applyFiltersAndUpdateCascades() {
+            let selectedBrands = $('#filterBrandName').val() || [];
+            let selectedSeries = $('#filterSeriesName').val() || [];
+            let selectedTitles = $('#filterTitle').val() || [];
+            let isbnText = $('#filterIsbn').val().toLowerCase().trim();
+
+            filteredEnquiryData = allEnquiryData.filter(item => {
+                let bMatch = selectedBrands.length === 0 || selectedBrands.includes(item.brandName);
+                let sMatch = selectedSeries.length === 0 || selectedSeries.includes(item.seriesName);
+                let tMatch = selectedTitles.length === 0 || selectedTitles.includes(item.title);
+                let iMatch = isbnText === '' || item.isbn.toLowerCase().includes(isbnText);
+                return bMatch && sMatch && tMatch && iMatch;
+            });
+
+            renderEnquiryTable(filteredEnquiryData);
+            updateDropdownOptions(selectedBrands, selectedSeries, selectedTitles);
+        }
+
+        function updateDropdownOptions(selectedBrands = [], selectedSeries = [], selectedTitles = []) {
+            let seriesContextData = allEnquiryData;
+            if (selectedBrands.length > 0) seriesContextData = seriesContextData.filter(d => selectedBrands.includes(d.brandName));
+
+            let titleContextData = seriesContextData;
+            if (selectedSeries.length > 0) titleContextData = titleContextData.filter(d => selectedSeries.includes(d.seriesName));
+
+            let allBrands = [...new Set(allEnquiryData.map(d => d.brandName).filter(Boolean))].sort();
+            let cascadedSeries = [...new Set(seriesContextData.map(d => d.seriesName).filter(Boolean))].sort();
+            let cascadedTitles = [...new Set(titleContextData.map(d => d.title).filter(Boolean))].sort();
+
+            function fillSelect(elementId, optionsArray, currentSelections) {
+                let select = $(elementId);
+                let html = '';
+                optionsArray.forEach(opt => html += `<option value="${opt}">${opt}</option>`);
+
+                select.off('change');
+                select.html(html).val(currentSelections).trigger('change.select2');
+                select.on('change', function () { applyFiltersAndUpdateCascades(); });
+            }
+
+            fillSelect('#filterBrandName', allBrands, selectedBrands);
+            fillSelect('#filterSeriesName', cascadedSeries, selectedSeries);
+            fillSelect('#filterTitle', cascadedTitles, selectedTitles);
+        }
+
+        $('#btnResetFilters').click(function () {
+            $('#filterBrandName, #filterSeriesName, #filterTitle').val(null).trigger('change.select2');
+            $('#filterIsbn').val('');
+            applyFiltersAndUpdateCascades();
+        });
+
+        function extractCoverData(rawItem, parentItem) {
+            let coverUrl = '';
+            let fileName = '';
+            let assets = [];
+            
+            if (rawItem && Array.isArray(rawItem.titleAssets)) assets = rawItem.titleAssets;
+            else if (rawItem && Array.isArray(rawItem.TitleAssets)) assets = rawItem.TitleAssets;
+
+            if (assets.length > 0) {
+                let coverAsset = assets.find(a => a.assetCategory && a.assetCategory.toLowerCase().trim() === 'front_cover');
+                if (coverAsset) {
+                    coverUrl = coverAsset.viewUrl || coverAsset.ViewUrl || '';
+                    fileName = coverAsset.fileName || coverAsset.FileName || '';
+                }
+            }
+
+            if (coverUrl && coverUrl.startsWith('/')) coverUrl = 'http://192.168.0.88:8080' + coverUrl;
+            return { url: coverUrl, file: fileName };
+        }
+
+        function renderEnquiryTable(data) {
+            let tbody = $('#enquiryTableBody');
+
+            if (data.length === 0) {
+                tbody.html('<tr><td colspan="13" class="text-center py-4 text-muted">No records found matching criteria.</td></tr>');
+                return;
+            }
+
+            let savedData = [];
+            try {
+                let existingJson = $('#EnquiryDataJson').val();
+                if (existingJson) savedData = JSON.parse(existingJson);
+            } catch (e) { }
+
+            let rowsHtml = '';
+
+            data.forEach((item, index) => {
+                let coverData = extractCoverData(item.rawItem, item.parentItem);
+                
+                let imgHtml = `<span class="badge bg-secondary text-white p-2 shadow-sm" style="font-size:8px;">No Cover</span>`;
+                if (coverData.url) {
+                    if (coverData.file.includes('.pdf')) imgHtml = `<a href="${coverData.url}" target="_blank" class="badge bg-danger text-white">PDF</a>`;
+                    else imgHtml = `<a href="${coverData.url}" target="_blank" class="badge bg-info text-white">Image</a>`;
+                }
+
+                let specValue = item.specification || (item.rawItem && item.rawItem.specification) || '';
+
+                let savedItem = savedData.find(x => x.id == (item.id || ''));
+                let isChecked = savedItem ? 'checked' : '';
+                let rowClass = savedItem ? 'table-warning' : '';
+
+                let qty = savedItem ? savedItem.enquiryDetails.quantity : 1;
+                let targetPrice = savedItem ? savedItem.enquiryDetails.targetPrice : (item.targetPrice || '');
+                let offeredPrice = savedItem ? savedItem.enquiryDetails.offeredPrice : '';
+                let unitCost = savedItem ? savedItem.enquiryDetails.unitCost : (item.unitCost || '');
+                let intRemark = savedItem ? savedItem.enquiryDetails.internalRemark : '';
+                let extRemark = savedItem ? savedItem.enquiryDetails.externalRemark : '';
+
+                rowsHtml += `
+                        <tr class="align-middle ${rowClass}">
+                            <td><div class="form-check"><input class="form-check-input row-checkbox" type="checkbox" value="${item.id}" ${isChecked}></div></td>
+                            <td class="text-wrap">${item.brandName || '-'}</td>
+                            <td class="text-wrap">${item.seriesName || '-'}</td>
+                            <td class="text-wrap fw-bold text-indigo-700">${item.title || '-'}</td>
+                            <td class="font-mono text-muted">${item.isbn || '-'}</td>
+                            <td class="text-center">${imgHtml}</td>
+                            <td><input type="number" class="form-control form-control-sm qty-input" min="1" value="${qty}" style="width: 70px;"></td>
+                            <td><input type="number" class="form-control form-control-sm target-price-input" step="0.01" value="${targetPrice}" style="width: 90px;"></td>
+                            <td><input type="number" class="form-control form-control-sm price-input" step="0.01" value="${offeredPrice}" style="width: 90px;"></td>
+                            <td><input type="number" class="form-control form-control-sm unit-cost-input" step="0.01" value="${unitCost}" style="width: 90px;"></td>
+                            <td><input type="text" class="form-control form-control-sm spec-input" value="${specValue}"></td>
+                            <td><input type="text" class="form-control form-control-sm int-remark-input" value="${intRemark}"></td>
+                            <td><input type="text" class="form-control form-control-sm ext-remark-input" value="${extRemark}"></td>
+                        </tr>`;
+            });
+
+            tbody.html(rowsHtml);
+        }
+
+        $('#btnSaveEnquiry').click(function () {
+            let selectedPayload = [];
+
+            $('.row-checkbox:checked').each(function () {
+                let itemId = $(this).val();
+                let item = filteredEnquiryData.find(x => (x.id || x.isbn) == itemId);
+
+                if (item) {
+                    let $row = $(this).closest('tr');
+                    let imgData = extractCoverData(item.rawItem, item.parentItem);
+
+                    selectedPayload.push({
+                        id: item.id || '',
+                        brandName: item.brandName || '',
+                        seriesName: item.seriesName || '',
+                        title: item.title || '',
+                        isbn: item.isbn || '',
+                        category: item.category || '',
+                        coverImageUrl: imgData.url,
+                        enquiryDetails: {
+                            quantity: parseInt($row.find('.qty-input').val()) || 1,
+                            targetPrice: parseFloat($row.find('.target-price-input').val()) || 0,
+                            offeredPrice: parseFloat($row.find('.price-input').val()) || 0,
+                            unitCost: parseFloat($row.find('.unit-cost-input').val()) || 0,
+                            specification: $row.find('.spec-input').val() || '',
+                            internalRemark: $row.find('.int-remark-input').val() || '',
+                            externalRemark: $row.find('.ext-remark-input').val() || ''
+                        }
+                    });
+                }
+            });
+
+            if (selectedPayload.length === 0) {
+                alert("Please select at least one item by checking the box on the left.");
+                return;
+            }
+
+            $('#EnquiryDataJson').val(JSON.stringify(selectedPayload));
+            $('#enquiryStatusBadge').removeClass('d-none');
+            $('#enquiryDocModal').modal('hide');
+        });
+    </script>
+}

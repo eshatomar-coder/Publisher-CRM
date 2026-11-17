@@ -1,0 +1,517 @@
+﻿@model Publisher_CRM.Models.Account
+
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', sans-serif;
+        color: #334155;
+    }
+
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 0 auto 2rem auto;
+        overflow: hidden;
+        max-width: 1300px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .crm-header {
+        background: #ffffff;
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .crm-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+    .section-title {
+        color: #4f46e5;
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Light tinted background for distinct sections (like Address & Internal Info) */
+    .form-section-tinted {
+        background-color: #f8fafc;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 800;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+   
+        .form-control[readonly] {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+   
+    /* Clean button overrides */
+    .btn-primary {
+        background-color: #4f46e5;
+        border-color: #4f46e5;
+        border-radius: 8px;
+    }
+   
+        .btn-primary:hover {
+            background-color: #4338ca;
+            border-color: #4338ca;
+        }
+
+    .bg-indigo-50 {
+        background-color: #eef2ff !important;
+    }
+
+    .text-indigo-600 {
+        color: #4f46e5 !important;
+    }
+
+    .border-indigo-100 {
+        border-color: #e0e7ff !important;
+    }
+</style>
+
+<div class="container my-4">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <strong>Error!</strong> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="crm-card">
+        <!-- CLEAN COMPACT HEADER -->
+        <div class="crm-header flex-column flex-md-row gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded d-flex align-items-center justify-content-center bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm flex-shrink-0" style="width: 42px; height: 42px;">
+                    <i class="bi bi-briefcase-fill fs-5"></i>
+                </div>
+                <div>
+                    <h2 class="m-0 fs-5 fw-bolder text-dark">Create New Account</h2>
+                    <small class="text-muted fw-bold" style="font-size: 0.75rem;">Register a new business partner</small>
+                </div>
+            </div>
+
+            <a asp-action="Index" class="btn btn-light fw-bold rounded px-4 shadow-sm text-dark border d-block d-md-inline-block text-center">
+                <i class="bi bi-arrow-left me-2"></i>Back
+            </a>
+        </div>
+
+        <div class="p-4">
+            <form asp-action="Create" method="post">
+               
+                <!-- SECTION 1: CORE INFORMATION -->
+                <div class="form-section shadow-sm">
+                    <h4 class="section-title"><i class="bi bi-info-square me-2"></i>Core Information</h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label asp-for="AccountName" class="form-label">Account Name <span class="text-danger">*</span></label>
+                            <input asp-for="AccountName" class="form-control" placeholder="e.g. Wonderland Bookshop" required />
+                            <span asp-validation-for="AccountName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="AccountOwner" class="form-label">Account Owner</label>
+                            <!-- Added asp-items="ViewBag.OwnerList" here -->
+                            <select asp-for="AccountOwner" asp-items="ViewBag.OwnerList" id="accountOwnerDropdown" class="form-select">
+                                <option value="">-- Select Account Owner --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Phone" class="form-label">Phone</label>
+                            <input asp-for="Phone" type="tel" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="contact@example.com" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CustomerRelationship" class="form-label">Customer Relationship</label>
+                            <select asp-for="CustomerRelationship" class="form-select">
+                                <option value="">-None-</option>
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
+                                <option value="Potential">Potential</option>
+                            </select>
+                        </div>
+                       
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Add notes about this account..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section-alt">
+                    <h4 class="section-title">Address Details</h4>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Address" class="form-label">Address 1</label>
+                            <input asp-for="Address" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address2" class="form-label">Address 2</label>
+                            <input asp-for="Address2" class="form-control" />
+                        </div>
+
+                     
+
+                        <div class="col-md-12">
+                            <label asp-for="Country" class="form-label">Country</label>
+                            <select asp-for="Country" id="countryDropdown" class="form-select">
+                                <option value="">-- Select Country --</option>
+
+                                <option value="India">India</option>
+                                <option value="USA">United States</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="AUS">Australia</option>
+                                <option value="CAN">Canada</option>
+                                <option value="NZ">New Zealand</option>
+                                <option value="UAE">United Arab Emirates</option>
+
+                                <option value="Algeria">Algeria</option>
+                                <option value="Armenia">Armenia</option>
+                                <option value="Azerbaijan">Azerbaijan</option>
+                                <option value="Belgium">Belgium</option>
+                                <option value="Bulgaria">Bulgaria</option>
+                                <option value="Czech Republic">Czech Republic</option>
+                                <option value="Denmark">Denmark</option>
+                                <option value="Estonia">Estonia</option>
+                                <option value="France">France</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Germany">Germany</option>
+                                <option value="Greece">Greece</option>
+                                <option value="Hong Kong">Hong Kong</option>
+                                <option value="Hungary">Hungary</option>
+                                <option value="Iceland">Iceland</option>
+                                <option value="Ireland">Ireland</option>
+                                <option value="Italy">Italy</option>
+                                <option value="Kazakhstan">Kazakhstan</option>
+                                <option value="Kosovo">Kosovo</option>
+                                <option value="Lithuania">Lithuania</option>
+                                <option value="Malta">Malta</option>
+                                <option value="Moldova">Moldova</option>
+                                <option value="Montenegro">Montenegro</option>
+                                <option value="Netherlands">Netherlands</option>
+                                <option value="North Macedonia">North Macedonia</option>
+                                <option value="Norway">Norway</option>
+                                <option value="Poland">Poland</option>
+                                <option value="Portugal">Portugal</option>
+                                <option value="Romania">Romania</option>
+                                <option value="Russia">Russia</option>
+                                <option value="Serbia">Serbia</option>
+                                <option value="Slovakia">Slovakia</option>
+                                <option value="Slovenia">Slovenia</option>
+                                <option value="Spain">Spain</option>
+                                <option value="Sweden">Sweden</option>
+                                <option value="Switzerland">Switzerland</option>
+                                <option value="Turkey">Turkey</option>
+                                <option value="Tunisia">Tunisia</option>
+                                <option value="Ukraine">Ukraine</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="State" class="form-label">State</label>
+                            <select asp-for="State" id="stateDropdown" class="form-select">
+                                <option value="">Select State</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Postcode" class="form-label">Postcode</label>
+                            <select asp-for="Postcode" id="postcodeDropdown" class="form-select">
+                                <option value="">Select Postcode</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="City" class="form-label">City</label>
+                            <input asp-for="City" id="cityInput" class="form-control" readonly placeholder="Auto-fills from postcode" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4 class="section-title">Business Profile</h4>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="CustomerChannel" class="form-label">Customer Channel</label>
+                            <select asp-for="CustomerChannel" class="form-select">
+                                <option value="">-- Select Channel --</option>
+                                <option value="Distribution">Distribution</option>
+                                <option value="Wholesale">Wholesale</option>
+                                <option value="Modern Trade">Modern Trade</option>
+                                <option value="Online">Online</option>
+                                <option value="D2C">D2C</option>
+                                <option value="Special Sales">Special Sales</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CustomerActivity" class="form-label">Customer Activity</label>
+                            <select asp-for="CustomerActivity" class="form-select">
+                                <option value="">-- Select Activity --</option>
+                                <option value="Bookshop">Bookshop</option>
+                                <option value="Toy Shop">Toy Shop</option>
+                                <option value="Baby Shop">Baby Shop</option>
+                                <option value="Multi Department Store">Multi Department Store</option>
+                                <option value="Library Supplier">Library Supplier</option>
+                                <option value="Reseller">Reseller</option>
+                                <option value="Exporter">Exporter</option>
+                                <option value="School">School</option>
+                                <option value="Institution">Institution</option>
+                                <option value="Online Store">Online Store</option>
+                                <option value="Quick Commerce">Quick Commerce</option>
+                                <option value="Pegasus4Kids">Pegasus4Kids</option>
+                                <option value="Publisher / Brand">Publisher / Brand</option>
+                                <option value="Play Area">Play Area</option>
+                                <option value="Book Fair Exhibitor">Book Fair Exhibitor</option>
+                                <option value="School Fair Exhibitor">School Fair Exhibitor</option>
+                                <option value="Non-Profit">Non-Profit</option>
+                                <option value="Influencer">Influencer</option>
+                                <option value="Direct Marketing Company">Direct Marketing Company</option>
+                                <option value="Gift Shop">Gift Shop</option>
+                                <option value="School Supplier">School Supplier</option>
+                                <option value="Online Marketplace">Online Marketplace</option>
+                                <option value="Agent">Agent</option>
+                                <option value="Supermarket">Supermarket</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CustomerGeography" class="form-label">Customer Geography</label>
+                            <select asp-for="CustomerGeography" class="form-select">
+                                <option value="">-- Select Geography --</option>
+                                <option value="India North">India North</option>
+                                <option value="India South">India South</option>
+                                <option value="India East">India East</option>
+                                <option value="India West">India West</option>
+                                <option value="India Pan India">India Pan India</option>
+                                <option value="South Asia">South Asia</option>
+                                <option value="South East Asia">South East Asia</option>
+                                <option value="Middle East">Middle East</option>
+                                <option value="East Africa">East Africa</option>
+                                <option value="West Africa">West Africa</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Eastern Europe">Eastern Europe</option>
+                                <option value="Western Europe">Western Europe</option>
+                                <option value="North America">North America</option>
+                                <option value="Latin America">Latin America</option>
+                                <option value="Australia">Australia</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="CustomerProductProfile" class="form-label">Product Profile</label>
+                            <select asp-for="CustomerProductProfile" class="form-select">
+                                <option value="">-- Select Profile --</option>
+                                <option value="Baby">Baby</option>
+                                <option value="Books">Books</option>
+                                <option value="Games">Games</option>
+                                <option value="Puzzles">Puzzles</option>
+                                <option value="Craft">Craft</option>
+                                <option value="Club">Club</option>
+                                <option value="Adult Books">Adult Books</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Website" class="form-label">Website</label>
+                            <input asp-for="Website" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="NoBranchesOutlets" class="form-label">No. Branches / Outlets</label>
+                            <input asp-for="NoBranchesOutlets" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="PanNo" class="form-label">PAN No.</label>
+                            <input asp-for="PanNo" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CompanyRegNoCIN" class="form-label">Company Reg No (CIN)</label>
+                            <input asp-for="CompanyRegNoCIN" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="GSTRegistrationNo" class="form-label">GST Registration No.</label>
+                            <input asp-for="GSTRegistrationNo" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="YearlyBusinessExpected" class="form-label">Yearly Business Expected</label>
+                            <input asp-for="YearlyBusinessExpected" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="YearsInOperation" class="form-label">Years in Operation</label>
+                            <input asp-for="YearsInOperation" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="StateCode" class="form-label">State Code</label>
+                            <input asp-for="StateCode" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="FrequencyOfOrder" class="form-label">Frequency of Order</label>
+                            <input asp-for="FrequencyOfOrder" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="InitialOrderValue" class="form-label">Initial Order Value</label>
+                            <input asp-for="InitialOrderValue" type="number" step="0.01" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="PaymentTerm" class="form-label">Payment Term</label>
+                            <select asp-for="PaymentTerm" class="form-select">
+                                <option value="">-None-</option>
+                                <option value="COD">COD</option>
+                                <option value="ON B/L">ON B/L</option>
+                                <option value="0 Days">0 Days</option>
+                                <option value="15 Days">15 Days</option>
+                                <option value="30 Days">30 Days</option>
+                                <option value="45 Days">45 Days</option>
+                                <option value="60 Days">60 Days</option>
+                                <option value="75 Days">75 Days</option>
+                                <option value="90 Days">90 Days</option>
+                                <option value="120 Days">120 Days</option>
+                                <option value="150 Days">150 Days</option>
+                                <option value="180 Days">180 Days</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Balance" class="form-label">Balance</label>
+                            <input asp-for="Balance" type="number" step="0.01" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="DivisionCode" class="form-label">Division Code</label>
+                            <input asp-for="DivisionCode" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CustomerZone" class="form-label">Customer Zone</label>
+                            <input asp-for="CustomerZone" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section-alt">
+                    <h4 class="section-title">Internal Information</h4>
+                    <p class="text-muted small mb-3 fw-bold">These fields are populated internally and cannot be manually edited.</p>
+                    <div class="row g-3">
+                       
+                        <div class="col-md-3">
+                            <label asp-for="Location" class="form-label">Location</label>
+                            <input asp-for="Location" class="form-control" readonly />
+                        </div>
+                     
+                        <div class="col-md-3">
+                            <label asp-for="SalespersonCode" class="form-label">Salesperson Code</label>
+                            <input asp-for="SalespersonCode" class="form-control" readonly />
+                        </div>
+                    </div>
+                </div>
+
+             
+
+                <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                    <a asp-action="Index" class="btn btn-cancel text-decoration-none">Cancel</a>
+                    <button type="submit" class="btn btn-save d-flex align-items-center gap-2">
+                        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Sparkles/3D/sparkles_3d.png" alt="Sparkles" style="width: 20px; height: 20px;" />
+                        Save Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $.getJSON('@Url.Action("GetUsers", "Account")', function (data) {
+                $.each(data, function (index, item) {
+                    $('#accountOwnerDropdown').append('<option value="' + item.fullName + '">' + item.fullName + '</option>');
+                });
+            });
+
+            $('#countryDropdown').change(function () {
+                var country = $(this).val();
+                $('#stateDropdown').empty().append('<option value="">Select State</option>');
+                $('#postcodeDropdown').empty().append('<option value="">Select Postcode</option>');
+                $('#cityInput').val('');
+
+                if (country) {
+                    $.getJSON('@Url.Action("GetStates", "Account")', { country: country }, function (data) {
+                        $.each(data, function (index, item) {
+                            $('#stateDropdown').append('<option value="' + item + '">' + item + '</option>');
+                        });
+                    });
+                }
+            });
+
+            $('#stateDropdown').change(function () {
+                var state = $(this).val();
+                $('#postcodeDropdown').empty().append('<option value="">Select Postcode</option>');
+                $('#cityInput').val('');
+
+                if (state) {
+                    $.getJSON('@Url.Action("GetPostcodes", "Account")', { state: state }, function (data) {
+                        $.each(data, function (index, item) {
+                            $('#postcodeDropdown').append('<option value="' + item + '">' + item + '</option>');
+                        });
+                    });
+                }
+            });
+
+            $('#postcodeDropdown').change(function () {
+                var postcode = $(this).val();
+                if (postcode) {
+                    $.getJSON('@Url.Action("GetCity", "Account")', { postcode: postcode }, function (data) {
+                        $('#cityInput').val(data);
+                    });
+                } else {
+                    $('#cityInput').val('');
+                }
+            });
+
+            $('#countryDropdown').trigger('change');
+        });
+    </script>
+}

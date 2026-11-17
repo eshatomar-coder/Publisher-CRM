@@ -1,0 +1,595 @@
+﻿@model Publisher_CRM.Models.Account
+
+@{
+    ViewData["Title"] = "Edit Account";
+}
+
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', sans-serif;
+        color: #334155;
+    }
+
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 0 auto 2rem auto;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Tightened header padding to bring fields higher */
+    .crm-header {
+        background: #ffffff;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .crm-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+    .section-title {
+        color: #4f46e5;
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-section-tinted {
+        background-color: #f8fafc;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 800;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+   
+        .form-control[readonly] {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+   
+    .btn-primary {
+        background-color: #4f46e5;
+        border-color: #4f46e5;
+        border-radius: 8px;
+    }
+   
+        .btn-primary:hover {
+            background-color: #4338ca;
+            border-color: #4338ca;
+        }
+
+    /* SIDEBAR STYLING */
+    .sidebar-wrapper {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .sidebar-title {
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        padding-left: 8px;
+    }
+
+    .sidebar-menu a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        color: #475569;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+        transition: all 0.2s;
+    }
+
+        .sidebar-menu a:hover {
+            background-color: #eef2ff;
+            color: #4f46e5;
+        }
+
+    .sidebar-menu .badge {
+        background-color: #f1f5f9;
+        color: #64748b;
+        font-size: 0.75rem;
+        padding: 5px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+
+    .sidebar-menu a:hover .badge {
+        background-color: #4f46e5;
+        color: #ffffff;
+    }
+
+    .sidebar-link-action {
+        display: inline-block;
+        padding: 8px 14px;
+        color: #4f46e5;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-decoration: none;
+    }
+
+        .sidebar-link-action:hover {
+            text-decoration: underline;
+        }
+</style>
+<div class="container-fluid my-4" style="max-width: 1500px;">
+    <div class="row g-4">
+       
+        <!-- LEFT SIDEBAR (RELATED LIST & LINKS) -->
+        <div class="col-lg-3 col-xl-2">
+            <div class="sidebar-wrapper sticky-top" style="top: 20px;">
+                <!-- Related List Section -->
+                <div class="mb-4">
+                    <h5 class="sidebar-title">Related List</h5>
+                    <div class="sidebar-menu d-flex flex-column">
+                        <a href="/Contact/Index?accountFilter=@Model.AccountName" target="_blank">
+                            <span><i class="bi bi-person-lines-fill me-2 opacity-75"></i>Contacts</span>
+                            <span class="badge">@(ViewBag.ContactCount ?? 0)</span>
+                        </a>
+                        <a href="/SalesCall/Index?accountFilter=@Model.AccountName" target="_blank">
+                            <span><i class="bi bi-telephone-outbound me-2 opacity-75"></i>Sales Call</span>
+                            <span class="badge">@(ViewBag.SalesCallCount ?? 0)</span>
+                        </a>
+                        <a href="/Lead/Index?accountFilter=@Model.AccountName" target="_blank">
+                            <span><i class="bi bi-funnel me-2 opacity-75"></i>New Leads</span>
+                            <span class="badge">@(ViewBag.LeadCount ?? 0)</span>
+                        </a>
+                        <a href="#">
+                            <span><i class="bi bi-exclamation-triangle me-2 opacity-75"></i>Complaints</span>
+                            <span class="badge">@(ViewBag.ComplaintCount ?? 0)</span>
+                        </a>
+                        <a href="#" class="sidebar-link-action mt-2"><i class="bi bi-plus-circle me-1"></i> Add Related List</a>
+                    </div>
+                </div>
+
+                <!-- Links Section -->
+                <div>
+                    <h5 class="sidebar-title">Links</h5>
+                    <div class="sidebar-menu d-flex flex-column">
+                        <a href="#" class="sidebar-link-action"><i class="bi bi-link-45deg me-1"></i> Add Link</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- MAIN FORM CONTENT -->
+        <div class="col-lg-9 col-xl-10">
+            <div class="crm-card">
+                <!-- COMPACT HEADER WITHOUT ICON -->
+                <div class="crm-header flex-column flex-md-row gap-3">
+                    <div>
+                        <h2 class="m-0 fs-5 fw-bolder text-dark">Edit: @Model?.AccountName</h2>
+                        <small class="text-muted fw-bold" style="font-size: 0.75rem;">Update business partner details</small>
+                    </div>
+
+                    <a asp-action="Index" class="btn btn-light fw-bold rounded px-4 shadow-sm text-dark border d-block d-md-inline-block text-center">
+                        <i class="bi bi-arrow-left me-2"></i>Back to List
+                    </a>
+                </div>
+
+                <!-- Reduced padding to bring fields higher up -->
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <!-- CRITICAL: Hidden IDs -->
+                        <input type="hidden" asp-for="AccountId" />
+                        <input type="hidden" asp-for="RecordId" />
+
+                        <div class="form-section">
+                            <h4 class="section-title">Core Information</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="AccountName" class="form-label">Account Name <span class="text-danger">*</span></label>
+                                    <input asp-for="AccountName" class="form-control" required />
+                                    <span asp-validation-for="AccountName" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Account Owner</label>
+                                    <!-- Hidden field retains the zcrm_ ID so it saves correctly in the database -->
+                                    <input type="hidden" asp-for="AccountOwner" />
+
+                                    <!-- Visible read-only text box showing the actual Name -->
+                                    <input type="text" class="form-control" value="@ViewBag.AccountOwnerName" readonly style="background-color: #f1f5f9; color: #64748b; cursor: not-allowed;" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Phone" class="form-label">Phone</label>
+                                    <input asp-for="Phone" type="tel" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Email" class="form-label">Email</label>
+                                    <input asp-for="Email" type="email" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="CustomerRelationship" class="form-label">Customer Relationship</label>
+                                    <select asp-for="CustomerRelationship" class="form-select">
+                                        <option value="">-None-</option>
+                                        <option value="Primary">Primary</option>
+                                        <option value="Secondary">Secondary</option>
+                                        <option value="Potential">Potential</option>
+                                    </select>
+                                </div>
+                             
+                                <div class="col-12">
+                                    <label asp-for="Description" class="form-label">Description</label>
+                                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section-alt">
+                            <h4 class="section-title">Address Details</h4>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="Address" class="form-label">Address 1</label>
+                                    <input asp-for="Address" class="form-control" />
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="Address2" class="form-label">Address 2</label>
+                                    <input asp-for="Address2" class="form-control" />
+                                </div>
+
+                                <!-- Hidden fields to hold existing values for the JS auto-fill logic -->
+                                <input type="hidden" id="existingState" value="@Model.State" />
+                                <input type="hidden" id="existingPostcode" value="@Model.Postcode" />
+
+                                <div class="col-md-12">
+                                    <label asp-for="Country" class="form-label">Country</label>
+                                    <select asp-for="Country" id="countryDropdown" class="form-select">
+                                        <option value="">-- Select Country --</option>
+                                        <option value="India">India</option>
+                                        <option value="USA">United States</option>
+                                        <option value="UK">United Kingdom</option>
+                                        <option value="AUS">Australia</option>
+                                        <option value="CAN">Canada</option>
+                                        <option value="NZ">New Zealand</option>
+                                        <option value="UAE">United Arab Emirates</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="State" class="form-label">State</label>
+                                    <select asp-for="State" id="stateDropdown" class="form-select">
+                                        <option value="">Select State</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Postcode" class="form-label">Postcode</label>
+                                    <select asp-for="Postcode" id="postcodeDropdown" class="form-select">
+                                        <option value="">Select Postcode</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="City" class="form-label">City</label>
+                                    <input asp-for="City" id="cityInput" class="form-control" readonly />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4 class="section-title">Business Profile</h4>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label asp-for="CustomerChannel" class="form-label">Customer Channel</label>
+                                    <select asp-for="CustomerChannel" class="form-select">
+                                        <option value="">-- Select Channel --</option>
+                                        <option value="Distribution">Distribution</option>
+                                        <option value="Wholesale">Wholesale</option>
+                                        <option value="Modern Trade">Modern Trade</option>
+                                        <option value="Online">Online</option>
+                                        <option value="D2C">D2C</option>
+                                        <option value="Special Sales">Special Sales</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="CustomerActivity" class="form-label">Customer Activity</label>
+                                    <select asp-for="CustomerActivity" class="form-select">
+                                        <option value="">-- Select Activity --</option>
+                                        <option value="Bookshop">Bookshop</option>
+                                        <option value="Toy Shop">Toy Shop</option>
+                                        <option value="Baby Shop">Baby Shop</option>
+                                        <option value="Multi Department Store">Multi Department Store</option>
+                                        <option value="Library Supplier">Library Supplier</option>
+                                        <option value="Reseller">Reseller</option>
+                                        <option value="Exporter">Exporter</option>
+                                        <option value="School">School</option>
+                                        <option value="Institution">Institution</option>
+                                        <option value="Online Store">Online Store</option>
+                                        <option value="Quick Commerce">Quick Commerce</option>
+                                        <option value="Pegasus4Kids">Pegasus4Kids</option>
+                                        <option value="Publisher / Brand">Publisher / Brand</option>
+                                        <option value="Play Area">Play Area</option>
+                                        <option value="Book Fair Exhibitor">Book Fair Exhibitor</option>
+                                        <option value="School Fair Exhibitor">School Fair Exhibitor</option>
+                                        <option value="Non-Profit">Non-Profit</option>
+                                        <option value="Influencer">Influencer</option>
+                                        <option value="Direct Marketing Company">Direct Marketing Company</option>
+                                        <option value="Gift Shop">Gift Shop</option>
+                                        <option value="School Supplier">School Supplier</option>
+                                        <option value="Online Marketplace">Online Marketplace</option>
+                                        <option value="Agent">Agent</option>
+                                        <option value="Supermarket">Supermarket</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="CustomerGeography" class="form-label">Customer Geography</label>
+                                    <select asp-for="CustomerGeography" class="form-select">
+                                        <option value="">-- Select Geography --</option>
+                                        <option value="India North">India North</option>
+                                        <option value="India South">India South</option>
+                                        <option value="India East">India East</option>
+                                        <option value="India West">India West</option>
+                                        <option value="India Pan India">India Pan India</option>
+                                        <option value="South Asia">South Asia</option>
+                                        <option value="South East Asia">South East Asia</option>
+                                        <option value="Middle East">Middle East</option>
+                                        <option value="East Africa">East Africa</option>
+                                        <option value="West Africa">West Africa</option>
+                                        <option value="South Africa">South Africa</option>
+                                        <option value="Eastern Europe">Eastern Europe</option>
+                                        <option value="Western Europe">Western Europe</option>
+                                        <option value="North America">North America</option>
+                                        <option value="Latin America">Latin America</option>
+                                        <option value="Australia">Australia</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label asp-for="CustomerProductProfile" class="form-label">Product Profile</label>
+                                    <select asp-for="CustomerProductProfile" class="form-select">
+                                        <option value="">-- Select Profile --</option>
+                                        <option value="Baby">Baby</option>
+                                        <option value="Books">Books</option>
+                                        <option value="Games">Games</option>
+                                        <option value="Puzzles">Puzzles</option>
+                                        <option value="Craft">Craft</option>
+                                        <option value="Club">Club</option>
+                                        <option value="Adult Books">Adult Books</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Website" class="form-label">Website</label>
+                                    <input asp-for="Website" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="NoBranchesOutlets" class="form-label">No. Branches / Outlets</label>
+                                    <input asp-for="NoBranchesOutlets" type="number" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="PanNo" class="form-label">PAN No.</label>
+                                    <input asp-for="PanNo" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="CompanyRegNoCIN" class="form-label">Company Reg No (CIN)</label>
+                                    <input asp-for="CompanyRegNoCIN" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="GSTRegistrationNo" class="form-label">GST Registration No.</label>
+                                    <input asp-for="GSTRegistrationNo" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="YearlyBusinessExpected" class="form-label">Yearly Business Expected</label>
+                                    <input asp-for="YearlyBusinessExpected" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="YearsInOperation" class="form-label">Years in Operation</label>
+                                    <input asp-for="YearsInOperation" type="number" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="StateCode" class="form-label">State Code</label>
+                                    <input asp-for="StateCode" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="FrequencyOfOrder" class="form-label">Frequency of Order</label>
+                                    <input asp-for="FrequencyOfOrder" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="InitialOrderValue" class="form-label">Initial Order Value</label>
+                                    <input asp-for="InitialOrderValue" type="number" step="0.01" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="PaymentTerm" class="form-label">Payment Term</label>
+                                    <select asp-for="PaymentTerm" class="form-select">
+                                        <option value="">-None-</option>
+                                        <option value="COD">COD</option>
+                                        <option value="ON B/L">ON B/L</option>
+                                        <option value="0 Days">0 Days</option>
+                                        <option value="15 Days">15 Days</option>
+                                        <option value="30 Days">30 Days</option>
+                                        <option value="45 Days">45 Days</option>
+                                        <option value="60 Days">60 Days</option>
+                                        <option value="75 Days">75 Days</option>
+                                        <option value="90 Days">90 Days</option>
+                                        <option value="120 Days">120 Days</option>
+                                        <option value="150 Days">150 Days</option>
+                                        <option value="180 Days">180 Days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Balance" class="form-label">Balance</label>
+                                    <input asp-for="Balance" type="number" step="0.01" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="DivisionCode" class="form-label">Division Code</label>
+                                    <input asp-for="DivisionCode" class="form-control" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="CustomerZone" class="form-label">Customer Zone</label>
+                                    <input asp-for="CustomerZone" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section-alt">
+                            <h4 class="section-title">Internal Information</h4>
+                            <p class="text-muted small mb-3 fw-bold">These fields are populated internally and cannot be manually edited.</p>
+                            <div class="row g-3">
+                               
+                                <div class="col-md-3">
+                                    <label asp-for="Location" class="form-label">Location</label>
+                                    <input asp-for="Location" class="form-control" readonly />
+                                </div>
+                               
+                                <div class="col-md-3">
+                                    <label asp-for="SalespersonCode" class="form-label">Salesperson Code</label>
+                                    <input asp-for="SalespersonCode" class="form-control" readonly />
+                                </div>
+                            </div>
+                        </div>
+
+                       
+
+                        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                            <!-- Redirects to Index to cancel -->
+                            <a asp-action="Index" class="btn btn-cancel text-decoration-none">Cancel Edit</a>
+                            <button type="submit" class="btn btn-save d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Get existing values for Auto-Fill
+            var existingOwner = $('#existingOwner').val();
+            var existingState = $('#existingState').val();
+            var existingPostcode = $('#existingPostcode').val();
+
+            // 0. Fetch Users and Populate Account Owner
+            $.getJSON('@Url.Action("GetUsers", "Account")', function (data) {
+                $.each(data, function (index, item) {
+                    var selected = (item.fullName === existingOwner) ? 'selected' : '';
+                    $('#accountOwnerDropdown').append('<option value="' + item.fullName + '" ' + selected + '>' + item.fullName + '</option>');
+                });
+            });
+
+            // 1. Logic for Country -> State
+            function loadStates(country, selectedState) {
+                $('#stateDropdown').empty().append('<option value="">Select State</option>');
+
+                if (country) {
+                    $.getJSON('@Url.Action("GetStates", "Account")', { country: country }, function (data) {
+                        $.each(data, function (index, item) {
+                            var selected = (item === selectedState) ? 'selected' : '';
+                            $('#stateDropdown').append('<option value="' + item + '" ' + selected + '>' + item + '</option>');
+                        });
+
+                        // If we pre-selected a state, trigger the postcode load automatically
+                        if (selectedState) {
+                            loadPostcodes(selectedState, existingPostcode);
+                        }
+                    });
+                }
+            }
+
+            // 2. Logic for State -> Postcode
+            function loadPostcodes(state, selectedPostcode) {
+                $('#postcodeDropdown').empty().append('<option value="">Select Postcode</option>');
+
+                if (state) {
+                    $.getJSON('@Url.Action("GetPostcodes", "Account")', { state: state }, function (data) {
+                        $.each(data, function (index, item) {
+                            var selected = (item === selectedPostcode) ? 'selected' : '';
+                            $('#postcodeDropdown').append('<option value="' + item + '" ' + selected + '>' + item + '</option>');
+                        });
+                    });
+                }
+            }
+
+            // Bind Change Events for User Interaction
+            $('#countryDropdown').change(function () {
+                var country = $(this).val();
+                $('#stateDropdown').empty().append('<option value="">Select State</option>');
+                $('#postcodeDropdown').empty().append('<option value="">Select Postcode</option>');
+                $('#cityInput').val('');
+                loadStates(country, null);
+            });
+
+            $('#stateDropdown').change(function () {
+                var state = $(this).val();
+                $('#postcodeDropdown').empty().append('<option value="">Select Postcode</option>');
+                $('#cityInput').val('');
+                loadPostcodes(state, null);
+            });
+
+            $('#postcodeDropdown').change(function () {
+                var postcode = $(this).val();
+                if (postcode) {
+                    $.getJSON('@Url.Action("GetCity", "Account")', { postcode: postcode }, function (data) {
+                        $('#cityInput').val(data);
+                    });
+                } else {
+                    $('#cityInput').val('');
+                }
+            });
+
+            // TRIGGER INITIAL LOAD ON PAGE START
+            // Check if there is an existing country to trigger the cascade
+            var currentCountry = $('#countryDropdown').val();
+            if (currentCountry) {
+                loadStates(currentCountry, existingState);
+            }
+        });
+    </script>
+}

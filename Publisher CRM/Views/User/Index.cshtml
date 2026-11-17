@@ -1,0 +1,649 @@
+﻿@model IEnumerable<Publisher_CRM.Models.Users>
+
+@{
+    ViewData["Title"] = "System Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* --- COLOR PALETTE: SaaS Theme --- */
+    :root {
+        --theme-primary: #0ea5e9;
+        --theme-primary-hover: #0284c7;
+        --theme-bg: #f8fafc;
+        --theme-card-bg: #ffffff;
+        --theme-border: #e2e8f0;
+        --theme-grid-border: #cbd5e1;
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+        --table-header-bg: #f1f5f9; /* Slightly darker crisp grey/blue for SaaS feel */
+        --table-row-hover: #f0f9ff;
+    }
+
+    body {
+        background-color: var(--theme-bg);
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        color: var(--text-dark);
+    }
+
+    .container-fluid {
+        width: auto;
+        margin: -1rem !important;
+        padding: 0 !important;
+    }
+
+    .crm-card {
+        background-color: var(--theme-card-bg);
+        border-radius: 0;
+        box-shadow: none;
+        padding: 20px;
+        margin: 0px;
+        border-top: 5px solid var(--theme-primary);
+        min-height: 100vh;
+    }
+
+    .page-title {
+        color: var(--text-dark);
+        font-weight: 800;
+        font-size: 1.6rem;
+        margin: 0;
+    }
+
+    /* --- Buttons --- */
+    .btn-primary-custom {
+        background-color: var(--theme-primary);
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
+        padding: 8px 18px;
+        border-radius: 6px;
+        transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2);
+            background-color: var(--theme-primary-hover);
+            color: #ffffff;
+        }
+
+    .btn-outline-custom {
+        border: 1px solid var(--theme-border);
+        color: var(--text-dark);
+        background: var(--theme-card-bg);
+        font-weight: 700;
+        padding: 8px 18px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .btn-outline-custom:hover {
+            background: var(--theme-bg);
+            border-color: var(--theme-grid-border);
+            color: var(--theme-primary-hover);
+        }
+
+    /* --- DATATABLES UI: SaaS Grid Fixes --- */
+
+    /* 1. Header and Body Synchronization */
+    .dataTables_scrollHeadInner, .dataTables_scrollHeadInner table {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        border-bottom: none !important;
+    }
+
+    .dataTables_scrollHead {
+        border-bottom: 1px solid var(--theme-border) !important;
+        margin-bottom: -1px !important; /* Pulls the body up to eliminate the gap */
+    }
+
+    table.dataTable {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+    }
+
+        /* 2. Column Dividers (Vertical Lines) */
+        table.dataTable thead th,
+        table.dataTable tbody td {
+            border: 1px solid var(--theme-border) !important; /* Adds clear vertical and horizontal grid lines */
+        }
+
+        /* 3. Header Styling */
+        table.dataTable thead th {
+            background-color: var(--table-header-bg) !important;
+            color: var(--text-dark);
+            font-weight: 700 !important;
+            font-size: 0.85rem;
+            padding: 12px 15px !important;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        /* 4. Data Cell Styling */
+        table.dataTable tbody td {
+            vertical-align: middle;
+            padding: 10px 15px !important;
+            font-size: 0.85rem;
+            font-weight: 600 !important;
+            color: var(--text-dark);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+    /* 5. Fix for the DataTables Scroll Body Gap */
+    /* This completely collapses the invisible cloned header DataTables creates in the scroll body */
+    .dataTables_scrollBody {
+        border-top: none !important;
+    }
+
+        .dataTables_scrollBody thead tr {
+            height: 0 !important;
+            line-height: 0 !important;
+        }
+
+        .dataTables_scrollBody thead th,
+        .dataTables_scrollBody thead td {
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            height: 0 !important;
+            line-height: 0 !important;
+            overflow: hidden !important;
+            color: transparent !important;
+        }
+
+    /* Striped rows and Hover Highlights */
+    table.dataTable tbody tr {
+        background-color: #ffffff;
+    }
+
+        table.dataTable tbody tr:hover {
+            background-color: var(--table-row-hover) !important;
+            cursor: pointer;
+        }
+
+    table.dataTable tbody td.sorting_1 {
+        background-color: rgba(14, 165, 233, 0.03) !important;
+    }
+
+    /* --- Controls (Pagination & Search) --- */
+    .dataTables_length select {
+        width: auto;
+        display: inline-block;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--theme-border);
+        margin: 0 8px;
+        font-weight: 600;
+        background-color: #fff;
+    }
+
+    .dt-buttons .btn {
+        background-color: #ffffff !important;
+        color: var(--text-dark) !important;
+        border: 1px solid var(--theme-border) !important;
+        font-weight: 600;
+        padding: 7px 15px;
+        border-radius: 6px;
+        margin-left: 10px;
+    }
+
+        .dt-buttons .btn:hover {
+            background-color: var(--theme-bg) !important;
+            border-color: var(--theme-grid-border) !important;
+        }
+
+    /* --- Inline Column Filter Inputs --- */
+    .column-search-input {
+        width: 100%;
+        min-width: 80px;
+        padding: 6px 10px;
+        border: 1px solid var(--theme-grid-border);
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .column-search-input:focus {
+            border-color: var(--theme-primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.15);
+        }
+
+        .column-search-input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+</style>
+
+<div class="container-fluid p-0">
+    <div class="crm-card">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-3 crm-header-container">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-custom d-lg-none px-2 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#filterSidebarCollapse" aria-expanded="false">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                <h2 class="page-title">
+                    <i class="bi bi-people-fill me-2" style="color: var(--theme-primary);"></i> System Users
+                </h2>
+            </div>
+
+            <div class="mobile-action-wrapper">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-custom">
+                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                </a>
+                <button type="button" class="btn btn-outline-custom" data-bs-toggle="modal" data-bs-target="#uploadCsvModal">
+                    <i class="bi bi-cloud-arrow-up me-1"></i> Upload
+                </button>
+                <a asp-action="Create" class="btn btn-primary-custom">
+                    <i class="bi bi-plus-lg me-1"></i> Create User
+                </a>
+            </div>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success fw-bold alert-dismissible fade show shadow-sm mb-4">
+                <i class="bi bi-check-circle me-2"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger fw-bold alert-dismissible fade show shadow-sm mb-4">
+                <i class="bi bi-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="row m-0">
+            <!-- Sidebar -->
+            <div class="col-12 p-0">
+                <div class="collapse mb-3" id="filterSidebarCollapse">
+                    <div class="filter-sidebar" style="background: var(--theme-card-bg); border: 1px solid var(--theme-border); border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0 fw-bold" style="color: var(--theme-primary);"><i class="bi bi-funnel"></i> Advanced Filters</h5>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" id="searchFilterFields" class="form-control form-control-sm fw-bold" placeholder="Search filter fields...">
+                        </div>
+                        <div id="filterFieldsContainer" class="pe-2" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+                        </div>
+                        <div class="mt-4 pt-3 border-top d-flex gap-2">
+                            <button id="applyFiltersBtn" class="btn btn-primary-custom w-100 fw-bold justify-content-center">Apply</button>
+                            <button id="clearFiltersBtn" class="btn btn-outline-custom w-100 fw-bold justify-content-center">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Area -->
+            <div class="col-12 p-0">
+                <div class="bg-white rounded-3 w-100">
+                    <table id="usersTable" class="table w-100 display nowrap">
+                        <thead>
+                            <tr>
+                                <!-- 32 COLUMNS -->
+                                <th>Record ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Date of Birth</th>
+                                <th>Phone</th>
+                                <th>Mobile</th>
+                                <th>Website</th>
+                                <th>Fax</th>
+                                <th>Profile</th>
+                                <th>Street</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Country</th>
+                                <th>ZipCode</th>
+                                <th>Language</th>
+                                <th>Locale</th>
+                                <th>Time Zone</th>
+                                <th>Time Format</th>
+                                <th>Currency</th>
+                                <th>Confirmed</th>
+                                <th>ZUID</th>
+                                <th>Date Format</th>
+                                <th>Grouping</th>
+                                <th>Decimal</th>
+                                <th>Sort Order</th>
+                                <th>Name Format</th>
+                                <th>Type</th>
+                                <th>Status Reason</th>
+                                <th>Source</th>
+                                <th>User Status</th>
+                            </tr>
+                            <tr class="top-filters">
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                                <th><input type="text" class="column-search-input" placeholder="Search..." /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null)
+                            {
+                                @foreach (var user in Model)
+                                {
+                                    <tr>
+                                        <td>@user?.RecordId</td>
+                                        <td>@user?.FirstName</td>
+                                        <td>@user?.LastName</td>
+                                        <td><a href="mailto:@user?.Email" class="text-decoration-none fw-bold" style="color: var(--theme-primary-hover);">@user?.Email</a></td>
+                                        <td>@user?.Role</td>
+                                        <td>@(user?.DateOfBirth?.ToString("MMM dd, yyyy") ?? "")</td>
+                                        <td>@user?.Phone</td>
+                                        <td>@user?.Mobile</td>
+                                        <td>@user?.Website</td>
+                                        <td>@user?.Fax</td>
+                                        <td>@user?.Profile</td>
+                                        <td>@user?.Street</td>
+                                        <td>@user?.City</td>
+                                        <td>@user?.State</td>
+                                        <td>@user?.Country</td>
+                                        <td>@user?.ZipCode</td>
+                                        <td>@user?.Language</td>
+                                        <td>@user?.CountryLocale</td>
+                                        <td>@user?.TimeZone</td>
+                                        <td>@user?.TimeFormat</td>
+                                        <td>@user?.Currency</td>
+                                        <td>
+                                            @if (user?.ConfirmationStatus == true)
+                                            {
+                                                <span class="badge bg-success">Yes</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">No</span>
+                                            }
+                                        </td>
+                                        <td>@user?.Zuid</td>
+                                        <td>@user?.DateFormat</td>
+                                        <td>@user?.Grouping</td>
+                                        <td>@user?.Decimal</td>
+                                        <td>@user?.SortOrderPreference</td>
+                                        <td>@user?.NameFormat</td>
+                                        <td>@user?.Type</td>
+                                        <td>@user?.StatusReason</td>
+                                        <td>@user?.Source</td>
+                                        <td>
+                                            @if (user?.UserStatus == "Active")
+                                            {
+                                                <span class="badge bg-success">@user?.UserStatus</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">@(user?.UserStatus ?? "N/A")</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadCsvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold" style="color: var(--theme-primary);"><i class="bi bi-filetype-csv me-2"></i> Bulk Import Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted fw-bold mb-4">Ensure your CSV headers map precisely to your User model fields before uploading.</p>
+                <form asp-action="ImportCsv" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select CSV File <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control fw-bold" accept=".csv" required />
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="bi bi-cloud-upload me-2"></i> Start Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Bind absolute column index BEFORE DataTables strips hidden columns
+            $('tr.top-filters th').each(function (i) {
+                $(this).find('input').attr('data-column-index', i);
+            });
+
+            // Sidebar Advanced Filter Logic
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'usersTable') return true;
+                let isMatch = true;
+                $('.filter-checkbox:checked').each(function() {
+                    if (!isMatch) return;
+                    let index = $(this).data('col-index');
+                    let operator = $(`#op_${index}`).val();
+                    let selectedVals = $(`#sel_${index}`).val() || [];
+                    let cellRawValue = data[index] || "";
+                    let cellValue = String(cellRawValue).replace(/(<([^>]+)>)/ig, "").replace(/\s+/g, ' ').trim();
+
+                    if (operator === 'is_empty') { if (cellValue !== '') isMatch = false; }
+                    else if (operator === 'is_not_empty') { if (cellValue === '') isMatch = false; }
+                    else {
+                        if (selectedVals.length === 0) return;
+                        let valMatch = false;
+                        let lowerCell = cellValue.toLowerCase();
+                        if (operator === 'is') valMatch = selectedVals.some(v => lowerCell === v.toLowerCase());
+                        else if (operator === 'is_not') valMatch = selectedVals.every(v => lowerCell !== v.toLowerCase());
+                        else if (operator === 'contains') valMatch = selectedVals.some(v => lowerCell.includes(v.toLowerCase()));
+                        else if (operator === 'not_contains') valMatch = selectedVals.every(v => !lowerCell.includes(v.toLowerCase()));
+                        else if (operator === 'starts_with') valMatch = selectedVals.some(v => lowerCell.startsWith(v.toLowerCase()));
+                        else if (operator === 'ends_with') valMatch = selectedVals.some(v => lowerCell.endsWith(v.toLowerCase()));
+                        if (!valMatch) isMatch = false;
+                    }
+                });
+                return isMatch;
+            });
+
+            // Initialize DataTables
+            var table = $('#usersTable').DataTable({
+                autoWidth: false,
+                orderCellsTop: true,
+                scrollX: true,
+                scrollY: "550px",
+                scrollCollapse: true,
+                pageLength: 10,
+                deferRender: true,
+                stateSave: true,
+                stateDuration: 0,
+                dom: "<'row mb-4 align-items-center'<'col-sm-12 col-md-6 d-flex align-items-center'l><'col-sm-12 col-md-6 d-flex justify-content-end'B>>" +
+                     "<'row'<'col-sm-12'tr>>" +
+                     "<'row mt-4'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                lengthMenu: [[10, 25, 50, 100, 500], [10, 25, 50, 100, "500"]],
+                buttons: [
+                    { extend: 'colvis', text: '<i class="bi bi-layout-three-columns me-1"></i> Columns', className: 'btn btn-outline-secondary btn-sm' }
+                ],
+                columnDefs: [
+                    { targets: [0, 5, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31], visible: false }
+                ],
+                initComplete: function () {
+                    var api = this.api();
+                    var state = api.state.loaded();
+                    if (state) {
+                        api.columns().eq(0).each(function (colIdx) {
+                            var colSearch = state.columns[colIdx].search;
+                            if (colSearch.search) {
+                                $('input.column-search-input[data-column-index="' + colIdx + '"]').val(colSearch.search);
+                            }
+                        });
+                    }
+                    setTimeout(() => { api.columns.adjust().draw(false); }, 200);
+                }
+            });
+
+            // Re-adjust columns on interactions
+            table.on('column-visibility.dt', function () { table.columns.adjust().draw(false); });
+            $(window).on('resize', function () { table.columns.adjust(); });
+
+            // Fix Top-Row Text Inputs
+            $(document).on('keyup change clear', '.column-search-input', function(e) {
+                e.stopPropagation();
+                let colIdx = $(this).attr('data-column-index');
+                if (table.column(colIdx).search() !== this.value) {
+                    table.column(colIdx).search(this.value).draw();
+                }
+            });
+            $(document).on('click', '.column-search-input', function(e) { e.stopPropagation(); });
+
+            // Build Sidebar UI dynamically based on active columns
+            let headerCells = table.columns().header();
+            table.columns().every(function (index) {
+                let title = $(headerCells[index]).text().trim();
+                if (!title || title === "Search...") return;
+
+                let filterHtml = `
+                <div class="filter-item pb-2 mb-2 border-bottom" data-field-name="${title.toLowerCase()}">
+                    <div class="form-check mb-1">
+                        <input class="form-check-input filter-checkbox" type="checkbox" id="chk_${index}" data-col-index="${index}">
+                        <label class="form-check-label fw-bold" for="chk_${index}">${title}</label>
+                    </div>
+                    <div class="filter-input-container" id="filter_container_${index}" style="display: none;">
+                        <select class="form-select form-select-sm fw-bold mb-2" id="op_${index}" data-col-index="${index}">
+                            <option value="is">is</option>
+                            <option value="is_not">isn't</option>
+                            <option value="contains">contains</option>
+                            <option value="not_contains">doesn't contain</option>
+                            <option value="starts_with">starts with</option>
+                            <option value="ends_with">ends with</option>
+                            <option value="is_empty">is empty</option>
+                            <option value="is_not_empty">is not empty</option>
+                        </select>
+                        <div id="val_wrapper_${index}">
+                            <select class="form-control select2-multi" id="sel_${index}" multiple="multiple" data-placeholder="Select options..."></select>
+                        </div>
+                    </div>
+                </div>`;
+
+                $('#filterFieldsContainer').append(filterHtml);
+                let select = $(`#sel_${index}`);
+                let uniqueValues = [];
+
+                this.nodes().to$().each(function () {
+                    let cellData = $(this).text().replace(/\s+/g, ' ').trim();
+                    if (cellData !== "" && uniqueValues.indexOf(cellData) === -1) {
+                        uniqueValues.push(cellData);
+                    }
+                });
+                uniqueValues.sort().forEach(val => select.append(new Option(val, val)));
+            });
+
+            $('.select2-multi').select2({ width: '100%', allowClear: true, tags: true, dropdownParent: $('.filter-sidebar') });
+
+            // Sidebar Toggles
+            $(document).on('change', '.filter-checkbox', function() {
+                let idx = $(this).data('col-index');
+                if ($(this).is(':checked')) {
+                    $('#filter_container_' + idx).slideDown(150);
+                } else {
+                    $('#filter_container_' + idx).slideUp(150);
+                    $('#sel_' + idx).val(null).trigger('change');
+                }
+            });
+
+            $(document).on('change', '.form-select[id^="op_"]', function() {
+                let idx = $(this).data('col-index');
+                let op = $(this).val();
+                if (op === 'is_empty' || op === 'is_not_empty') {
+                    $('#val_wrapper_' + idx).hide();
+                } else {
+                    $('#val_wrapper_' + idx).show();
+                }
+            });
+
+            $('#searchFilterFields').on('input', function () {
+                let term = $(this).val().toLowerCase();
+                $('.filter-item').each(function () {
+                    let fieldName = $(this).data('field-name');
+                    if (fieldName.includes(term)) $(this).show(); else $(this).hide();
+                });
+            });
+
+            $('#applyFiltersBtn').on('click', function () { table.draw(); });
+            $('#clearFiltersBtn').on('click', function () {
+                $('.filter-checkbox').prop('checked', false).trigger('change');
+                $('.column-search-input').val('');
+                table.columns().search('').draw();
+            });
+
+            // Click Row to Edit
+            $('table.dataTable tbody').on('click', 'tr', function (e) {
+                if ($(e.target).closest('a, button, input').length) return;
+                var rowData = table.row(this).data();
+                if (rowData) {
+                    var recordId = $('<div>').html(rowData[0]).text().trim();
+                    if (recordId) window.location.href = '@Url.Action("Edit", "User")' + '/' + recordId;
+                }
+            });
+        });
+    </script>
+}

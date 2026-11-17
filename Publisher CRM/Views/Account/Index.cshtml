@@ -1,0 +1,1085 @@
+﻿@{
+    ViewData["Title"] = "Accounts List";
+}
+
+<!-- External Libraries -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* =========================================
+           PREMIUM SAAS ZOHO-STYLE DESIGN SYSTEM
+           ========================================= */
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+        --bg-body: #f3f4f6;
+        --bg-surface: #ffffff;
+        --primary-blue: #0f172a;
+        --primary-hover: #1e293b;
+        --text-dark: #111827;
+        --text-main: #374151;
+        --text-muted: #6b7280;
+        --border-soft: #e5e7eb;
+        --border-dark: #d1d5db;
+        --blue-soft: #eff6ff;
+        --blue-active: #2563eb;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --font: 'Inter', -apple-system, sans-serif;
+    }
+
+    body {
+        background: var(--bg-body);
+        color: var(--text-main);
+        font-family: var(--font);
+        font-size: 13.5px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Buttons */
+    .btn-saas {
+        background-color: #f9fafb;
+        color: var(--text-dark);
+        border: 1px solid #d1d5db;
+        font-weight: 500;
+        border-radius: var(--radius-md);
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        transition: all 0.1s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+        .btn-saas:hover {
+            background-color: #f3f4f6;
+        }
+
+    .btn-saas-primary {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        border: none !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3), 0 2px 4px -2px rgba(37, 99, 235, 0.2);
+        border-radius: 6px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+    }
+
+        .btn-saas-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+            box-shadow: 0 6px 8px -2px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
+
+    /* App Layout Container */
+    .crm-container {
+        display: flex;
+        width: 100%;
+        height: calc(100vh - 64px); /* Exactly fills height under the header */
+        background: var(--bg-surface);
+        margin: 0;
+        overflow: hidden;
+        border: none;
+    }
+
+    /* =========================================
+       SCROLLBAR & MOBILE SIDEBAR FIXES
+       ========================================= */
+
+    /* Fix horizontal scrollbar so you don't have to scroll down the page */
+    body {
+        overflow: hidden !important; /* Prevents the main page from scrolling */
+    }
+
+    .crm-container {
+        height: calc(100dvh - 65px); /* Uses dvh for accurate mobile viewport sizing */
+        position: relative;
+    }
+
+    .table-responsive {
+        flex: 1 1 auto;
+        height: 100% !important;
+        max-height: calc(100dvh - 180px) !important; /* Adjust if toolbar height changes */
+        overflow: auto !important;
+    }
+
+    /* Mobile Sidebar Overlay */
+    @@media (max-width: 768px) {
+        .filter-sidebar {
+            position: absolute;
+            z-index: 1050;
+            left: -300px; /* Hidden off-screen by default */
+            width: 260px !important;
+            min-width: 260px !important;
+            height: 100%;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        }
+            /* Class applied via JS when opened on mobile */
+            .filter-sidebar.mobile-open {
+                left: 0;
+            }
+            /* Prevent desktop rules from breaking mobile layout */
+            .filter-sidebar.hidden-sidebar {
+                width: 260px !important;
+                min-width: 260px !important;
+                opacity: 1 !important;
+            }
+    }
+
+    /* =========================================
+       MOBILE VIEW OPTIMIZATIONS
+       ========================================= */
+    @@media (max-width: 768px) {
+        /* --- 1. Fix Toolbar & Buttons --- */
+        .table-toolbar {
+            flex-direction: column; /* Stack the left and right sides */
+            align-items: stretch !important;
+            padding: 10px;
+        }
+
+            .table-toolbar > div {
+                width: 100%;
+                flex-wrap: wrap; /* Allow buttons to wrap to next line if needed */
+                margin-bottom: 8px;
+            }
+            /* Make buttons flexible and uniform on mobile */
+            .table-toolbar .btn-saas {
+                flex: 1 1 auto;
+                justify-content: center;
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            /* Hide the "All Accounts" label on mobile to save space, keep icon */
+            .table-toolbar .rounded {
+                flex-grow: 1;
+                text-align: center;
+            }
+        /* --- 2. Hide All Columns Except Account Name --- */
+        /* Checkbox is nth-child(1), Account Name is nth-child(2). Hide everything from 3 onwards */
+        table.dataTable thead th:nth-child(n+3),
+        table.dataTable tbody td:nth-child(n+3) {
+            display: none !important;
+        }
+        /* --- 3. Expand Account Name Column --- */
+        table.dataTable thead th:nth-child(2),
+        table.dataTable tbody td:nth-child(2) {
+            width: 100% !important;
+            max-width: none !important;
+            white-space: normal !important; /* Allow long account names to wrap */
+            border-right: none !important; /* Clean up edge */
+        }
+    }
+
+    /* ---------------------------------------------------------
+           TABLE ALIGNMENT FIX: Let DataTables calculate exact widths
+           --------------------------------------------------------- */
+    .dataTables_scrollHeadInner,
+    .dataTables_scrollHeadInner table.dataTable,
+    .dataTables_scrollBody table.dataTable,
+    table.dataTable {
+        margin: 0 !important;
+        border-collapse: collapse !important;
+        /* DO NOT add table-layout: fixed or width: 100% here.
+               It breaks alignment when scrolling horizontally! */
+    }
+
+
+
+    /* Flat Sidebar - Darkened and Narrowed */
+    .filter-sidebar {
+        width: 240px; /* Narrower width */
+        min-width: 240px;
+        background: #0f172a; /* Navy Blue / Dark */
+        border-right: 1px solid var(--border-soft);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+        .filter-sidebar.hidden-sidebar {
+            width: 0 !important;
+            min-width: 0 !important;
+            border-right: none !important;
+            opacity: 0;
+        }
+
+    .filter-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1e293b; /* Slightly lighter navy */
+    }
+
+        .filter-header h6, .filter-header i {
+            color: #ffffff !important;
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .filter-header a, .filter-header button i {
+            color: #94a3b8 !important; /* Muted light gray */
+        }
+
+    .filter-search-box {
+        padding: 12px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        background-color: #1e293b;
+    }
+
+        /* Dark Theme Search Input */
+        .filter-search-box .input-group-text,
+        .filter-search-box input {
+            background-color: #0f172a !important;
+            border-color: rgba(255,255,255,0.1) !important;
+            color: #ffffff !important;
+        }
+
+            .filter-search-box input::placeholder {
+                color: #64748b !important;
+            }
+
+    .filter-body {
+        overflow-y: auto;
+        flex-grow: 1;
+        padding: 0;
+    }
+
+    .filter-footer {
+        flex-shrink: 0;
+        background: #0f172a;
+        z-index: 10;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    .filter-field-item {
+        padding: 14px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transition: background-color 0.2s;
+    }
+
+        /* Make list text white so it can be seen on dark background */
+        .filter-field-item label {
+            color: #f8fafc !important;
+        }
+
+        .filter-field-item:hover {
+            background-color: #1e293b;
+        }
+
+    .filter-expanded-area {
+        display: none;
+        margin-top: 12px;
+        padding-left: 24px;
+    }
+
+    .filter-field-item.active .filter-expanded-area {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Workspace constraints for scrolling */
+    .workspace {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        width: 100%;
+    }
+    /* FIXED: Added missing closing bracket here */
+
+    /* DataTables Overrides for Layout & Scrolling */
+    .dataTables_wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .table-responsive {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        flex: 1;
+        width: 100%;
+        min-height: 0; /* CRITICAL: Allows flexbox to scroll instead of expanding infinitely */
+        height: calc(100vh - 190px);
+    }
+
+    .dataTables_scroll {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Ensures the bottom horizontal scrollbar appears properly */
+    .dataTables_scrollBody {
+        flex: 1 1 auto;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        height: calc(100vh - 190px) !important;
+        max-height: calc(100vh - 190px) !important;
+    }
+
+    .dataTables_scrollHeadInner {
+        width: 100% !important;
+        padding-right: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Hide the icons inside the cloned header so they don't create an empty ghost row */
+    .dataTables_scrollBody table.dataTable thead th * {
+        display: none !important;
+    }
+
+    .dataTables_scrollBody table.dataTable thead th,
+    .dataTables_scrollBody table.dataTable thead td {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+
+    /* Force cloned header and body to auto layout for pixel-perfect alignment */
+    .dataTables_scrollHeadInner table.dataTable,
+    .dataTables_scrollBody table.dataTable,
+    table.dataTable {
+        border-collapse: separate !important;
+        border-spacing: 0;
+        margin: 0 !important;
+        /* CRITICAL: Force the table to be as wide as its content to trigger the horizontal scrollbar */
+        width: max-content !important;
+        min-width: 100% !important;
+    }
+
+        /* Standardize cell formatting and add vertical dividing lines */
+        table.dataTable thead th,
+        table.dataTable tbody td {
+            box-sizing: border-box !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            border-right: 1px solid var(--border-soft) !important;
+            max-width: 250px;
+        }
+
+            /* Clean up the far-right edge by removing the border on the last column */
+            table.dataTable thead th:last-child,
+            table.dataTable tbody td:last-child {
+                border-right: none !important;
+            }
+
+        table.dataTable thead th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 40px 12px 16px !important;
+            border-bottom: 2px solid var(--border-soft) !important;
+            position: sticky; /* ADDED: Native sticky positioning */
+            top: 0; /* ADDED: Native sticky positioning */
+            z-index: 10; /* ADDED: Native sticky positioning */
+        }
+
+        table.dataTable tbody td {
+            padding: 10px 16px !important;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border-soft) !important;
+            vertical-align: middle;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        table.dataTable tbody tr:hover td {
+            background-color: #f8fafc;
+            cursor: pointer;
+        }
+
+    
+    /* Filter Icon positioned to avoid overlap with DataTables sorting arrows */
+    .header-icon-filter {
+        position: absolute;
+        right: 22px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #cbd5e1;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: color 0.2s;
+        z-index: 10;
+    }
+
+        .header-icon-filter:hover {
+            color: var(--blue-active);
+        }
+
+    /* Sticky Checkbox and Action Columns */
+    .sticky-cb {
+        position: sticky !important;
+        left: 0;
+        width: 45px !important;
+        min-width: 45px !important;
+        max-width: 45px !important;
+        text-align: center;
+        z-index: 11 !important; /* UPDATED: Higher than standard headers */
+        border-right: 1px solid var(--border-soft) !important;
+        background-color: var(--bg-surface) !important;
+    }
+
+    .sticky-actions {
+        position: sticky !important;
+        right: 0;
+        width: 60px !important;
+        min-width: 60px !important;
+        max-width: 60px !important;
+        text-align: center;
+        z-index: 11 !important; /* UPDATED: Higher than standard headers */
+        border-left: 1px solid var(--border-soft) !important;
+        background-color: var(--bg-surface) !important;
+    }
+
+    /* The corners where Sticky Headers meet Sticky Columns */
+    table.dataTable thead th.sticky-cb,
+    table.dataTable thead th.sticky-actions {
+        z-index: 12 !important; /* ADDED: Highest z-index to prevent overlapping corners */
+        background-color: #f8fafc !important; /* Matches standard header background */
+    }
+
+    .dataTables_scrollHead .sticky-cb,
+    .dataTables_scrollHead .sticky-actions {
+        z-index: 12 !important;
+        background-color: #f8fafc !important;
+    }
+
+    /* Table Toolbar */
+    .table-container {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg-surface);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .table-toolbar {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        align-items: center;
+        background-color: var(--bg-surface);
+        gap: 10px;
+    }
+
+    /* Badges */
+    .badge-soft { /* FIXED: Removed duplicated .badge-soft selector */
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: var(--text-dark);
+        border: 1px solid var(--border-soft);
+    }
+
+    .badge-success {
+        background: #dcfce3;
+        color: #166534;
+        border-color: #86efac;
+    }
+
+    /* Scrollbars */
+    .custom-scroll::-webkit-scrollbar,
+    .table-responsive::-webkit-scrollbar { /* ADDED: Applies to the native CSS wrapper */
+        width: 8px; /* UPDATED: Thicker for easier grabbing */
+        height: 12px; /* UPDATED: Thicker horizontal scrollbar */
+    }
+
+    .custom-scroll::-webkit-scrollbar-track,
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb,
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 8px;
+        border: 3px solid #f8fafc; /* Creates a padded inset look */
+    }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover,
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+        height: 14px; /* Thick horizontal scrollbar for easy grabbing */
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-top: 1px solid var(--border-soft);
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 8px;
+        border: 3px solid #f1f5f9; /* Creates a padded look */
+    }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+</style>
+
+<div class="crm-container">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="filter-sidebar custom-scroll" id="filterSidebarWrapper">
+        <div class="filter-header">
+            <h6 class="d-flex align-items-center m-0">
+                <i class="fa-solid fa-filter text-primary me-2"></i> Filters
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                <a href="javascript:void(0);" id="clearFiltersBtn" class="btn btn-sm btn-link text-decoration-none p-0 text-muted">Clear</a>
+                <button class="btn btn-sm text-muted border-0 bg-transparent p-1 ms-1" onclick="window.toggleFilterSidebar(event)" title="Hide Filters">
+                    <i class="fa-solid fa-chevron-left fs-6"></i>
+                </button>
+            </div>
+        </div>
+        <div class="filter-search-box">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0 fw-medium" placeholder="Search fields..." id="searchFilterFields">
+            </div>
+        </div>
+
+        <!-- Filters will inject directly into here -->
+        <div class="filter-body custom-scroll" id="filterFieldsContainer">
+        </div>
+
+        <div class="filter-footer p-3 border-top bg-white mt-auto" style="flex-shrink: 0; z-index: 10;">
+            <button id="applyFiltersBtn" class="btn-saas-primary w-100 justify-content-center" style="padding: 8px;">Apply Filters</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="table-container">
+
+        <!-- Table Toolbar -->
+        <div class="table-toolbar d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-saas" onclick="window.toggleFilterSidebar(event)" title="Hide/Show Filters" style="border: none; box-shadow: none;">
+                    <i class="fa-solid fa-filter text-muted"></i>
+                </button>
+                <div class="px-3 py-1 rounded" style="background-color: #eff6ff; color: var(--blue-active); font-weight: 600;">
+                    <i class="fa-solid fa-building me-2"></i> All Accounts
+                </div>
+            </div>
+
+            <!-- Buttons on the far right -->
+            <div class="d-flex gap-2 align-items-center">
+
+                <button type="button" id="btnDeleteSelected" class="btn-saas text-danger" style="display: none; border-color: #fca5a5; background-color: #fef2f2;">
+                    <i class="fa-solid fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+                </button>
+                <button type="button" data-bs-toggle="modal" data-bs-target="#uploadCsvModal" class="btn-saas">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Import
+                </button>
+
+                <!-- NEW SYNC BUTTON -->
+                <button type="button" id="btnSyncBc" class="btn-saas text-primary" style="font-weight: 600;">
+                    <i class="fa-solid fa-rotate"></i> Sync BC Record
+                </button>
+
+                <!-- Target container for DataTables 'Columns' button -->
+                <div id="columns-btn-container" class="d-none d-md-block"></div>
+
+                <a asp-action="Create" class="btn-saas btn-saas-primary shadow-sm">
+                    <i class="fa-solid fa-plus"></i> Create Account
+                </a>
+            </div>
+        </div>
+
+        <!-- Data Workspace -->
+        <div class="workspace">
+            <div class="table-responsive">
+            <table id="accountsTable" class="table display nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="sticky-cb">
+                            <input class="form-check-input m-0 border-secondary" type="checkbox" id="selectAllCb">
+                        </th>
+                        <th>Account Name <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Owner <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Country <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>State <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>City <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Channel <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Activity <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Relationship <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Balance <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Phone <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Email <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Geography <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Description <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>Website <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>GST No <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th>ERP Code <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                        <th class="sticky-actions text-center"><i class="fa-solid fa-bolt text-muted"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        </div>
+    </main>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal fade" id="uploadCsvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: 1px solid var(--border-soft);">
+            <div class="modal-header border-bottom-0 bg-light" style="padding: 20px 24px 10px;">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="bi bi-filetype-csv text-primary me-2"></i> Bulk Import Accounts
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 0 24px 24px;">
+                <p class="text-muted mb-4 mt-2" style="font-size: 13.5px;">Ensure your CSV headers map precisely to your Account model fields before uploading.</p>
+                <form asp-action="ImportCsv" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" style="font-size: 13px;">Select CSV File <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control" accept=".csv" required style="border-radius: 8px;" />
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn-saas btn-saas-primary" style="justify-content: center; padding: 10px;">
+                            <i class="bi bi-cloud-upload"></i> Start Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // Attach to window globally to fix "Uncaught ReferenceError: toggleFilterSidebar is not defined"
+                   window.toggleFilterSidebar = function(event) {
+                if(event) {
+                    event.stopPropagation(); // Prevents DataTables from sorting
+                }
+
+                const sidebar = document.getElementById('filterSidebarWrapper');
+
+                // Check if on mobile or desktop
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('mobile-open'); // Slide in/out on mobile
+                } else {
+                    sidebar.classList.toggle('hidden-sidebar'); // Shrink width on desktop
+                }
+
+                // Force DataTables to realign columns and headers
+                setTimeout(function() {
+                    if ($.fn.DataTable.isDataTable('#accountsTable')) {
+                        $('#accountsTable').DataTable().columns.adjust();
+                    }
+                }, 300);
+            };
+
+        $(document).ready(function () {
+
+            $('#btnSyncBc').on('click', function () {
+                const btn = $(this);
+                const originalHtml = btn.html();
+    
+                btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
+
+                $.ajax({
+                    url: '@Url.Action("TriggerBcSync", "Account")',
+                    type: 'POST',
+                    success: function (res) {
+                        if (res.success) {
+                            alert('Sync completed successfully!');
+                            $('#accountsTable').DataTable().ajax.reload(null, false); 
+                        } else {
+                            alert('Sync failed: ' + res.error);
+                        }
+                    },
+                    error: function () {
+                        alert('A server error occurred while trying to sync.');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false).html(originalHtml);
+                    }
+                });
+            });
+
+            // Custom DataTables Filter Engine
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'accountsTable') return true;
+                let isMatch = true;
+
+                $('.field-checkbox:checked').each(function () {
+                    if (!isMatch) return;
+
+                    let index = $(this).data('col-index');
+                    let item = $(this).closest('.filter-field-item');
+                    let operator = item.find('.condition-select').val();
+                    let selectedVals = item.find('.condition-val').val() || [];
+
+                    let cellRaw = data[index] || "";
+                    let cellValue = cellRaw.replace(/<[^>]*>?/gm, '').trim();
+
+                    if (operator === 'is_empty') {
+                        if (cellValue !== '') isMatch = false;
+                    }
+                    else if (operator === 'is_not_empty') {
+                        if (cellValue === '') isMatch = false;
+                    }
+                    else {
+                        if (selectedVals.length === 0) return;
+
+                        let valMatch = false;
+                        if (!Array.isArray(selectedVals)) {
+                            selectedVals = [selectedVals];
+                        }
+
+                        if (operator === 'is') {
+                            valMatch = selectedVals.some(v => cellValue.toLowerCase() === v.toLowerCase());
+                        }
+                        else if (operator === 'is_not') {
+                            valMatch = selectedVals.every(v => cellValue.toLowerCase() !== v.toLowerCase());
+                        }
+                        else if (operator === 'contains') {
+                            valMatch = selectedVals.some(v => cellValue.toLowerCase().includes(v.toLowerCase()));
+                        }
+                        else if (operator === 'does_not_contain') {
+                            valMatch = selectedVals.every(v => !cellValue.toLowerCase().includes(v.toLowerCase()));
+                        }
+                        else if (operator === 'starts_with') {
+                            valMatch = selectedVals.some(v => cellValue.toLowerCase().startsWith(v.toLowerCase()));
+                        }
+                        else if (operator === 'ends_with') {
+                            valMatch = selectedVals.some(v => cellValue.toLowerCase().endsWith(v.toLowerCase()));
+                        }
+                        if (!valMatch) isMatch = false;
+                    }
+                });
+                return isMatch;
+            });
+
+            // Initialize DataTable
+            var table = $('#accountsTable').DataTable({
+                "ajax": {
+                    "url": '@Url.Action("GetAccountsList", "Account")',
+                    "dataSrc": ""
+                },
+                "stateSave": true,
+                "autoWidth": false,
+               // "scrollCollapse": true,
+                "columns": [
+                    {
+                        "data": null,
+                        "orderable": false,
+                        "className": 'sticky-cb',
+                        "render": function (data, type, row) {
+                            return `<div class="d-flex align-items-center justify-content-start gap-2 w-100 ps-2">
+                                        <input class="form-check-input m-0 border-secondary row-cb" type="checkbox" value="${row.accountId}">
+                                    </div>`;
+                        }
+                    },
+                    {
+                        "data": "accountName",
+                        "render": function (data, type, row) {
+                            return `<a href="@Url.Action("Edit", "Account")/${row.accountId}" class="text-primary fw-bold text-decoration-none">${data || ''}</a>`;
+                        }
+                    },
+                    { "data": "accountOwner", "defaultContent": "" },
+                    { "data": "country", "defaultContent": "" },
+                    { "data": "state", "defaultContent": "" },
+                    { "data": "city", "defaultContent": "" },
+                    {
+                        "data": "customerChannel",
+                        "render": function (data) {
+                            return data ? `<span class="badge-soft">${data}</span>` : "";
+                        }
+                    },
+                    { "data": "customerActivity", "defaultContent": "" },
+                    {
+                        "data": "customerRelationship",
+                        "render": function (data) {
+                            if (data === "Primary") return `<span class="badge-soft badge-success">${data}</span>`;
+                            return data ? `<span class="badge-soft">${data}</span>` : "";
+                        }
+                    },
+                    {
+                        "data": "balance",
+                        "render": function (data) {
+                            if (data === null || data === undefined) return "-";
+                            return "₹" + parseFloat(data).toFixed(2);
+                        }
+                    },
+                    { "data": "phone", "defaultContent": "" },
+                    { "data": "email", "defaultContent": "" },
+                    { "data": "customerGeography", "defaultContent": "" },
+                    {
+                        "data": "description",
+                        "render": function (data) {
+                            if (!data) return "";
+                            return data.length > 20 ? data.substring(0, 20) + "..." : data;
+                        }
+                    },
+                    { "data": "website", "defaultContent": "" },
+                    { "data": "gstRegistrationNo", "defaultContent": "" },
+                    { "data": "erpCustomerCode", "defaultContent": "" },
+                    {
+                        "data": null,
+                        "orderable": false,
+                        "className": 'sticky-actions text-center',
+                        "render": function (data, type, row) {
+                            return ``;
+                        }
+                    }
+                ],
+                "orderCellsTop": true,
+               // "scrollY": "calc(100vh - 280px)",
+               // "scrollX": true,
+                "pageLength": 100,
+                "deferRender": true,
+                "drawCallback": function(settings) {
+                    // Forces layout perfect alignment after data fetch
+                    setTimeout(function () {
+                        table.columns.adjust();
+                    }, 50);
+                },
+                    // Replace your current "dom" setting with this:
+                    "dom": "<'table-responsive custom-scroll'tr>" +
+                           "<'row m-0 px-3 py-2 bg-white border-top align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                "lengthMenu": [[25, 50, 100, 500], [25, 50, 100, "500"]],
+                "buttons": [
+                    {
+                        extend: 'colvis',
+                        text: '<i class="fa-solid fa-table-columns me-1"></i> Columns',
+                        className: 'btn-saas'
+                    }
+                ],
+                "columnDefs": [
+                    { "visible": false, "targets": [10, 11, 12, 13, 14, 15, 16] }
+                ]
+            });
+
+            // Bulk Delete Logic
+            function toggleDeleteButton() {
+                var selectedCount = table.$('.row-cb:checked').length; 
+                if (selectedCount > 0) {
+                    $('#selectedCount').text(selectedCount);
+                    $('#btnDeleteSelected').fadeIn(150); 
+                } else {
+                    $('#btnDeleteSelected').fadeOut(150);
+                }
+            }
+
+            $(document).on('change', '#selectAllCb', function () {
+                var isChecked = $(this).prop('checked');
+                table.$('.row-cb').prop('checked', isChecked);
+                $('.row-cb').prop('checked', isChecked); 
+                toggleDeleteButton();
+            });
+
+            $(document).on('change', '.row-cb', function () {
+                if (!$(this).prop('checked')) {
+                    $('#selectAllCb').prop('checked', false);
+                }
+                toggleDeleteButton();
+            });
+
+            $(document).on('click', '#btnDeleteSelected', function () {
+                var selectedIds = [];
+                table.$('.row-cb:checked').each(function () {
+                    selectedIds.push(parseInt($(this).val()));
+                });
+
+                if (selectedIds.length === 0) return;
+
+                if (confirm(`Are you sure you want to delete ${selectedIds.length} account(s)? This cannot be undone.`)) {
+                    var btn = $(this);
+                    var originalHtml = btn.html();
+                    btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Deleting...');
+
+                    $.ajax({
+                        url: '@Url.Action("DeleteBulk", "Account")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(selectedIds),
+                        success: function (res) {
+                            if (res.success) {
+                                $('#selectAllCb').prop('checked', false);
+                                table.ajax.reload(function() {
+                                    toggleDeleteButton(); 
+                                }, false); 
+                            } else {
+                                alert("Delete failed: " + res.message);
+                            }
+                        },
+                        error: function () {
+                            alert("A server error occurred while trying to delete.");
+                        },
+                        complete: function () {
+                            btn.prop('disabled', false).html(originalHtml);
+                        }
+                    });
+                }
+            });
+
+            // Build the Zoho Style Sidebar Dynamically
+            table.on('init.dt', function () {
+                let headerCells = table.columns().header();
+
+                if (document.getElementById('columns-btn-container')) {
+                    table.buttons().container().appendTo('#columns-btn-container');
+                }
+
+                table.columns().every(function (index) {
+                    if (index === 0 || index === table.columns()[0].length - 1) return;
+
+                    let title = $(headerCells[index]).text().trim();
+                    if (!title) return;
+
+                    let uniqueValues = table.column(index).data().unique().sort();
+                    let options = '';
+                    uniqueValues.each(function (d) {
+                        let textValue = $('<div>').html(d).text().trim();
+                        if (textValue !== '') {
+                            options += `<option value="${textValue}">${textValue}</option>`;
+                        }
+                    });
+
+                    let filterHtml = `
+                            <div class="filter-field-item field-item-row" data-field-type="text">
+                                <div class="d-flex align-items-center m-0 w-100">
+                                    <input class="form-check-input field-checkbox me-2 mt-0 flex-shrink-0" type="checkbox" id="chk_${index}" data-col-index="${index}" style="width: 14px; height: 14px; border-radius: 3px; cursor: pointer;">
+                                    <label class="form-check-label flex-grow-1 text-dark text-truncate" for="chk_${index}" style="font-size: 0.8rem; cursor: pointer;">
+                                        ${title}
+                                    </label>
+                                </div>
+                                <div class="filter-expanded-area" id="filter_container_${index}">
+                                    <select class="form-select form-select-sm mb-2 text-primary border-primary condition-select fw-semibold" id="op_${index}">
+                                        <option value="is">is exactly</option>
+                                        <option value="is_not">is not</option>
+                                        <option value="contains" selected>contains</option>
+                                        <option value="does_not_contain">does not contain</option>
+                                        <option value="is_empty">is empty</option>
+                                        <option value="is_not_empty">is not empty</option>
+                                    </select>
+                                    <div id="val_wrapper_${index}">
+                                        <select class="form-select form-select-sm condition-val select2-multi" id="sel_${index}" multiple="multiple" style="width: 100%;">
+                                            ${options}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>`;
+
+                    $('#filterFieldsContainer').append(filterHtml);
+                });
+
+                $('.select2-multi').select2({
+                    width: '100%',
+                    placeholder: "Select values...",
+                    allowClear: true,
+                    tags: true
+                });
+
+                $(document).on('change', '.field-checkbox', function () {
+                    let item = $(this).closest('.filter-field-item');
+                    if ($(this).is(':checked')) {
+                        item.addClass('active');
+                    } else {
+                        item.removeClass('active');
+                        item.find('.condition-select').val('contains');
+                        item.find('.condition-val').val(null).trigger('change');
+                    }
+                });
+
+                $(document).on('change', '.condition-select', function () {
+                    let wrapper = $(this).siblings('div');
+                    let op = $(this).val();
+                    if (op === 'is_empty' || op === 'is_not_empty') {
+                        wrapper.slideUp(200);
+                    } else {
+                        wrapper.slideDown(200);
+                    }
+                });
+            });
+
+            // Sidebar Actions
+            $('#searchFilterFields').on('input', function () {
+                let term = $(this).val().toLowerCase();
+                $('.filter-field-item').each(function () {
+                    let label = $(this).find('label').text().toLowerCase();
+                    $(this).toggle(label.includes(term));
+                });
+            });
+
+            $('#applyFiltersBtn').on('click', function () {
+                table.draw();
+            });
+
+            $('#clearFiltersBtn').on('click', function () {
+                $('.field-checkbox').prop('checked', false).trigger('change');
+                table.draw();
+            });
+
+            $('table.dataTable tbody').on('click', 'tr', function (e) {
+                if ($(e.target).closest('a, button, input, select, .row-cb').length) return;
+                var editUrl = $(this).find('a').attr('href');
+                if (editUrl) window.location.href = editUrl;
+            });
+        });
+    </script>
+}

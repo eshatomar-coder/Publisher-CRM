@@ -1,0 +1,508 @@
+﻿@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#f8fafc]">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SalesONE</title>
+
+    <!-- 1. Bootstrap & Existing CSS (Crucial to prevent view distortion) -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Publisher_CRM.styles.css" asp-append-version="true" />
+
+    <link rel="icon" type="image/jpeg" href="https://cdn.shopify.com/s/files/1/0578/8198/5133/files/favicon_logo_without_background.png?v=1763369009" />
+
+    <!-- Modern Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Configuration (Preflight disabled to protect Bootstrap views) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+            tailwind.config = {
+                corePlugins: {
+                    preflight: false // THIS PREVENTS TAILWIND FROM BREAKING BOOTSTRAP VIEWS
+                }
+            }
+    </script>
+
+    <style>
+            body {
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                letter-spacing: -0.01em;
+                margin: 0;
+                padding: 0;
+            }
+
+            /* --- Scrollbar --- */
+            .custom-scroll::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+
+            .custom-scroll::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .custom-scroll::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 9999px;
+            }
+
+                .custom-scroll::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
+                }
+
+            /* --- Sidebar Menu Styles --- */
+            .menu-item {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.5rem 0.875rem;
+                border-radius: 0.5rem;
+                color: #475569;
+                font-size: 0.875rem;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                border: 1px solid transparent;
+                border-left: 3px solid transparent;
+                text-decoration: none;
+            }
+
+                .menu-item:hover {
+                    background-color: #f1f5f9;
+                    color: #0f172a;
+                    border-left-color: #cbd5e1;
+                    text-decoration: none;
+                }
+
+                .menu-item.active {
+                    background-color: #eff6ff;
+                    color: #4f46e5;
+                    font-weight: 600;
+                    border-left-color: #4f46e5;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                }
+
+            details > summary {
+                list-style: none;
+                cursor: pointer;
+            }
+
+                details > summary::-webkit-details-marker {
+                    display: none;
+                }
+
+            .category-header {
+                font-size: 0.8rem;
+                font-weight: 800;
+                color: #334155;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                padding: 0.75rem 0.875rem 0.25rem 0.875rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                .category-header:hover {
+                    color: #0f172a;
+                }
+
+            details[open] > summary > .arrow-icon {
+                transform: rotate(90deg);
+            }
+
+            /* --- Mobile Responsiveness --- */
+            .sidebar-overlay {
+                display: none;
+            }
+
+            @@media (max-width: 768px) {
+                .sidebar-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    height: 100vh;
+                    transform: translateX(-100%);
+                    transition: transform 0.3s ease-in-out;
+                    z-index: 1040; /* Above Bootstrap navbars */
+                }
+
+                    .sidebar-container.open {
+                        transform: translateX(0);
+                    }
+
+                .sidebar-overlay.open {
+                    display: block;
+                    position: fixed;
+                    inset: 0;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    z-index: 1030;
+                    opacity: 1;
+                    transition: opacity 0.3s ease-in-out;
+                }
+            }
+    </style>
+</head>
+<body class="h-full overflow-hidden text-slate-800 text-sm bg-[#f4f6f8]">
+    @{
+        var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Standard User";
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
+
+        string activeModule = "SalesONE";
+        string logoText = "SalesONE";
+    
+        // Ensure this uses Url.Content:
+        string dashboardLink = Url.Content("~/Home/Index");
+        string dashboardLabel = "Dashboard";
+    }
+
+    <div class="flex h-full w-full">
+
+        <!-- Mobile Overlay -->
+        <div id="mobileOverlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <aside id="main-sidebar-@activeModule" class="sidebar-container w-[280px] bg-white border-r border-slate-200 flex flex-col shrink-0 select-none shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+            <div class="h-16 flex items-center px-6 border-b border-slate-100 shrink-0 justify-between">
+
+                <a href="@dashboardLink" class="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer text-decoration-none">
+                    <div class="w-8 h-8 bg-indigo-600 text-white rounded flex items-center justify-center font-bold">S</div>
+                    <div>
+                        <span class="font-black text-xl tracking-tight text-gray-900 block leading-none">@logoText</span>
+                        <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Workspace</span>
+                    </div>
+                </a>
+
+                <!-- Mobile Close Sidebar Button -->
+                <button id="closeSidebarBtn" class="md:hidden p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-1" id="sidebarContent"></div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 h-full relative">
+
+            <!-- Top Navbar -->
+            <header id="main-topbar-@activeModule" class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 z-20 shrink-0">
+                <div class="flex items-center w-full max-w-md relative">
+
+                    <!-- Hamburger Toggle (Mobile Only) -->
+                    <button id="mobileMenuBtn" class="md:hidden p-2 mr-3 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors border-0 bg-transparent">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+
+                    <!-- Search Bar -->
+                    <div class="w-full relative" id="globalSearchContainer">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="globalSearchInput" placeholder="Quick search... (Press '/')" class="block w-full pl-10 pr-12 py-2 bg-slate-100 hover:bg-slate-200/50 border border-transparent focus:border-indigo-300 focus:bg-white rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all border-0 m-0" autocomplete="off" />
+
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none hidden sm:flex">
+                            <kbd class="px-1.5 py-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 rounded shadow-sm">/</kbd>
+                        </div>
+
+                        <!-- Search Results Dropdown -->
+                        <div id="globalSearchResults" class="hidden absolute top-full left-0 mt-2 w-full sm:w-[600px] bg-white border border-slate-200 shadow-2xl rounded-2xl z-[100] max-h-[70vh] flex flex-col overflow-hidden">
+                            <div class="flex-grow overflow-y-auto custom-scroll p-2" id="globalSearchResultsBody"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 md:gap-3">
+                    <div class="hidden md:flex items-center gap-1">
+                        <button id="globalStarBtn" onclick="toggleCurrentPageStar()" class="p-2.5 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors border-0 bg-transparent" title="Bookmark Page">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Sign Out Form -->
+                    <form asp-controller="User" asp-action="Logout" method="post" class="m-0 md:pl-2 md:border-l border-slate-200">
+                        <button type="submit" class="px-3 md:px-4 py-2 rounded-xl text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm">
+                            <span class="hidden sm:inline">Sign Out</span>
+                            <i class="bi bi-box-arrow-right sm:hidden"></i>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <!-- Render Body -->
+           <main role="main" class="flex-1 overflow-y-auto custom-scroll relative w-full min-h-full p-0">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts (Bootstrap, jQuery, site.js) to keep existing functions working -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- UI & Routing Logic -->
+    <script>
+            window.currentUserRole = '@userRole';
+            window.currentModule = '@activeModule';
+
+            // --- MOBILE SIDEBAR TOGGLE LOGIC ---
+            document.addEventListener("DOMContentLoaded", () => {
+                const sidebar = document.getElementById('main-sidebar-SalesONE');
+                const overlay = document.getElementById('mobileOverlay');
+                const mobileBtn = document.getElementById('mobileMenuBtn');
+                const closeBtn = document.getElementById('closeSidebarBtn');
+
+                function toggleMobileSidebar() {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('open');
+                }
+
+                if (mobileBtn) mobileBtn.addEventListener('click', toggleMobileSidebar);
+                if (closeBtn) closeBtn.addEventListener('click', toggleMobileSidebar);
+                if (overlay) overlay.addEventListener('click', toggleMobileSidebar);
+
+                highlightActiveSidebarLink();
+                if (window.checkCurrentPageStar) window.checkCurrentPageStar();
+                if (window.globalUserPrefs) window.buildDynamicSidebar(window.globalUserPrefs);
+            });
+
+            // Global Event Listeners
+            document.addEventListener('keydown', function (e) {
+                const searchInput = document.getElementById('globalSearchInput');
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    if (searchInput) searchInput.focus();
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                const searchContainer = document.getElementById('globalSearchContainer');
+                const searchResults = document.getElementById('globalSearchResults');
+                if (searchContainer && searchResults && !searchContainer.contains(e.target)) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('input', function (e) {
+                if (e.target && e.target.id === 'globalSearchInput') {
+                    handleGlobalSearch(e.target.value);
+                }
+            });
+
+            // Search Engine
+            window.handleGlobalSearch = function(queryText) {
+                const searchResults = document.getElementById('globalSearchResults');
+                const searchResultsBody = document.getElementById('globalSearchResultsBody');
+                const query = queryText.toLowerCase().trim();
+
+                if (query.length === 0) {
+                    if (searchResults) searchResults.classList.add('hidden');
+                    return;
+                }
+
+                let allPermittedRoutes = [];
+                for (const [modName, routes] of Object.entries(systemRoutes)) {
+                    routes.forEach(route => {
+                        if (route.type === 'Permissions' || route.hideInSidebar) return;
+
+                        if (route.roles.includes('All') || route.roles.includes(window.currentUserRole)) {
+                            const identifier = route.url || route.title;
+                            const accessRecord = window.userRouteAccess ? window.userRouteAccess.find(a => a.routeUrl === identifier) : null;
+                            if (accessRecord ? accessRecord.isAllowed : true) allPermittedRoutes.push({ ...route, moduleName: modName });
+                        }
+                    });
+                }
+
+                const matchedRoutes = allPermittedRoutes.filter(r => r.title.toLowerCase().includes(query) || r.category.toLowerCase().includes(query) || r.moduleName.toLowerCase().includes(query));
+
+                if (matchedRoutes.length === 0) {
+                    searchResultsBody.innerHTML = `<div class="p-8 text-center text-slate-400 font-semibold text-xs">No matching actions or pages found.</div>`;
+                    searchResults.classList.remove('hidden');
+                    return;
+                }
+
+                let html = buildSection('Pages & Results', matchedRoutes);
+                searchResultsBody.innerHTML = html;
+                searchResults.classList.remove('hidden');
+            };
+
+            window.buildSection = function(title, items) {
+                if (items.length === 0) return '';
+                let sectionHtml = `
+                    <div class="p-2 border-b border-slate-100 last:border-0">
+                        <div class="flex justify-between items-center mb-1.5 px-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${title}</span>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 rounded">${items.length}</span>
+                        </div>
+                        <div class="flex flex-col gap-0.5">`;
+                items.forEach(item => {
+                    const iconSvg = getIconForTitle(item.title);
+                    const actionAttr = item.action ? `onclick="${item.action}; document.getElementById('globalSearchResults').classList.add('hidden');"` : `href="${item.url}"`;
+                    sectionHtml += `
+                        <${item.action ? 'button' : 'a'} ${actionAttr} class="flex justify-between items-center p-2.5 hover:bg-indigo-50 rounded-xl text-left transition-colors cursor-pointer group text-decoration-none">
+                            <div class="flex items-center gap-3 text-slate-600 group-hover:text-indigo-600">
+                                ${iconSvg}
+                                <span class="text-sm font-semibold text-slate-800 group-hover:text-indigo-700">${item.title}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${item.category}</span>
+                        </${item.action ? 'button' : 'a'}>`;
+                });
+                return sectionHtml + `</div></div>`;
+            };
+
+            window.highlightActiveSidebarLink = function() {
+                const currentPath = window.location.pathname.toLowerCase();
+                const currentSearch = window.location.search.toLowerCase();
+                const fullCurrentUrl = currentPath + currentSearch;
+
+                document.querySelectorAll('#sidebarContent .menu-item').forEach(link => {
+                    link.classList.remove('active');
+
+                    const href = link.getAttribute('href');
+                    if (!href || href === '#' || href.includes('javascript')) return;
+
+                    const lowerHref = href.toLowerCase();
+                    if (lowerHref.includes('?') ? fullCurrentUrl.includes(lowerHref) : (lowerHref === currentPath || (currentPath === '/' && lowerHref === '/home/index'))) {
+                        link.classList.add('active');
+                        let parentDetails = link.closest('details');
+                        while(parentDetails) {
+                            parentDetails.open = true;
+                            if(parentDetails.parentElement) {
+                                parentDetails = parentDetails.parentElement.closest('details');
+                            } else {
+                                parentDetails = null;
+                            }
+                        }
+                    }
+                });
+            };
+
+        window.systemRoutes = {
+            "SalesONE": [
+                { category: "DASHBOARDS", title: "Dashboard", url: '@Url.Content("~/Home/Index")', type: "Page", roles: ["All"], hideInSidebar: true },
+
+                { category: "OPERATIONS", title: "Beat Route", url: '@Url.Content("~/BeatRoute/Index")', type: "Page", roles: ["All"] },
+                { category: "OPERATIONS", title: "Beat Plan", url: '@Url.Content("~/BeatRoute/Plan")', type: "Page", roles: ["All"] },
+                { category: "OPERATIONS", title: "Daily Plan", url: '@Url.Content("~/BeatRoute/DailyPlan")', type: "Page", roles: ["All"] },
+                { category: "OPERATIONS", title: "Sales Call", url: '@Url.Content("~/SalesCall/Index")', type: "Page", roles: ["All"] },
+                { category: "OPERATIONS", title: "Enquiry", url: '@Url.Content("~/Lead/Index")', type: "Page", roles: ["All"] },
+                { category: "OPERATIONS", title: "Order Management", url: '@Url.Content("~/OrderManagement/Index")', type: "Page", roles: ["All"] },
+                { category: "OPERATIONS", title: "Project Management", url: '@Url.Content("~/ProjectManagement/Index")', type: "Page", roles: ["All"] },
+
+               
+               // { category: "MASTERS", title: "Retailer", url: '@Url.Content("~/RetailerPoint/Index")', type: "Page", roles: ["All"] },
+                { category: "MASTERS", title: "Accounts", url: '@Url.Content("~/Account/Index")', type: "Page", roles: ["All"] },
+                { category: "MASTERS", title: "Contact", url: '@Url.Content("~/Contact/Index")', type: "Page", roles: ["All"] },
+                { category: "MASTERS", title: "Event Master", url: '@Url.Content("~/EventMaster/Index")', type: "Page", roles: ["All"] },
+                { category: "MASTERS", title: "Complaints", url: '@Url.Content("~/Complaints/Index")', type: "Page", roles: ["All"] },
+                { category: "MASTERS", title: "PostCodes", url: '@Url.Content("~/Postcode/Index")', type: "Page", roles: ["All"] },
+
+                { category: "CATALOGUE", title: "Catalogue Maker", url: '@Url.Content("~/Catalogue/Create")', type: "Page", roles: ["All"] },
+                { category: "CATALOGUE", title: "My Catalogues", url: '@Url.Content("~/Catalogue/Index")', type: "Page", roles: ["All"] },
+
+                { category: "ADMIN", title: "Users", url: '@Url.Content("~/User/Index")', type: "Settings", roles: ["Admin"] },
+                { category: "ADMIN", title: "Roles", url: '@Url.Content("~/Roles/Index")', type: "Settings", roles: ["Admin"] }
+            ]
+        };
+
+            // Icons matching specific menu items
+            window.getIconForTitle = function(title) {
+                const t = title.toLowerCase();
+                const cls = "w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors flex-shrink-0";
+
+            // Add this line inside window.getIconForTitle before the default return:
+            if (t.includes('catalogue')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`;
+                if (t.includes('beat route') || t.includes('postcode')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`;
+                if (t.includes('plan') || t.includes('event')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
+                if (t.includes('retailer') || t.includes('account')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>`;
+                if (t.includes('contact') || t.includes('user') || t.includes('role')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+                if (t.includes('order') || t.includes('cart')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+                if (t.includes('call')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>`;
+                if (t.includes('complaint') || t.includes('enquiry')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>`;
+                if (t.includes('project')) return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>`;
+
+                return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
+            };
+
+            window.buildDynamicSidebar = function (userPrefs) {
+                const container = document.getElementById('sidebarContent');
+                if (!container) return;
+
+                const moduleRoutes = (systemRoutes[window.currentModule] || []).filter(r => r.type !== 'Permissions' && !r.hideInSidebar);
+                let html = '';
+
+            // 1. Dashboard Top Link
+            html += `
+            
+            <a href="@Url.Content("~/Home/Index")" class="menu-item mb-2 text-decoration-none">
+                <svg class="w-4 h-4 text-slate-500 opacity-80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span>Dashboard</span>
+            </a>`;
+
+                // 2. Categories mapping (Operations, Masters, Admin)
+                const categories = [...new Set(moduleRoutes.map(r => r.category))];
+
+                categories.forEach(cat => {
+                    const permittedRoutes = moduleRoutes.filter(route => route.category === cat);
+                    if (permittedRoutes.length === 0) return;
+
+                    const safeCatId = cat.replace(/[^a-zA-Z0-9]/g, '-');
+
+                    html += `
+                        <details id="det-cat-${safeCatId}" class="mb-3 group">
+                            <summary class="category-header">
+                                <span>${cat}</span>
+                                <svg class="w-3.5 h-3.5 arrow-icon transition-transform duration-150 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </summary>
+                            <div class="space-y-1 mt-1">`;
+
+                    // Render direct links (no sub-folders) for SalesONE
+                    permittedRoutes.forEach(p => {
+                        const iconSvg = getIconForTitle(p.title);
+                        html += `
+                            <a href="${p.url}" class="menu-item w-full text-left relative group/item text-decoration-none">
+                                ${iconSvg}
+                                <span class="flex-grow truncate">${p.title}</span>
+                            </a>`;
+                    });
+
+                    html += `</div></details>`;
+                });
+
+                container.innerHTML = html;
+
+                // Handle Open/Close States via session storage
+            const openIds = JSON.parse(sessionStorage.getItem('pemsSidebarOpenState'));
+            if (openIds !== null) {
+                container.querySelectorAll('details').forEach(det => {
+                    if (openIds.includes(det.id)) det.open = true;
+                    else if (!det.querySelector('.active')) det.open = false;
+                });
+            } else {
+                container.querySelectorAll('details').forEach(det => { det.open = false; }); // Default closed
+            }
+
+                container.querySelectorAll('details').forEach(det => {
+                    det.addEventListener('toggle', () => {
+                        const openDetails = Array.from(container.querySelectorAll('details[open]')).map(d => d.id).filter(Boolean);
+                        sessionStorage.setItem('pemsSidebarOpenState', JSON.stringify(openDetails));
+                    });
+                });
+
+                highlightActiveSidebarLink();
+            };
+
+            // Initialize Sidebar
+            window.buildDynamicSidebar();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

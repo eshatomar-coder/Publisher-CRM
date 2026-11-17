@@ -1,0 +1,775 @@
+﻿@using System.Text.Json
+@model IEnumerable<Publisher_CRM.Models.BeatPlan>
+@{
+    ViewData["Title"] = "Beat Plans - Operations";
+
+    // Serialize data securely for the JavaScript engine
+    var planJson = JsonSerializer.Serialize(Model.Select(p => new
+    {
+        id = "BP-" + p.BeatPlanId,
+        rawId = p.BeatPlanId,
+        planDate = p.PlanDate.ToString("yyyy-MM-dd"), // Standard format for input type="date"
+        planDateDisplay = p.PlanDate.ToString("dd MMM yyyy"),
+        planDateSort = p.PlanDate.ToString("yyyyMMdd"),
+        routeId = p.BeatRouteId,
+        routeName = p.BeatRoute?.RouteName ?? "-",
+        city = p.City ?? "",
+        salesPerson = p.SalesPerson != null ? $"{p.SalesPerson.FirstName} {p.SalesPerson.LastName}" : "-",
+        salesPersonId = p.SalesPersonId,
+        associates = string.IsNullOrEmpty(p.Associates) ? "" : p.Associates,
+        meetingsCount = p.PlanMeetings.Count,
+        meetings = p.PlanMeetings.Select(m => new
+        {
+            accountId = m.AccountId,
+            customerName = m.Customer?.AccountName ?? "Unknown",
+            time = m.MeetingTime.ToString(@"hh\:mm")
+        }).ToArray()
+    }));
+}
+
+<div class="fixed inset-0 -z-10 h-full w-full bg-slate-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px]">
+    <div class="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_800px_at_100%_200px,#e0e7ff,transparent)]"></div>
+</div>
+
+<div class="font-sans antialiased w-full min-h-screen relative overflow-x-hidden flex flex-col items-center py-6 px-4 sm:px-6 lg:px-8 gap-4 pb-32">
+
+    <div class="w-full lg:w-[98%] max-w-[150rem] z-10 flex flex-col gap-4">
+
+        <!-- COMPACT HEADER -->
+        <div class="bg-white rounded-2xl shadow-md border border-gray-200 p-3 relative z-[60] flex flex-col gap-3">
+
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-sm shrink-0">
+                        <i class="bi bi-calendar-check-fill fs-6"></i>
+                    </div>
+                    <h1 class="text-lg font-extrabold text-gray-900 tracking-tight leading-tight m-0 whitespace-nowrap">Beat Plans</h1>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 flex-1 lg:justify-center" id="topFilterContainer">
+                    <!-- Dropdowns injected via JS -->
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0 w-full lg:w-auto">
+                    <div class="relative w-full lg:w-48 xl:w-56">
+                        <i class="bi bi-search absolute left-3 top-2.5 text-gray-400 text-[10px]"></i>
+                        <input type="text" id="searchInput" placeholder="Search..." class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium focus:border-indigo-600 focus:bg-white outline-none transition-all shadow-inner m-0" onkeyup="applyClientFilters()" />
+                    </div>
+                    <button onclick="openCreateModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black tracking-widest uppercase transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap m-0 border-0">
+                        <i class="bi bi-plus-lg"></i> <span class="hidden sm:inline">Create Plan</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-gray-100 pt-2">
+                <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar flex-nowrap w-full whitespace-nowrap" id="activeFiltersContainer">
+                    <span class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest shrink-0 mr-1">Active:</span>
+                    <span class="text-[11px] font-bold text-gray-400 italic shrink-0" id="noFiltersText">None</span>
+                </div>
+                <div class="text-right pl-4 shrink-0 border-l border-gray-100 ml-2">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest m-0">Showing</p>
+                    <p class="text-xs font-black text-indigo-600 m-0"><span id="totalCountDisplay">0</span> Plans</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DATA AREA -->
+        <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 relative z-10 w-full overflow-hidden" style="min-height: 600px;">
+
+            <div class="hidden md:block w-full overflow-x-auto pb-6 custom-scroll h-[70vh]">
+                <table class="w-full text-left border-collapse whitespace-nowrap min-w-max">
+                    <thead class="sticky top-0 z-20 bg-white shadow-sm border-b border-gray-200" id="tableHeaderRow">
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm" id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="md:hidden flex flex-col gap-3 w-full p-3 h-[70vh] overflow-y-auto custom-scroll" id="mobileCardsContainer">
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: CREATE / EDIT BEAT PLAN -->
+<!-- ========================================== -->
+<div class="modal fade" id="planModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-fullscreen-lg-down modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-2xl border-0 shadow-2xl">
+            <div class="modal-header bg-gray-50 border-b border-gray-200 py-3 sm:py-4 px-4 sm:px-6">
+                <h5 class="modal-title font-extrabold text-gray-800 text-lg sm:text-xl" id="modalTitle">
+                    <i class="bi bi-calendar-plus text-emerald-600 me-2"></i>Schedule Beat Plan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="frmSavePlan">
+                <input type="hidden" id="PlanId" value="0" />
+                <div class="modal-body p-4 sm:p-6 bg-white">
+
+                    <div class="row g-4 mb-4 sm:mb-5">
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Plan Date</label>
+                            <input type="date" id="PlanDate" class="form-control form-control-lg rounded-xl shadow-sm text-sm font-bold" required>
+                        </div>
+
+                        <!-- Sales Person Dropdown -->
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sales Person</label>
+                            <div class="dropdown w-100">
+                                <button class="form-select form-select-lg text-start rounded-xl shadow-sm bg-white text-sm font-bold text-gray-700" type="button" id="spDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    Select...
+                                </button>
+                                <input type="hidden" id="PlanSalesPersonId" required>
+                                <ul class="dropdown-menu w-100 p-2 shadow-xl border border-gray-100 mt-1 rounded-xl" style="max-height: 250px; overflow-y: auto;">
+                                    <li class="px-2 pb-2 sticky-top bg-white z-10">
+                                        <input type="text" class="form-control form-control-sm rounded-lg border-gray-300" id="spSearchInput" placeholder="Search person..." onkeyup="filterDropdownItems('spSearchInput', 'sp-item')">
+                                    </li>
+                                    @foreach (var sp in ViewBag.AllUsers)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item sp-item rounded-lg text-sm font-semibold cursor-pointer py-2 hover:bg-emerald-50 hover:text-emerald-700" onclick="selectDropdownVal('PlanSalesPersonId', 'spDropdownBtn', '@sp.RecordId', '@Html.Raw(sp.FirstName + " " + sp.LastName)')">
+                                                <i class="bi bi-person me-2 text-gray-400"></i>@sp.FirstName @sp.LastName
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Route Dropdown (Searchable) -->
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Beat Route</label>
+                            <div class="dropdown w-100">
+                                <button class="form-select form-select-lg text-start rounded-xl shadow-sm border-indigo-300 bg-indigo-50 text-sm font-bold text-indigo-800" type="button" id="routeDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    Select Route...
+                                </button>
+                                <input type="hidden" id="PlanBeatRouteId" required>
+                                <ul class="dropdown-menu w-100 p-2 shadow-xl border border-gray-100 mt-1 rounded-xl" style="max-height: 250px; overflow-y: auto;">
+                                    <li class="px-2 pb-2 sticky-top bg-white z-10">
+                                        <input type="text" class="form-control form-control-sm rounded-lg border-gray-300" id="routeSearchInput" placeholder="Search route..." onkeyup="filterDropdownItems('routeSearchInput', 'route-item')">
+                                    </li>
+                                    @foreach (var r in ViewBag.Routes)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item route-item rounded-lg text-sm font-semibold cursor-pointer py-2 hover:bg-indigo-50 hover:text-indigo-700" onclick="selectRoute('@r.BeatRouteId', '@Html.Raw(r.RouteName.Replace("'", "\\'"))')">
+                                                <i class="bi bi-geo-alt me-2 text-gray-400"></i>@r.RouteName
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- City Dropdown (Searchable) -->
+                        <div class="col-md-3">
+                            <label class="form-label text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">City</label>
+                            <div class="dropdown w-100">
+                                <button class="form-select form-select-lg text-start rounded-xl shadow-sm bg-white text-sm font-bold text-gray-700" type="button" id="cityDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    Select City...
+                                </button>
+                                <input type="hidden" id="PlanCity">
+                                <ul class="dropdown-menu w-100 p-2 shadow-xl border border-gray-100 mt-1 rounded-xl" style="max-height: 250px; overflow-y: auto;">
+                                    <li class="px-2 pb-2 sticky-top bg-white z-10">
+                                        <input type="text" class="form-control form-control-sm rounded-lg border-gray-300" id="citySearchInput" placeholder="Search city..." onkeyup="filterDropdownItems('citySearchInput', 'city-item')">
+                                    </li>
+                                    @foreach (var city in ViewBag.Cities)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item city-item rounded-lg text-sm font-semibold cursor-pointer py-2 hover:bg-gray-50" onclick="selectDropdownVal('PlanCity', 'cityDropdownBtn', '@city', '@Html.Raw(city)')">
+                                                <i class="bi bi-building me-2 text-gray-400"></i>@city
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Associates (Custom Multi-select with Search) -->
+                        <div class="col-md-12">
+                            <label class="form-label text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Associates (Accompanying Users)</label>
+                            <div class="dropdown">
+                                <button class="form-select form-select-lg text-start rounded-xl shadow-sm bg-white text-sm font-bold text-gray-700" type="button" id="associatesDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    Select Associates...
+                                </button>
+                                <ul class="dropdown-menu w-100 p-2 shadow-lg border border-gray-100 mt-1 rounded-xl" style="max-height: 250px; overflow-y: auto;">
+                                    <li class="px-2 pb-2 sticky-top bg-white z-10">
+                                        <input type="text" class="form-control form-control-sm rounded-lg border-gray-300" id="assocSearchInput" placeholder="Search associates..." onkeyup="filterDropdownItems('assocSearchInput', 'assoc-item')">
+                                    </li>
+                                    @foreach (var user in ViewBag.AllUsers)
+                                    {
+                                        <li class="assoc-item">
+                                            <div class="form-check custom-control px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                                <input class="form-check-input associate-check cursor-pointer" type="checkbox" value="@user.FirstName @user.LastName" id="assoc_@user.RecordId">
+                                                <label class="form-check-label font-bold text-gray-700 w-100 cursor-pointer text-sm" for="assoc_@user.RecordId">
+                                                    @user.FirstName @user.LastName
+                                                </label>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DYNAMIC MEETINGS ADDER & LIST (Responsive) -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 mt-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h6 class="font-extrabold text-indigo-700 text-uppercase tracking-wider text-xs m-0"><i class="bi bi-clock-history me-2"></i>Manage Meetings</h6>
+                            <span class="badge bg-indigo-100 text-indigo-800" id="meetingCountBadge">0 Meetings</span>
+                        </div>
+
+                        <div class="row g-2 mb-4 align-items-end p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <div class="col-md-6 col-12">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Select Customer</label>
+                                <select id="meetingCustomerSelect" class="form-select text-sm font-bold border-gray-300 shadow-sm rounded-lg" disabled>
+                                    <option value="">Choose Beat Route first...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 col-12">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Time</label>
+                                <input type="time" id="meetingTimeInput" class="form-control text-sm font-bold border-gray-300 shadow-sm rounded-lg" value="10:00" disabled>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <button type="button" id="btnAddMeeting" onclick="addMeeting()" class="btn btn-primary w-100 font-bold rounded-lg shadow-sm" disabled>Add</button>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Table for Meetings -->
+                        <div class="hidden md:block table-responsive border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
+                            <table class="table table-borderless table-hover mb-0 align-middle">
+                                <thead class="bg-gray-50 border-bottom border-gray-200 text-[10px] uppercase text-gray-500 font-extrabold tracking-widest">
+                                    <tr>
+                                        <th class="ps-4 py-3">Customer Name</th>
+                                        <th width="200" class="py-3">Scheduled Time</th>
+                                        <th class="text-end pe-4 py-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="meetingsBodyDesktop">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile Cards for Meetings -->
+                        <div class="md:hidden flex flex-col gap-2" id="meetingsBodyMobile">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-gray-50 border-t border-gray-200 py-3 px-4 sm:px-6 d-flex justify-content-between">
+                    <button type="button" class="btn btn-light border font-bold px-4 rounded-lg shadow-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success font-bold px-5 rounded-lg shadow-sm" id="btnSavePlan"><i class="bi bi-save me-2"></i>Save Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const masterData = @Html.Raw(planJson);
+        let filteredData = [...masterData];
+        let activeDropdown = null;
+        let currentSort = { col: '', dir: 'asc' };
+
+        // Meetings State Management
+        let currentMeetings = [];
+
+        const filterColumns = [
+            { key: 'id', label: 'Beat Plan ID', type: 'string' },
+            { key: 'planDate', label: 'Date', type: 'date' },
+            { key: 'routeName', label: 'Beat Route', type: 'string' },
+            { key: 'city', label: 'City', type: 'string' },
+            { key: 'salesPerson', label: 'Sales Person', type: 'string' },
+            { key: 'meetingsCount', label: 'No. of Customers', type: 'number' },
+            { key: 'associates', label: 'Associates', type: 'string' }
+        ];
+
+        document.addEventListener("DOMContentLoaded", function () {
+            buildTableHeaders();
+            buildTopFilterBar();
+            renderData();
+
+            document.addEventListener("click", function (event) {
+                if (activeDropdown) {
+                    const dropdownMenu = document.getElementById(`dropdownMenu-${activeDropdown}`);
+                    const dropdownBtn = document.getElementById(`dropdownBtn-${activeDropdown}`);
+                    if (dropdownMenu && !dropdownMenu.contains(event.target) && !dropdownBtn.contains(event.target)) {
+                        dropdownMenu.classList.add('hidden');
+                        activeDropdown = null;
+                    }
+                }
+            });
+        });
+
+        // --- FILTER & HEADER SETUP ---
+        function buildTableHeaders() {
+            const headerRow = document.getElementById('tableHeaderRow');
+            let html = '';
+            filterColumns.forEach(col => {
+                let align = col.key === 'meetingsCount' ? 'text-center' : 'text-left';
+                html += `
+                            <th class="px-6 py-4 cursor-pointer transition-colors hover:bg-gray-100 border-r border-gray-100 ${align}" onclick="sortTable('${col.key}')">
+                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-gray-500 hover:text-indigo-600">${col.label}</span>
+                                <span id="sort-icon-${col.key}" class="text-gray-400 font-bold ml-1"></span>
+                            </th>`;
+            });
+            html += `<th class="px-6 py-4 text-end"><span class="text-[10px] font-extrabold uppercase tracking-widest text-gray-500">Actions</span></th>`;
+            headerRow.innerHTML = html;
+        }
+
+        function buildTopFilterBar() {
+            const container = document.getElementById('topFilterContainer');
+            const labelHtml = `<span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mr-1 shrink-0 mt-1">Filters:</span>`;
+            let dropdownsHtml = '';
+
+            filterColumns.forEach(col => {
+                let innerContent = '';
+                if (col.type === 'date') {
+                    innerContent = `
+                                <div class="flex flex-col gap-3 p-1">
+                                    <div><label class="block text-[10px] font-extrabold text-gray-500 uppercase mb-1">Exact Date</label><input type="date" id="dateExact-${col.key}" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:border-indigo-600" onchange="clearDateRange('${col.key}')" /></div>
+                                    <div class="flex gap-2">
+                                        <div class="flex-1"><label class="block text-[10px] font-extrabold text-gray-500 uppercase mb-1">From</label><input type="date" id="dateFrom-${col.key}" class="w-full px-2 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:border-indigo-600" onchange="clearDateExact('${col.key}')" /></div>
+                                        <div class="flex-1"><label class="block text-[10px] font-extrabold text-gray-500 uppercase mb-1">To</label><input type="date" id="dateTo-${col.key}" class="w-full px-2 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:border-indigo-600" onchange="clearDateExact('${col.key}')" /></div>
+                                    </div>
+                                </div>`;
+                } else {
+                    let uniqueVals = [...new Set(masterData.map(item => String(item[col.key] || '-')))].filter(v => v !== '-').sort();
+                    if (col.type === 'number') uniqueVals.sort((a, b) => parseInt(a) - parseInt(b));
+
+                    let optionsHtml = uniqueVals.map(val => `
+                                <label class="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded cursor-pointer filter-item">
+                                    <input type="checkbox" value="${val.replace(/"/g, '&quot;')}" class="cb-${col.key} text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" checked onchange="handleCheckboxChange('${col.key}', this)" />
+                                    <span class="text-xs font-medium text-gray-700 truncate" title="${val.replace(/"/g, '&quot;')}">${val}</span>
+                                </label>`).join('');
+
+                    innerContent = `
+                                <input type="text" id="filterSearch-${col.key}" placeholder="Search ${col.label}..." class="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-md outline-none focus:border-indigo-600 mb-2" onkeyup="searchDropdownOptions('${col.key}', this.value)" />
+                                <label class="flex items-center gap-2 text-xs font-bold text-gray-700 border-b border-gray-100 pb-2 mb-1 cursor-pointer hover:text-indigo-600">
+                                    <input type="checkbox" id="selectAll-${col.key}" onchange="toggleSelectAll('${col.key}', this.checked)" checked class="text-indigo-600 rounded border-gray-300 focus:ring-indigo-600" /> Select All
+                                </label>
+                                <div id="optionsList-${col.key}" class="max-h-48 overflow-y-auto flex flex-col gap-0.5 pr-1 custom-scroll">${optionsHtml}</div>`;
+                }
+
+                dropdownsHtml += `
+                            <div class="relative inline-block text-left shrink-0 m-0">
+                                <button type="button" id="dropdownBtn-${col.key}" class="px-2.5 py-1 bg-white border border-gray-300 rounded text-[10px] font-bold text-gray-600 hover:border-indigo-500 hover:text-indigo-600 whitespace-nowrap transition-colors flex items-center gap-1 shadow-sm border-0 m-0" onclick="toggleDropdown('${col.key}')">
+                                    <span id="btnText-${col.key}">${col.label}</span>
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="dropdownMenu-${col.key}" class="hidden absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl z-[100] p-3 flex flex-col gap-2">
+                                    ${innerContent}
+                                    <div class="flex justify-between border-t border-gray-100 pt-2 mt-1">
+                                        <button type="button" onclick="clearSpecificFilter('${col.key}')" class="text-xs text-gray-500 font-bold hover:text-gray-800 bg-transparent border-0">Clear</button>
+                                        <button type="button" onclick="applyClientFilters(); closeDropdown('${col.key}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-700 border-0">Apply</button>
+                                    </div>
+                                </div>
+                            </div>`;
+            });
+            container.innerHTML = labelHtml + dropdownsHtml;
+        }
+
+        // Generic UI Handlers
+        function toggleDropdown(colKey) {
+            const menu = document.getElementById(`dropdownMenu-${colKey}`);
+            if (menu.classList.contains('hidden')) {
+                if (activeDropdown && activeDropdown !== colKey) closeDropdown(activeDropdown);
+                menu.classList.remove('hidden');
+                activeDropdown = colKey;
+            } else closeDropdown(colKey);
+        }
+        function closeDropdown(colKey) { document.getElementById(`dropdownMenu-${colKey}`).classList.add('hidden'); activeDropdown = null; }
+        function toggleSelectAll(colKey, isChecked) { document.querySelectorAll(`.cb-${colKey}`).forEach(cb => { if (cb.closest('label').style.display !== 'none') cb.checked = isChecked; }); }
+        function clearDateRange(colKey) { document.getElementById(`dateFrom-${colKey}`).value = ''; document.getElementById(`dateTo-${colKey}`).value = ''; }
+        function clearDateExact(colKey) { document.getElementById(`dateExact-${colKey}`).value = ''; }
+        function clearSpecificFilter(colKey) {
+            const col = filterColumns.find(c => c.key === colKey);
+            if (col.type === 'date') { clearDateRange(colKey); clearDateExact(colKey); }
+            else { document.getElementById(`selectAll-${colKey}`).checked = true; toggleSelectAll(colKey, true); }
+            applyClientFilters(); closeDropdown(colKey);
+        }
+        function searchDropdownOptions(colKey, term) {
+            term = term.toLowerCase().trim();
+            document.querySelectorAll(`#optionsList-${colKey} .filter-item`).forEach(label => {
+                const text = label.querySelector('span').textContent.toLowerCase();
+                label.style.display = text.includes(term) ? 'flex' : 'none';
+            });
+        }
+        function handleCheckboxChange(colKey, cb) {
+            const selectAll = document.getElementById(`selectAll-${colKey}`);
+            if (selectAll && selectAll.checked) {
+                document.querySelectorAll(`.cb-${colKey}`).forEach(box => box.checked = false);
+                cb.checked = true; selectAll.checked = false;
+            } else if (selectAll) {
+                const total = document.querySelectorAll(`.cb-${colKey}`).length;
+                const checked = document.querySelectorAll(`.cb-${colKey}:checked`).length;
+                selectAll.checked = (total === checked && total > 0);
+            }
+        }
+
+        function applyClientFilters() {
+            let activeFilters = {};
+            const activeFiltersContainer = document.getElementById('activeFiltersContainer');
+            const noFiltersText = document.getElementById('noFiltersText');
+            Array.from(activeFiltersContainer.querySelectorAll('.filter-badge')).forEach(el => el.remove());
+            let hasFilters = false;
+
+            const addBadge = (label, text) => {
+                hasFilters = true;
+                const badge = document.createElement('span');
+                badge.className = "filter-badge bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold shadow-sm shrink-0 flex items-center";
+                badge.innerHTML = `<span class="text-gray-500 mr-1">${label}:</span> <span class="truncate max-w-[200px]">${text}</span>`;
+                activeFiltersContainer.appendChild(badge);
+            };
+
+            filterColumns.forEach(col => {
+                const btnText = document.getElementById(`btnText-${col.key}`);
+                const btnObj = document.getElementById(`dropdownBtn-${col.key}`);
+
+                if (col.type === 'date') {
+                    const exact = document.getElementById(`dateExact-${col.key}`)?.value;
+                    const from = document.getElementById(`dateFrom-${col.key}`)?.value;
+                    const to = document.getElementById(`dateTo-${col.key}`)?.value;
+                    if (exact || from || to) {
+                        activeFilters[col.key] = { exact: exact ? exact.replace(/-/g, '') : null, from: from ? from.replace(/-/g, '') : null, to: to ? to.replace(/-/g, '') : null };
+                        btnObj.classList.add('bg-indigo-50', 'text-indigo-800');
+                        addBadge(col.label, exact ? exact : `${from || 'Any'} to ${to || 'Any'}`);
+                    } else btnObj.classList.remove('bg-indigo-50', 'text-indigo-800');
+                } else {
+                    const selectAll = document.getElementById(`selectAll-${col.key}`);
+                    if (selectAll && !selectAll.checked) {
+                        const checkedValues = Array.from(document.querySelectorAll(`.cb-${col.key}:checked`)).map(cb => cb.value);
+                        activeFilters[col.key] = checkedValues;
+                        btnObj.classList.add('bg-indigo-50', 'text-indigo-800');
+                        let displayText = checkedValues.length <= 2 ? checkedValues.join(', ') : `${checkedValues.length} Selected`;
+                        btnText.textContent = `${col.label}: ${displayText}`;
+                        addBadge(col.label, displayText);
+                    } else if (btnText) {
+                        btnObj.classList.remove('bg-indigo-50', 'text-indigo-800');
+                        btnText.textContent = col.label;
+                    }
+                }
+            });
+
+            if (hasFilters) noFiltersText.classList.add('hidden'); else noFiltersText.classList.remove('hidden');
+
+            const globalSearch = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            filteredData = masterData.filter(item => {
+                if (globalSearch) {
+                    let searchStr = "";
+                    filterColumns.forEach(c => { if (item[c.key]) searchStr += String(item[c.key]).toLowerCase() + " "; });
+                    if (!searchStr.includes(globalSearch)) return false;
+                }
+                for (const key in activeFilters) {
+                    const colDef = filterColumns.find(c => c.key === key);
+                    if (colDef.type === 'date') {
+                        let itemDate = item[key + 'Sort'];
+                        if (!itemDate || itemDate === "0") return false;
+                        itemDate = itemDate.substring(0, 8);
+                        if (activeFilters[key].exact) { if (itemDate !== activeFilters[key].exact) return false; }
+                        else {
+                            if (activeFilters[key].from && itemDate < activeFilters[key].from) return false;
+                            if (activeFilters[key].to && itemDate > activeFilters[key].to) return false;
+                        }
+                    } else {
+                        const itemVal = item[key] || '-';
+                        if (!activeFilters[key].includes(String(itemVal))) return false;
+                    }
+                }
+                return true;
+            });
+
+            document.getElementById('totalCountDisplay').innerText = filteredData.length;
+            renderData();
+        }
+
+        // --- RENDERING VIEWS ---
+        function renderData() {
+            const tbody = document.getElementById('tableBody');
+            const mobileContainer = document.getElementById('mobileCardsContainer');
+            tbody.innerHTML = ''; mobileContainer.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-16 text-center text-gray-500 font-bold"><p class="text-lg">No records found.</p></td></tr>`;
+                mobileContainer.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold bg-white rounded-xl shadow-sm border border-gray-200">No records found.</div>`;
+                return;
+            }
+
+            filteredData.forEach(t => {
+                let jsonPlan = JSON.stringify(t).replace(/"/g, '&quot;');
+
+                // Desktop Row
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-emerald-50/30 transition-colors bg-white border-b border-gray-100 data-row";
+                tr.innerHTML = `
+                            <td class="px-6 py-4 font-bold text-indigo-600 border-r border-gray-100">${t.id}</td>
+                            <td class="px-6 py-4 font-bold text-gray-800 border-r border-gray-100">${t.planDateDisplay}</td>
+                            <td class="px-6 py-4 font-bold text-indigo-600 whitespace-normal break-words min-w-[150px] border-r border-gray-100">${t.routeName}</td>
+                            <td class="px-6 py-4 font-bold text-gray-600 border-r border-gray-100">${t.city}</td>
+                            <td class="px-6 py-4 font-semibold text-gray-700 border-r border-gray-100">${t.salesPerson}</td>
+                            <td class="px-6 py-4 text-center border-r border-gray-100">
+                                <span class="badge bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-pill px-3 py-1.5 shadow-sm">${t.meetingsCount}</span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500 text-xs truncate max-w-[150px] border-r border-gray-100" title="${t.associates}">${t.associates}</td>
+                            <td class="px-6 py-4 text-end">
+                                        <button class="btn btn-sm btn-light border text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 shadow-sm font-bold" onclick="openEditModal(${jsonPlan})">
+                                            <i class="bi bi-pencil-square me-1"></i> Edit & Meetings
+                                        </button>
+                            </td>
+                        `;
+                tbody.appendChild(tr);
+
+                // Mobile Card
+                let card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col gap-2";
+                card.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded border border-indigo-100 uppercase tracking-widest">${t.id}</span>
+                                <span class="px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-bold rounded border border-gray-200">${t.planDateDisplay}</span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-extrabold text-gray-900 m-0 leading-tight">${t.routeName} <span class="text-gray-400 font-normal text-xs">(${t.city})</span></h3>
+                                <p class="text-xs font-bold text-gray-500 m-0 mt-1"><i class="bi bi-person-badge me-1"></i>${t.salesPerson}</p>
+                            </div>
+                            <div class="mt-2 pt-3 border-t border-gray-100 flex justify-between items-center gap-2">
+                                <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1.5 rounded border border-indigo-100 whitespace-nowrap">${t.meetingsCount} Meetings</span>
+                                <button class="btn btn-sm btn-light border text-warning font-bold shadow-sm flex-1" onclick="openEditModal(${jsonPlan})">
+                                    <i class="bi bi-pencil-square me-1"></i> Manage
+                                </button>
+                            </div>
+                        `;
+                mobileContainer.appendChild(card);
+            });
+        }
+
+        function sortTable(colKey) {
+            if (currentSort.col === colKey) { currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc'; }
+            else { currentSort.col = colKey; currentSort.dir = 'asc'; }
+
+            document.querySelectorAll('th span[id^="sort-icon-"]').forEach(icon => icon.innerHTML = '');
+            const activeIcon = document.getElementById(`sort-icon-${colKey}`);
+            if (activeIcon) activeIcon.innerHTML = currentSort.dir === 'asc' ? '↑' : '↓';
+
+            filteredData.sort((a, b) => {
+                let valA = a[colKey] || ''; let valB = b[colKey] || '';
+                if (colKey === 'planDate') { valA = a.planDateSort; valB = b.planDateSort; }
+                const numA = parseFloat(valA); const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB)) { return currentSort.dir === 'asc' ? numA - numB : numB - numA; }
+                return currentSort.dir === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+            });
+            renderData();
+        }
+
+        // --- DROPDOWN SEARCH HELPERS ---
+        function filterDropdownItems(inputId, itemClass) {
+            let term = document.getElementById(inputId).value.toLowerCase();
+            let items = document.getElementsByClassName(itemClass);
+            for (let i = 0; i < items.length; i++) {
+                let text = items[i].innerText.toLowerCase();
+                items[i].closest('li').style.display = text.includes(term) ? 'block' : 'none';
+            }
+        }
+
+        function selectDropdownVal(hiddenInputId, btnId, val, displayHtml) {
+            document.getElementById(hiddenInputId).value = val;
+            document.getElementById(btnId).innerHTML = displayHtml;
+            var dropdown = bootstrap.Dropdown.getInstance(document.getElementById(btnId));
+            if (dropdown) dropdown.hide();
+
+            // Special trigger for Beat Route to load customers
+            if (hiddenInputId === 'PlanBeatRouteId') {
+                loadRouteCustomers(val);
+            }
+        }
+
+        $('.associate-check').on('change', function () {
+            let selected = [];
+            $('.associate-check:checked').each(function () { selected.push($(this).val()); });
+            let btnText = selected.length > 0 ? selected.join(", ") : "Select Associates...";
+            $('#associatesDropdown').text(btnText).attr('title', btnText);
+        });
+
+        // --- MANAGING MEETINGS ---
+        function loadRouteCustomers(routeId) {
+            let select = $('#meetingCustomerSelect');
+            select.empty().prop('disabled', true);
+            $('#meetingTimeInput').prop('disabled', true);
+            $('#btnAddMeeting').prop('disabled', true);
+
+            if (!routeId) {
+                select.append('<option value="">Choose Beat Route first...</option>');
+                return;
+            }
+
+            select.append('<option value="">Loading customers...</option>');
+            $.get('/BeatRoute/GetRouteCustomers?routeId=' + routeId, function (data) {
+                select.empty();
+                if (data.length === 0) {
+                    select.append('<option value="">No customers mapped to this route</option>');
+                    return;
+                }
+                select.append('<option value="">-- Select Customer to Add --</option>');
+                data.forEach(function (c) {
+                    select.append(`<option value="${c.id}">${c.name}</option>`);
+                });
+
+                select.prop('disabled', false);
+                $('#meetingTimeInput').prop('disabled', false);
+                $('#btnAddMeeting').prop('disabled', false);
+            });
+        }
+
+        function renderMeetingsList() {
+            let desktopHtml = '';
+            let mobileHtml = '';
+
+            if (currentMeetings.length === 0) {
+                desktopHtml = `<tr id="emptyMeetingRow"><td colspan="3" class="text-center text-gray-400 font-bold py-5">No meetings added yet.</td></tr>`;
+                mobileHtml = `<div class="text-center text-gray-400 font-bold py-5 border border-gray-100 rounded-lg bg-white">No meetings added yet.</div>`;
+            } else {
+                currentMeetings.forEach((m, index) => {
+                    desktopHtml += `
+                                <tr class="border-bottom border-gray-100 bg-white hover:bg-gray-50 transition-colors">
+                                    <td class="ps-4 py-3 font-bold text-gray-800 border-r border-gray-100">${m.customerName}</td>
+                                    <td class="py-3 border-r border-gray-100 font-bold text-indigo-600"><i class="bi bi-clock me-1"></i>${m.time}</td>
+                                    <td class="text-end pe-4 py-3">
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-lg px-3 shadow-sm font-bold" onclick="removeMeeting(${index})" title="Remove"><i class="bi bi-trash3"></i></button>
+                                    </td>
+                                </tr>`;
+
+                    mobileHtml += `
+                                <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex flex-col gap-2">
+                                    <div class="font-extrabold text-gray-800 text-sm leading-tight">${m.customerName}</div>
+                                    <div class="flex justify-between items-center mt-1 pt-2 border-t border-gray-100">
+                                        <span class="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded text-xs"><i class="bi bi-clock me-1"></i>${m.time}</span>
+                                        <button type="button" class="btn btn-sm btn-danger rounded shadow-sm text-[10px] font-bold" onclick="removeMeeting(${index})">Remove</button>
+                                    </div>
+                                </div>`;
+                });
+            }
+
+            $('#meetingsBodyDesktop').html(desktopHtml);
+            $('#meetingsBodyMobile').html(mobileHtml);
+            $('#meetingCountBadge').text(`${currentMeetings.length} Meetings`);
+        }
+
+        function addMeeting() {
+            let custId = $('#meetingCustomerSelect').val();
+            let timeVal = $('#meetingTimeInput').val();
+
+            if (!custId) return alert("Please select a customer.");
+            if (!timeVal) return alert("Please specify a time.");
+
+            if (currentMeetings.some(m => String(m.accountId) === String(custId))) {
+                return alert("This customer is already added to the meeting list.");
+            }
+
+            let custName = $("#meetingCustomerSelect option:selected").text();
+
+            currentMeetings.push({ accountId: custId, customerName: custName, time: timeVal });
+            renderMeetingsList();
+
+            $('#meetingCustomerSelect').val(''); // Reset select
+        }
+
+        function removeMeeting(index) {
+            currentMeetings.splice(index, 1);
+            renderMeetingsList();
+        }
+
+        // --- MODAL: CREATE / EDIT PLAN ---
+        function openCreateModal() {
+            $('#modalTitle').html('<i class="bi bi-calendar-plus text-emerald-600 me-2"></i>Schedule Beat Plan');
+            $('#PlanId').val(0);
+            $('#PlanDate').val('');
+
+            selectDropdownVal('PlanCity', 'cityDropdownBtn', '', 'Select City...');
+            selectDropdownVal('PlanBeatRouteId', 'routeDropdownBtn', '', 'Select Route...');
+            selectDropdownVal('PlanSalesPersonId', 'spDropdownBtn', '', 'Select...');
+
+            $('.associate-check').prop('checked', false); $('#associatesDropdown').text('Select Associates...');
+
+            currentMeetings = [];
+            renderMeetingsList();
+
+            $('#meetingCustomerSelect').empty().append('<option value="">Choose Beat Route first...</option>').prop('disabled', true);
+            $('#meetingTimeInput').prop('disabled', true);
+            $('#btnAddMeeting').prop('disabled', true);
+
+            $('#planModal').modal('show');
+        }
+
+        function openEditModal(plan) {
+            $('#modalTitle').html('<i class="bi bi-pencil-square text-warning me-2"></i>Edit Plan & Meetings');
+            $('#PlanId').val(plan.rawId);
+            $('#PlanDate').val(plan.planDate); // Assuming standard format string
+
+            selectDropdownVal('PlanCity', 'cityDropdownBtn', plan.city, `<i class="bi bi-building me-2 text-gray-400"></i>${plan.city}`);
+            selectDropdownVal('PlanSalesPersonId', 'spDropdownBtn', plan.salesPersonId, `<i class="bi bi-person me-2 text-indigo-600"></i>${plan.salesPerson}`);
+
+            // Route triggers loading customers
+            selectDropdownVal('PlanBeatRouteId', 'routeDropdownBtn', plan.routeId, `<i class="bi bi-geo-alt me-2 text-gray-400"></i>${plan.routeName}`);
+
+            // Associates
+            $('.associate-check').prop('checked', false);
+            if (plan.associates && plan.associates !== "-") {
+                let assocs = plan.associates.split(',').map(a => a.trim());
+                assocs.forEach(a => {
+                    $(`.associate-check[value="${a}"]`).prop('checked', true);
+                });
+                $('#associatesDropdown').text(plan.associates).attr('title', plan.associates);
+            } else {
+                $('#associatesDropdown').text('Select Associates...');
+            }
+
+            // Load Existing Meetings
+            currentMeetings = [...plan.meetings];
+            renderMeetingsList();
+
+            $('#planModal').modal('show');
+        }
+
+        // Save Plan via AJAX
+        $('#frmSavePlan').on('submit', function (e) {
+            e.preventDefault();
+            let btn = $('#btnSavePlan');
+
+            if (!$('#PlanSalesPersonId').val()) return alert("Please select a Sales Person.");
+
+            // Note: Required Meeting Validation explicitly removed as requested.
+
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+            let associatesList = [];
+            $('.associate-check:checked').each(function () { associatesList.push($(this).val()); });
+
+            let payload = {
+                BeatPlanId: $('#PlanId').val(), // Handles Edit (if supported by controller logic)
+                PlanDate: $('#PlanDate').val(),
+                BeatRouteId: $('#PlanBeatRouteId').val(),
+                City: $('#PlanCity').val(),
+                SalesPersonId: $('#PlanSalesPersonId').val(),
+                Associates: associatesList.join(", "),
+                Meetings: currentMeetings.map(m => ({ AccountId: m.accountId, Time: m.time }))
+            };
+
+            $.ajax({
+                url: '/BeatRoute/SavePlan',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    if (res.success) location.reload();
+                    else { alert("Error: " + res.message); btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Save Plan'); }
+                },
+                error: function () {
+                    alert("Network error occurred.");
+                    btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Save Plan');
+                }
+            });
+        });
+    </script>
+}

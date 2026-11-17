@@ -1,0 +1,345 @@
+﻿@model Publisher_CRM.Models.Contact
+
+@{
+    ViewData["Title"] = "Create Contact";
+    var accountsList = ViewBag.Accounts as dynamic ?? new List<dynamic>();
+}
+
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', sans-serif;
+        color: #334155;
+    }
+
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 0 auto 2rem auto;
+        overflow: hidden;
+        max-width: 1300px;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Tightened header padding for a compact look */
+    .crm-header {
+        background: #ffffff;
+        padding: 15px 25px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .crm-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+    .section-title {
+        color: #4f46e5;
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-section-tinted {
+        background-color: #f8fafc;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 800;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        background-color: #ffffff;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            background-color: #ffffff;
+        }
+   
+        .form-control[readonly] {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+   
+    /* Input Group Styling for Salutation + First Name */
+    .input-group > .form-select.salutation-drop {
+        max-width: 110px;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        background-color: #f8fafc;
+    }
+
+    .input-group > .form-control.fname-input {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    /* Select2 UI Overrides to match Bootstrap fields */
+    .select2-container .select2-selection--single {
+        height: 42px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #334155 !important;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding-left: 14px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+        right: 10px !important;
+    }
+
+    .select2-container--open .select2-selection--single {
+        border-color: #4f46e5 !important;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1) !important;
+    }
+
+    .btn-primary {
+        background-color: #4f46e5;
+        border-color: #4f46e5;
+        border-radius: 8px;
+    }
+   
+        .btn-primary:hover {
+            background-color: #4338ca;
+            border-color: #4338ca;
+        }
+
+    .bg-indigo-50 {
+        background-color: #eef2ff !important;
+    }
+
+    .text-indigo-600 {
+        color: #4f46e5 !important;
+    }
+
+    .border-indigo-100 {
+        border-color: #e0e7ff !important;
+    }
+</style>
+
+<!-- Using container-fluid with max-width for a wide, beautiful form layout -->
+<div class="container-fluid my-4" style="max-width: 1400px;">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="crm-card">
+        <!-- COMPACT HEADER WITHOUT HEAVY ICON -->
+        <div class="crm-header flex-column flex-md-row gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded d-flex align-items-center justify-content-center bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm flex-shrink-0" style="width: 42px; height: 42px;">
+                    <i class="bi bi-person-badge fs-5"></i>
+                </div>
+                <div>
+                    <h2 class="m-0 fs-5 fw-bolder text-dark">Create Contact</h2>
+                    <small class="text-muted fw-bold" style="font-size: 0.75rem;">Register a new contact person</small>
+                </div>
+            </div>
+
+            <a asp-action="Index" class="btn btn-light fw-bold rounded px-4 shadow-sm text-dark border d-block d-md-inline-block text-center">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+               
+                <!-- SECTION 1: CORE INFORMATION -->
+                <!-- SECTION 1: CORE INFORMATION -->
+                <div class="form-section shadow-sm">
+                    <h4 class="section-title"><i class="bi bi-info-square me-2"></i>Core Information</h4>
+   
+                    <div class="row g-4">
+                        <!-- Account Lookup (Full Width) -->
+                        <div class="col-md-12">
+                            <label asp-for="AccountNameId" class="form-label">Account Name Lookup <span class="text-danger">*</span></label>
+                            <select asp-for="AccountNameId" id="AccountNameId" asp-items="ViewBag.AccountsList" class="form-select account-lookup" required>
+                                <option value="">-- Select Account --</option>
+                            </select>
+                            <span asp-validation-for="AccountNameId" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Row 1: First Name, Last Name, Contact Owner -->
+                        <div class="col-md-4">
+                            <label class="form-label">First Name</label>
+                            <div class="input-group">
+                                <select asp-for="Salutation" class="form-select salutation-drop border-end-0">
+                                    <option value="">-None-</option>
+                                    <option value="Mr.">Mr.</option>
+                                    <option value="Mrs.">Mrs.</option>
+                                    <option value="Ms.">Ms.</option>
+                                    <option value="Dr.">Dr.</option>
+                                    <option value="Prof.">Prof.</option>
+                                </select>
+                                <input asp-for="FirstName" id="FirstName" class="form-control fname-input" placeholder="First Name" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input asp-for="LastName" id="LastName" class="form-control" placeholder="Last Name" required />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="ContactOwnerId" class="form-label">Contact Owner</label>
+                            <select asp-for="ContactOwnerId" asp-items="ViewBag.OwnerList" id="contactOwnerDropdown" class="form-select">
+                                <option value="">-- Select Owner --</option>
+                            </select>
+                        </div>
+
+                        <!-- Row 2: Title, Department, Date of Birth -->
+                        <div class="col-md-4">
+                            <label asp-for="Title" class="form-label">Title / Designation</label>
+                            <input asp-for="Title" class="form-control" placeholder="e.g. Sales Manager" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Department" class="form-label">Department</label>
+                            <input asp-for="Department" class="form-control" placeholder="e.g. Marketing" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
+                            <input asp-for="DateOfBirth" type="date" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CRITICAL FIX: Made Contact Owner a Dropdown linked to ViewBag.Users -->
+                <div class="col-md-4">
+                    <label asp-for="ContactOwner" class="form-label">Contact Owner</label>
+                    <!-- Added asp-items="ViewBag.OwnerList" here -->
+                    <select asp-for="ContactOwnerId" asp-items="ViewBag.OwnerList" id="contactOwnerDropdown" class="form-select">
+                        <option value="">-- Select Account Owner --</option>
+                    </select>
+                </div>
+
+                <h4 class="section-header">Contact Details</h4>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <label asp-for="Email" class="form-label">Email Address (Unique)</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="example@company.com" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Phone" class="form-label">Office Phone</label>
+                        <input asp-for="Phone" class="form-control" placeholder="+1 234 567 8900" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Mobile" class="form-label">Mobile Number</label>
+                        <input asp-for="Mobile" class="form-control" placeholder="+1 098 765 4321" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="OtherPhone" class="form-label">Alternate Phone</label>
+                        <input asp-for="OtherPhone" class="form-control" />
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="Description" class="form-label">Additional Description / Notes</label>
+                        <textarea asp-for="Description" class="form-control" rows="1" placeholder="Enter notes here..."></textarea>
+                    </div>
+                </div>
+
+           
+                <!-- Removed System Tracking & Web Analytics from Create View as requested -->
+
+                <div class="mt-5 text-end border-top pt-4">
+                    <a asp-action="Index" class="btn btn-light border px-4 me-2" style="background: #f8f9fa; color: #495057; font-weight: 700; padding: 12px 30px; border-radius: 10px;">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">Save Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        <script>
+            $(document).ready(function () {
+                // Initialize Account Search Dropdown
+                $('.account-lookup').select2({
+                    placeholder: "Start typing to search accounts...",
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                $(document).ready(function () {
+                    // Initialize Select2 with search and type capability
+                    $('#AccountNameId').select2({
+                        placeholder: "-- Select Account --",
+                        allowClear: true,
+                        width: '100%' // Ensures it aligns perfectly with your Bootstrap columns
+                    });
+                });
+
+                // Automatically concatenate First Name + Last Name into Contact Name
+                function autoFillContactName() {
+                    var firstName = $('#FirstName').val() || '';
+                    var lastName = $('#LastName').val() || '';
+
+                    // Combine names and trim any extra spaces
+                    var fullName = (firstName + ' ' + lastName).trim();
+
+                    $('#ContactName').val(fullName);
+                }
+
+                // Listen for typing events on both fields
+                $('#FirstName, #LastName').on('input change', autoFillContactName);
+            });
+        </script>
+    }

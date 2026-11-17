@@ -1,0 +1,13 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@{
+    ViewData["Title"] = "Catalogue Maker";
+    var pemsUrl = Config["PemsBaseUrl"];
+}
+
+<!-- FIX: Exact height calc locks the container to the screen, keeping bottom buttons visible -->
+<div class="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style="height: calc(100vh - 100px);">
+    <iframe src="@(pemsUrl)/Marketing/CreateCatalogue?embedded=true"
+            class="w-full h-full border-0 block"
+            title="Catalogue Maker">
+    </iframe>
+</div>

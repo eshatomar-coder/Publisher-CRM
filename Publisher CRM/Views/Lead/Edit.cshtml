@@ -1,0 +1,477 @@
+﻿@model Publisher_CRM.Models.LeadViewModel
+@{
+    ViewData["Title"] = "Edit Enquiry";
+}
+
+<!-- SELECT2 CSS & BOOTSTRAP 5 THEME -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<style>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', sans-serif;
+        color: #334155;
+    }
+
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 0 auto 2rem auto;
+        overflow: hidden;
+        max-width: 1400px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .crm-header {
+        background: #ffffff;
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .crm-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+    .section-title {
+        color: #4f46e5;
+        font-weight: 800;
+        font-size: 0.9rem;
+        margin-bottom: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 2px solid #e0e7ff;
+        padding-bottom: 8px;
+        display: inline-block;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 25px 30px;
+    }
+
+    .form-section-alt {
+        background-color: #f8fafc;
+        padding: 25px 30px;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        padding: 10px 14px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-control[readonly] {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+        }
+
+    .table-titles th {
+        background-color: #f1f5f9;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #475569;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .table-titles td {
+        vertical-align: middle;
+    }
+</style>
+
+<div class="container my-4">
+    <div class="crm-card">
+        <div class="crm-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-lg bg-amber-50 d-flex align-items-center justify-content-center text-amber-600 border border-amber-100 shadow-sm" style="width: 40px; height: 40px;">
+                    <i class="bi bi-pencil-square fs-5"></i>
+                </div>
+                <h2 class="m-0">Edit Enquiry</h2>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-primary px-3 py-2 text-[12px] shadow-sm">ID: @Model.EnquiryId</span>
+                <a asp-action="Index" class="btn btn-light fw-bold rounded-lg px-4 shadow-sm text-dark border"><i class="bi bi-arrow-left me-2"></i>Back</a>
+            </div>
+        </div>
+
+        <form id="enquiryForm" asp-action="Edit" method="post">
+            <!-- CRITICAL FOR EDIT: RecordId Must Be Included -->
+            <input type="hidden" asp-for="RecordId" />
+            <input type="hidden" asp-for="EnquiryId" />
+            <input type="hidden" asp-for="CreatedTime" />
+            <input type="hidden" asp-for="LeadOwnerId" />
+            <input type="hidden" asp-for="EnquiryTitlesJson" id="EnquiryTitlesJson" value="[]" />
+            
+            <div asp-validation-summary="ModelOnly" class="text-danger px-4 pt-3 fw-bold"></div>
+
+            <!-- SECTION 1: CORE ENQUIRY DETAILS -->
+            <div class="form-section">
+                <h4 class="section-title"><i class="bi bi-info-circle me-2"></i>1. Core Information</h4>
+                
+                <div id="customerWarningAlert" class="alert alert-warning fw-bold d-none shadow-sm mb-4">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Please select a Customer to enable Enquiry Grid.
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <label asp-for="SalesCallId" class="form-label">Linked Sales Call ID</label>
+                        <input asp-for="SalesCallId" class="form-control" type="number" placeholder="Optional" />
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="AccountNameId" class="form-label">Customer Name <span class="text-danger">*</span></label>
+                        <select asp-for="AccountNameId" id="AccountNameId" class="form-select" asp-items="Model.AccountsList" required style="width: 100%;">
+                            <option value="">-- Select Customer --</option>
+                        </select>
+                        <span asp-validation-for="AccountNameId" class="text-danger small fw-bold"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="ContactNameId" class="form-label">Contact Name</label>
+                        <select asp-for="ContactNameId" id="ContactNameId" class="form-select" style="width: 100%;">
+                            <option value="">-- Select Contact --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <label asp-for="EnquiryType" class="form-label">Enquiry Type</label>
+                        <select asp-for="EnquiryType" class="form-select" asp-items="Model.EnquiryTypesList">
+                            <option value="">-- Select Type --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="CallType" class="form-label">Call Type</label>
+                        <select asp-for="CallType" class="form-select">
+                            <option value="">-- Select --</option>
+                            <option value="Virtual">Virtual</option>
+                            <option value="Physical">Physical</option>
+                            <option value="Phone">Phone</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Nature" class="form-label">Nature</label>
+                        <select asp-for="Nature" class="form-select" asp-items="Model.NaturesList">
+                            <option value="">-- Select Nature --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Stage" class="form-label">Status</label>
+                        <select asp-for="Stage" class="form-select border-primary text-primary fw-bold" asp-items="Model.StatusList">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <label asp-for="FollowupDate" class="form-label">Followup Date</label>
+                        <input asp-for="FollowupDate" type="date" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Currency" class="form-label">Currency</label>
+                        <select asp-for="Currency" id="Currency" class="form-select" asp-items="Model.CurrencyList"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EnquiryValue" class="form-label">Enquiry Value (Auto-calculated)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted fw-bold border-end-0" id="currencySymbol">₹</span>
+                            <input asp-for="EnquiryValue" id="EnquiryValue" type="number" step="0.01" class="form-control border-start-0 fw-bold text-success" readonly placeholder="0.00" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: LAST SALES CALL INFO -->
+            <div class="form-section-alt">
+                <h4 class="section-title text-secondary"><i class="bi bi-clock-history me-2"></i>2. Last Sales Call Reference</h4>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <label asp-for="LastSalesCallDate" class="form-label">Last Call Date</label>
+                        <input asp-for="LastSalesCallDate" type="date" class="form-control" readonly />
+                    </div>
+                    <div class="col-md-9">
+                        <label asp-for="LastCallRemark" class="form-label">Last Call Remark</label>
+                        <input asp-for="LastCallRemark" type="text" class="form-control" readonly />
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: ADD TITLES (EXCEL & MANUAL) -->
+            <div class="form-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="section-title m-0"><i class="bi bi-journal-plus me-2"></i>3. Edit Titles</h4>
+                    
+                    <div class="d-flex gap-2">
+                        <!-- Custom File Upload Button -->
+                        <div class="input-group shadow-sm" style="width: 350px;">
+                            <input type="file" id="excelUpload" class="form-control form-control-sm" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+                            <button class="btn btn-sm btn-indigo fw-bold text-white px-3" style="background-color: #4f46e5;" type="button" id="btnUploadExcel"><i class="bi bi-upload me-1"></i> Upload Excel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-lg border border-gray-200">
+                    <table class="table table-hover table-titles mb-0" id="titlesTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%;">ISBN</th>
+                                <th style="width: 45%;">Title Name</th>
+                                <th style="width: 10%;">Qty</th>
+                                <th style="width: 15%;">Net Price</th>
+                                <th style="width: 10%; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="titlesTableBody">
+                            <tr id="emptyStateRow">
+                                <td colspan="5" class="text-center py-5 text-muted fw-bold">
+                                    <i class="bi bi-file-earmark-excel fs-1 d-block mb-2 text-gray-300"></i>
+                                    Upload an Excel/CSV file or manually add titles below.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-light border-top">
+                            <tr>
+                                <td><input type="text" id="manIsbn" class="form-control form-control-sm" placeholder="ISBN..." /></td>
+                                <td><input type="text" id="manTitle" class="form-control form-control-sm" placeholder="Title Name..." /></td>
+                                <td><input type="number" id="manQty" class="form-control form-control-sm" value="1" min="1" /></td>
+                                <td><input type="number" id="manPrice" class="form-control form-control-sm" placeholder="0.00" step="0.01" /></td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-success fw-bold w-100" id="btnAddManual"><i class="bi bi-plus-lg"></i> Add</button></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 4: TERMS & REMARKS -->
+            <div class="form-section-alt">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label asp-for="CommercialTerms" class="form-label">Commercial Terms</label>
+                        <textarea asp-for="CommercialTerms" class="form-control" rows="3" placeholder="Enter terms of agreement..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Remarks" class="form-label">General Remarks</label>
+                        <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 border-top text-end">
+                <a asp-action="Index" class="btn btn-light border fw-bold px-4 py-2 shadow-sm me-2 text-secondary">Cancel</a>
+                <button type="submit" class="btn btn-warning fw-bold px-5 py-2 shadow-sm" id="btnSaveEnquiry"><i class="bi bi-check2-all me-2"></i> Update Enquiry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        let titlesData = [];
+
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            // 1. Load Existing JSON Data
+            let initialJson = '@Html.Raw(Model.EnquiryTitlesJson ?? "[]")';
+            try {
+                titlesData = JSON.parse(initialJson);
+            } catch (e) {
+                console.warn("Failed to parse existing titles", e);
+                titlesData = [];
+            }
+
+            // 2. Render Existing Grid immediately
+            renderTitles();
+
+                    // 3. Init Select2
+                    \$('#AccountNameId').select2({ theme: 'bootstrap-5' });
+
+                    // 4. Currency Symbol Sync
+                    \$('#Currency').on('change', function () {
+                let sym = '₹';
+                if ($(this).val() === 'USD') sym = '$';
+                if (\$(this).val() === 'EUR') sym = '€';
+            if (\$(this).val() === 'GBP') sym = '£';
+                        \$('#currencySymbol').text(sym);
+                    });
+                    \$('#Currency').trigger('change');
+
+                    // 5. Customer Validation & Contact Fetching
+                    \$('#AccountNameId').on('change', function () {
+                let val = \$(this).val();
+                if (!val) {
+                            \$('#customerWarningAlert').removeClass('d-none');
+                            \$('#btnSaveEnquiry, #btnUploadExcel, #btnAddManual').prop('disabled', true);
+                } else {
+                            \$('#customerWarningAlert').addClass('d-none');
+                            \$('#btnSaveEnquiry, #btnUploadExcel, #btnAddManual').prop('disabled', false);
+                    
+                            \$.get('/Lead/GetContactsByAccount?accountName=' + encodeURIComponent(val), function (data) {
+                    let contactDrop = \$('#ContactNameId');
+                    let currentVal = contactDrop.val() || '@Model.ContactNameId';
+                        
+                    contactDrop.empty().append('<option value="">-- Select Contact --</option>');
+                    if (data && data.length > 0) {
+                        data.forEach(c => {
+                            let selected = (c === currentVal) ? 'selected' : '';
+                            contactDrop.append(`<option value="${c}" ${selected}>${c}</option>`);
+                        });
+                    }
+                });
+                }
+            }).trigger('change');
+
+        // --- TITLE GRID LOGIC ---
+        function renderTitles() {
+            let tbody = \$('#titlesTableBody');
+            if (titlesData.length === 0) {
+                tbody.html('<tr id="emptyStateRow"><td colspan="5" class="text-center py-5 text-muted fw-bold"><i class="bi bi-file-earmark-excel fs-1 d-block mb-2 text-gray-300"></i>Upload an Excel/CSV file or manually add titles below.</td></tr>');
+                            \$('#EnquiryValue').val('0.00');
+                            \$('#EnquiryTitlesJson').val('[]');
+                return;
+            }
+
+            tbody.empty();
+            let totalValue = 0;
+
+            titlesData.forEach((t, index) => {
+                let rowTotal = (t.Qty * t.NetPrice);
+                totalValue += rowTotal;
+                    
+                tbody.append(`
+                                <tr>
+                                    <td class="font-mono text-muted">${t.Isbn}</td>
+                                    <td class="fw-bold text-indigo-700">${t.TitleName}</td>
+                                    <td><input type="number" class="form-control form-control-sm grid-qty" data-idx="${index}" value="${t.Qty}" min="1"></td>
+                                    <td><input type="number" class="form-control form-control-sm grid-price" data-idx="${index}" value="${t.NetPrice}" step="0.01"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm text-danger border-0" onclick="window.removeTitle(${index})"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `);
+            });
+
+                        \$('#EnquiryValue').val(totalValue.toFixed(2));
+                        \$('#EnquiryTitlesJson').val(JSON.stringify(titlesData));
+
+                        // Bind Grid Inputs
+                        \$('.grid-qty').on('change', function () {
+                titlesData[$(this).data('idx')].Qty = parseInt($(this).val()) || 1;
+                renderTitles();
+            });
+                        \$('.grid-price').on('change', function () {
+                titlesData[$(this).data('idx')].NetPrice = parseFloat($(this).val()) || 0;
+                renderTitles();
+            });
+        }
+
+        window.removeTitle = function (index) {
+            titlesData.splice(index, 1);
+            renderTitles();
+        };
+
+                    // Manual Add
+                    \$('#btnAddManual').click(function () {
+            let isbn = \$('#manIsbn').val().trim();
+            let title = \$('#manTitle').val().trim();
+            let qty = parseInt(\$('#manQty').val()) || 1;
+            let price = parseFloat(\$('#manPrice').val()) || 0;
+
+            if (!isbn && !title) {
+                alert("Please enter ISBN or Title.");
+                return;
+            }
+
+            titlesData.push({ Isbn: isbn, TitleName: title, Qty: qty, NetPrice: price });
+                        \$('#manIsbn, #manTitle').val('');
+                        \$('#manQty').val('1');
+                        \$('#manPrice').val('');
+                
+            renderTitles();
+        });
+
+                    // Excel Upload Hook
+                    \$('#btnUploadExcel').click(function () {
+            let fileInput = document.getElementById('excelUpload');
+            if (fileInput.files.length === 0) {
+                alert("Please select a file first.");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("uploadFile", fileInput.files[0]);
+
+            let btn = \$(this);
+            btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Processing...').prop('disabled', true);
+
+                        \$.ajax({
+                url: '/Lead/ParseTitlesFile',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    if (res.success) {
+                        titlesData = titlesData.concat(res.data);
+                        renderTitles();
+                        fileInput.value = '';
+                    } else {
+                        alert(res.message);
+                    }
+                },
+                error: function () {
+                    alert("Error uploading file. Please check file format.");
+                },
+                complete: function () {
+                    btn.html('<i class="bi bi-upload me-1"></i> Upload Excel').prop('disabled', false);
+                }
+            });
+        });
+
+                    // Prevent enter key form submit on manual inputs
+                    \$('#manIsbn, #manTitle, #manQty, #manPrice').on('keypress', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                            \$('#btnAddManual').click();
+            }
+        });
+            
+                    // Submitting Form validation
+                    \$('#enquiryForm').on('submit', function (e) {
+            if (titlesData.length === 0) {
+                alert('Please add at least one title to the enquiry.');
+                e.preventDefault();
+                return false;
+            }
+                        \$('#btnSaveEnquiry').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...');
+        });
+                });
+    </script>
+}

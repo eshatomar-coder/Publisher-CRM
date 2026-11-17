@@ -1,0 +1,1315 @@
+﻿@using System.Text.Json
+@using System.Net
+@model IEnumerable<Publisher_CRM.Models.DailyPlan>
+@{
+    ViewData["Title"] = "Daily Plan - Operations";
+
+    var planJson = JsonSerializer.Serialize(Model.Select(p => new
+    {
+        id = "DP-" + p.DailyPlanId,
+        rawId = p.DailyPlanId,
+        planDate = p.Date.ToString("yyyy-MM-dd"),
+        planDateDisplay = p.Date.ToString("dd MMM yyyy"),
+        planDateSort = p.Date.ToString("yyyyMMdd"),
+        planTime = p.Time.ToString(@"hh\:mm"),
+        callType = p.CallType,
+        place = p.Place ?? "-",
+
+        customerIds = p.Customers.Select(c => c.AccountId).ToArray(),
+        customerNames = p.Customers.Select(c => c.Customer?.AccountName ?? "Unknown").ToArray(),
+
+        contactIds = p.Contacts.Select(c => c.ContactId).ToArray(),
+        contactNames = p.Contacts.Select(c => c.Contact?.FirstName + " " + c.Contact?.LastName).ToArray(),
+
+        salesPersonId = p.SalesPersonId,
+        salesPerson = p.SalesPerson != null ? $"{p.SalesPerson.FirstName} {p.SalesPerson.LastName}" : "-",
+        associates = string.IsNullOrEmpty(p.Associates) ? "-" : p.Associates,
+
+        business12m = "$15,400",
+        lastSalesCall = "10 Aug 2026",
+        lastOrderDate = "22 Aug 2026",
+        ongoingOrders = "2",
+        overDueBalance = "$1,200",
+        totalBalance = "$4,500",
+        recommendations = "Pitch new Alpha Series",
+        newItems = "Alpha Guide 2026",
+        customerAnalysis = "High growth potential",
+        createdBy = p.CreatedBy != null ? $"{p.CreatedBy.FirstName} {p.CreatedBy.LastName}" : "-",
+        createdById = p.CreatedById
+    }));
+}
+
+<!-- External Libraries -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* =========================================
+       PREMIUM SAAS ZOHO-STYLE DESIGN SYSTEM
+       ========================================= */
+   @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+        --bg-body: #f3f4f6;
+        --bg-surface: #ffffff;
+        --primary-blue: #0f172a;
+        --primary-hover: #1e293b;
+        --text-dark: #111827;
+        --text-main: #374151;
+        --text-muted: #6b7280;
+        --border-soft: #e5e7eb;
+        --border-dark: #d1d5db;
+        --blue-soft: #eff6ff;
+        --blue-active: #2563eb;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --font: 'Inter', -apple-system, sans-serif;
+    }
+
+    body {
+        background: var(--bg-body);
+        color: var(--text-main);
+        font-family: var(--font);
+        font-size: 13.5px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden !important;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Buttons */
+    .btn-saas {
+        background-color: #f9fafb;
+        color: var(--text-dark);
+        border: 1px solid #d1d5db;
+        font-weight: 500;
+        border-radius: var(--radius-md);
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        transition: all 0.1s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-saas:hover {
+        background-color: #f3f4f6;
+    }
+
+    .btn-saas-primary {
+        background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+        border: none !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.3), 0 2px 4px -2px rgba(13, 148, 136, 0.2);
+        border-radius: 6px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+    }
+
+    .btn-saas-primary:hover {
+        background: linear-gradient(135deg, #0f766e, #115e59) !important;
+        box-shadow: 0 6px 8px -2px rgba(13, 148, 136, 0.4);
+        transform: translateY(-1px);
+    }
+
+    /* App Layout Container */
+    .crm-container {
+        display: flex;
+        width: 100%;
+        height: calc(100dvh - 65px);
+        background: var(--bg-surface);
+        margin: 0;
+        overflow: hidden;
+        border: none;
+        position: relative;
+    }
+
+    /* ---------------------------------------------------------
+       TABLE ALIGNMENT FIX: Let DataTables calculate exact widths
+       --------------------------------------------------------- */
+    .dataTables_scrollHeadInner,
+    .dataTables_scrollHeadInner table.dataTable,
+    .dataTables_scrollBody table.dataTable,
+    table.dataTable {
+        margin: 0 !important;
+        border-collapse: collapse !important;
+    }
+
+    /* Flat Sidebar - Darkened and Narrowed */
+    .filter-sidebar {
+        width: 240px;
+        min-width: 240px;
+        background: #0f172a; 
+        border-right: 1px solid var(--border-soft);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .filter-sidebar.hidden-sidebar {
+        width: 0 !important;
+        min-width: 0 !important;
+        border-right: none !important;
+        opacity: 0;
+    }
+
+    .filter-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1e293b; 
+    }
+
+    .filter-header h6, .filter-header i {
+        color: #ffffff !important;
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .filter-header a, .filter-header button i {
+        color: #94a3b8 !important; 
+    }
+
+    .filter-search-box {
+        padding: 12px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        background-color: #1e293b;
+    }
+
+    .filter-search-box .input-group-text,
+    .filter-search-box input {
+        background-color: #0f172a !important;
+        border-color: rgba(255,255,255,0.1) !important;
+        color: #ffffff !important;
+    }
+
+    .filter-search-box input::placeholder {
+        color: #64748b !important;
+    }
+
+    .filter-body {
+        overflow-y: auto;
+        flex-grow: 1;
+        padding: 0;
+    }
+
+    .filter-footer {
+        flex-shrink: 0;
+        background: #0f172a;
+        z-index: 10;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    .filter-field-item {
+        padding: 14px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transition: background-color 0.2s;
+    }
+
+    .filter-field-item label {
+        color: #f8fafc !important;
+    }
+
+    .filter-field-item:hover {
+        background-color: #1e293b;
+    }
+
+    .filter-expanded-area {
+        display: none;
+        margin-top: 12px;
+        padding-left: 24px;
+    }
+
+    .filter-field-item.active .filter-expanded-area {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+   @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Workspace constraints for scrolling */
+    .workspace {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        width: 100%;
+    }
+
+    /* DataTables Overrides for Layout & Scrolling */
+    .dataTables_wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .table-responsive {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        flex: 1 1 auto; 
+        width: 100%;
+        height: 100% !important;
+        max-height: calc(100dvh - 180px) !important; 
+    }
+
+    .dataTables_scrollBody table.dataTable thead th * {
+        display: none !important;
+    }
+
+    .dataTables_scrollBody table.dataTable thead th,
+    .dataTables_scrollBody table.dataTable thead td {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+
+    .dataTables_scrollHeadInner table.dataTable,
+    .dataTables_scrollBody table.dataTable,
+    table.dataTable {
+        border-collapse: separate !important;
+        border-spacing: 0;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    table.dataTable thead th,
+    table.dataTable tbody td {
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        border-right: 1px solid var(--border-soft) !important;
+        max-width: 250px;
+    }
+
+    table.dataTable thead th:last-child,
+    table.dataTable tbody td:last-child {
+        border-right: none !important;
+    }
+
+    table.dataTable thead th {
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 12px 40px 12px 16px !important;
+        border-bottom: 2px solid var(--border-soft) !important;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    table.dataTable tbody td {
+        padding: 10px 16px !important;
+        font-size: 0.85rem;
+        border-bottom: 1px solid var(--border-soft) !important;
+        vertical-align: middle;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    table.dataTable tbody tr:hover td {
+        background-color: #f8fafc;
+        cursor: pointer;
+    }
+
+    /* Filter Icon positioned to avoid overlap with DataTables sorting arrows */
+    .header-icon-filter {
+        position: absolute;
+        right: 22px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #cbd5e1;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: color 0.2s;
+        z-index: 10;
+    }
+
+    .header-icon-filter:hover {
+        color: var(--blue-active);
+    }
+
+    /* Sticky Checkbox and Action Columns */
+    .sticky-cb {
+        position: sticky !important;
+        left: 0;
+        width: 45px !important;
+        min-width: 45px !important;
+        max-width: 45px !important;
+        text-align: center;
+        z-index: 11 !important;
+        border-right: 1px solid var(--border-soft) !important;
+        background-color: var(--bg-surface) !important;
+    }
+
+    .sticky-actions {
+        position: sticky !important;
+        right: 0;
+        width: 80px !important;
+        min-width: 80px !important;
+        max-width: 80px !important;
+        text-align: center;
+        z-index: 11 !important;
+        border-left: 1px solid var(--border-soft) !important;
+        background-color: var(--bg-surface) !important;
+    }
+
+    table.dataTable thead th.sticky-cb,
+    table.dataTable thead th.sticky-actions {
+        z-index: 12 !important;
+        background-color: #f8fafc !important;
+    }
+
+    /* Table Toolbar */
+    .table-container {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg-surface);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .table-toolbar {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        align-items: center;
+        background-color: var(--bg-surface);
+        gap: 10px;
+    }
+
+    /* Badges */
+    .badge-soft { 
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: var(--text-dark);
+        border: 1px solid var(--border-soft);
+    }
+
+    .badge-success {
+        background: #dcfce3;
+        color: #166534;
+        border-color: #86efac;
+    }
+    
+    .badge-primary {
+        background: #e0e7ff;
+        color: #4338ca;
+        border-color: #c7d2fe;
+    }
+
+    /* Scrollbars */
+    .custom-scroll::-webkit-scrollbar { 
+        width: 8px; 
+        height: 12px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 6px;
+        border: 2px solid var(--bg-surface); 
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+        height: 14px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-top: 1px solid #e5e7eb;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 8px;
+        border: 3px solid #f8fafc;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }
+
+    /* =========================================
+       MOBILE VIEW OPTIMIZATIONS
+       ========================================= */
+   @@media (max-width: 768px) {
+        .filter-sidebar {
+            position: absolute;
+            z-index: 1050;
+            left: -300px;
+            width: 260px !important;
+            min-width: 260px !important;
+            height: 100%;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        }
+        
+        .filter-sidebar.mobile-open {
+            left: 0;
+        }
+        
+        .filter-sidebar.hidden-sidebar {
+            width: 260px !important;
+            min-width: 260px !important;
+            opacity: 1 !important;
+        }
+
+        .table-toolbar {
+            flex-direction: column;
+            align-items: stretch !important;
+            padding: 10px;
+        }
+        
+        .table-toolbar > div {
+            width: 100%;
+            flex-wrap: wrap; 
+            margin-bottom: 8px;
+        }
+        
+        .table-toolbar .btn-saas {
+            flex: 1 1 auto;
+            justify-content: center;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+        
+        .table-toolbar .rounded {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        #columns-btn-container {
+            display: none !important;
+        }
+
+        table.dataTable thead th:nth-child(n+3),
+        table.dataTable tbody td:nth-child(n+3) {
+            display: none !important;
+        }
+
+        table.dataTable thead th:nth-child(2),
+        table.dataTable tbody td:nth-child(2) {
+            width: 100% !important; 
+            max-width: none !important;
+            white-space: normal !important; 
+            border-right: none !important; 
+        }
+    }
+</style>
+
+<!-- JSON Data Source for DataTables -->
+<script type="application/json" id="planDataJson">
+    @Html.Raw(planJson)
+</script>
+
+<div class="crm-container">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="filter-sidebar custom-scroll" id="filterSidebarWrapper">
+        <div class="filter-header">
+            <h6 class="d-flex align-items-center m-0">
+                <i class="fa-solid fa-filter text-primary me-2"></i> Filters
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                <a href="javascript:void(0);" id="clearFiltersBtn" class="btn btn-sm btn-link text-decoration-none p-0 text-muted">Clear</a>
+                <button class="btn btn-sm text-muted border-0 bg-transparent p-1 ms-1" onclick="window.toggleFilterSidebar(event)" title="Hide Filters">
+                    <i class="fa-solid fa-chevron-left fs-6"></i>
+                </button>
+            </div>
+        </div>
+        <div class="filter-search-box">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0 fw-medium" placeholder="Search fields..." id="searchFilterFields">
+            </div>
+        </div>
+
+        <!-- Filters will inject directly into here -->
+        <div class="filter-body custom-scroll" id="filterFieldsContainer"></div>
+
+        <div class="filter-footer p-3 border-top bg-white mt-auto" style="flex-shrink: 0; z-index: 10;">
+            <button id="applyFiltersBtn" class="btn-saas-primary w-100 justify-content-center" style="padding: 8px; background: linear-gradient(135deg, #0d9488, #0f766e) !important;">Apply Filters</button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="table-container">
+
+        <!-- Table Toolbar -->
+        <div class="table-toolbar d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn-saas" onclick="window.toggleFilterSidebar(event)" title="Hide/Show Filters" style="border: none; box-shadow: none;">
+                    <i class="fa-solid fa-filter text-muted"></i>
+                </button>
+                <div class="px-3 py-1 rounded" style="background-color: #f0fdf4; color: #166534; font-weight: 600; border: 1px solid #bbf7d0;">
+                    <i class="fa-solid fa-calendar-day me-2"></i> All Daily Plans
+                </div>
+            </div>
+
+            <!-- Buttons on the far right -->
+            <div class="d-flex gap-2 align-items-center">
+                <button type="button" id="btnDeleteSelected" class="btn-saas text-danger" style="display: none; border-color: #fca5a5; background-color: #fef2f2;">
+                    <i class="fa-solid fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+                </button>
+
+                <!-- Target container for DataTables 'Columns' button -->
+                <div id="columns-btn-container" class="d-none d-md-block"></div>
+
+                <button type="button" onclick="window.openCreateModal()" class="btn-saas btn-saas-primary shadow-sm text-white border-0">
+                    <i class="fa-solid fa-plus"></i> Create Plan
+                </button>
+            </div>
+        </div>
+
+        <!-- Data Workspace -->
+        <div class="workspace">
+            <div class="table-responsive">
+                <table id="plansTable" class="table display nowrap" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th class="sticky-cb">
+                                <input class="form-check-input m-0 border-secondary" type="checkbox" id="selectAllCb">
+                            </th>
+                            <th>Daily Plan ID <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Date <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Time <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Type of Call <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Place <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Customer Name <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Contact Name <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Sales Person Name <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Associates <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>12M Business <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Last Sales Call <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Last Order Date <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Ongoing Orders <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Over Due Balance <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Total Balance <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Recommendations <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>New Items <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Customer Analysis <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th>Created by <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
+                            <th class="sticky-actions text-center"><i class="fa-solid fa-bolt text-muted"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: CREATE / EDIT DAILY PLAN -->
+<!-- ========================================== -->
+<div class="modal fade" id="planModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-light border-bottom py-3 px-4">
+                <h5 class="modal-title fw-bold text-dark fs-5" id="modalTitle">
+                    <i class="bi bi-calendar-plus text-success me-2"></i>Log Daily Plan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="frmSavePlan">
+                <input type="hidden" id="DailyPlanId" value="0" />
+                <div class="modal-body p-4 bg-white custom-scroll">
+
+                    <!-- Row 1: Core Details -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label text-muted fw-bold small text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Date</label>
+                            <input type="date" id="PlanDate" class="form-control form-control-sm fw-bold shadow-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted fw-bold small text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Time</label>
+                            <input type="time" id="PlanTime" class="form-control form-control-sm fw-bold shadow-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted fw-bold small text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Type of Call</label>
+                            <select id="PlanCallType" class="form-select form-select-sm fw-bold shadow-sm" onchange="window.handleCallTypeChange()" required>
+                                <option value="">Select Type...</option>
+                                <option value="Virtual">Virtual</option>
+                                <option value="Physical">Physical</option>
+                                <option value="Phone">Phone</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="placeContainer">
+                            <label class="form-label text-muted fw-bold small text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Place</label>
+                            <div id="placeInputWrapper">
+                                <input type="text" id="PlanPlaceText" class="form-control form-control-sm fw-bold shadow-sm bg-light" placeholder="Select Call Type first..." disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Personnel -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Sales Person</label>
+                            <div class="dropdown w-100">
+                                <button class="form-select form-select-sm text-start fw-bold shadow-sm bg-white" type="button" id="spDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <input type="hidden" id="SalesPersonId" required>
+                                <ul class="dropdown-menu w-100 p-2 shadow-lg border-0 mt-1" style="max-height: 300px; overflow-y: auto;">
+                                    <li class="px-2 pb-2 sticky-top bg-white z-10">
+                                        <input type="text" class="form-control form-control-sm" id="spSearchInput" placeholder="Search person..." onkeyup="window.filterModalList('spSearchInput', 'sp-item')">
+                                    </li>
+                                    @foreach (var sp in ViewBag.AllUsers)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item sp-item sp-select-action fw-semibold py-2" data-id="@sp.RecordId" data-name="@Html.Raw(WebUtility.HtmlEncode(sp.FirstName + " " + sp.LastName))">
+                                                <i class="bi bi-person me-2 text-secondary"></i>@sp.FirstName @sp.LastName
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Associates</label>
+                            <div class="dropdown w-100">
+                                <button class="form-select form-select-sm text-start fw-bold shadow-sm bg-white" type="button" id="associatesDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select Associates...
+                                </button>
+                                <ul id="associatesListContainer" class="dropdown-menu w-100 p-2 shadow-lg border-0 mt-1" style="max-height: 300px; overflow-y: auto;">
+                                    <li class="px-2 pb-2 sticky-top bg-white z-10">
+                                        <input type="text" class="form-control form-control-sm" id="assocSearchInput" placeholder="Search associates..." onkeyup="window.filterModalList('assocSearchInput', 'assoc-item')">
+                                    </li>
+                                    @foreach (var user in ViewBag.AllUsers)
+                                    {
+                                        <li class="assoc-item">
+                                            <div class="form-check px-3 py-2 border-bottom mb-0">
+                                                <input class="form-check-input associate-check" type="checkbox" value="@user.FirstName @user.LastName" id="assoc_@user.RecordId">
+                                                <label class="form-check-label fw-bold w-100" for="assoc_@user.RecordId" style="font-size:0.85rem; cursor:pointer;">@user.FirstName @user.LastName</label>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Customers & Contacts Mapping -->
+                    <div class="row g-4">
+                        <!-- Customers List -->
+                        <div class="col-md-6">
+                            <div class="bg-light border rounded-3 p-3 h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-primary text-uppercase m-0" style="font-size: 0.8rem; letter-spacing: 1px;"><i class="bi bi-shop me-2"></i>Customers</h6>
+                                </div>
+                                <input type="text" id="modalCustSearch" class="form-control form-control-sm shadow-sm mb-3" placeholder="Search accounts..." onkeyup="window.searchBackendCustomers()">
+
+                                <div id="customerListContainer" onscroll="window.handleCustomerScroll()" class="flex-grow-1 bg-white rounded-3 border p-2 custom-scroll" style="max-height: 250px; min-height: 250px; overflow-y: auto;">
+                                    <!-- Data loaded via AJAX -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contacts List -->
+                        <div class="col-md-6">
+                            <div class="bg-light border rounded-3 p-3 h-100 d-flex flex-column" style="background-color: #f0fdf4 !important; border-color: #bbf7d0 !important;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold text-success text-uppercase m-0" style="font-size: 0.8rem; letter-spacing: 1px;"><i class="bi bi-person-lines-fill me-2"></i>Contacts</h6>
+                                </div>
+                                <input type="text" id="modalContactSearch" class="form-control form-control-sm shadow-sm mb-3" placeholder="Search contacts..." onkeyup="window.filterModalList('modalContactSearch', 'modal-contact-item')">
+
+                                <div id="modalContactList" class="flex-grow-1 bg-white rounded-3 border p-2 custom-scroll" style="max-height: 250px; min-height: 250px; overflow-y: auto;">
+                                    <div class="text-center py-5 text-secondary fw-bold small">
+                                        <i class="bi bi-arrow-left-circle fs-3 d-block mb-2 text-muted"></i>
+                                        Select customers on the left to view their contacts here.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light border-top py-3 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary fw-bold px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-5 shadow-sm" id="btnSavePlan" style="background: linear-gradient(135deg, #0d9488, #0f766e); border: none;"><i class="bi bi-save me-2"></i>Save Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        const rawJsonText = document.getElementById('planDataJson').textContent;
+        const masterData = JSON.parse(rawJsonText);
+        const currentUserId = '@ViewBag.CurrentUserId';
+
+        // Global Sidebar Toggle Handle
+        window.toggleFilterSidebar = function(event) {
+            if(event) event.stopPropagation();
+            const sidebar = document.getElementById('filterSidebarWrapper');
+
+            if (window.innerWidth <= 768) sidebar.classList.toggle('mobile-open');
+            else sidebar.classList.toggle('hidden-sidebar');
+
+            setTimeout(function() {
+                if ($.fn.DataTable.isDataTable('#plansTable')) {
+                    $('#plansTable').DataTable().columns.adjust();
+                }
+            }, 300);
+        };
+
+        $(document).ready(function () {
+
+            // Custom DataTables Filter Engine
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'plansTable') return true;
+                let isMatch = true;
+
+                $('.field-checkbox:checked').each(function () {
+                    if (!isMatch) return;
+
+                    let index = $(this).data('col-index');
+                    let item = $(this).closest('.filter-field-item');
+                    let operator = item.find('.condition-select').val();
+                    let selectedVals = item.find('.condition-val').val() || [];
+
+                    let cellRaw = data[index] || "";
+                    let cellValue = cellRaw.replace(/<[^>]*>?/gm, '').trim(); 
+
+                    if (operator === 'is_empty') {
+                        if (cellValue !== '' && cellValue !== '-') isMatch = false;
+                    }
+                    else if (operator === 'is_not_empty') {
+                        if (cellValue === '' || cellValue === '-') isMatch = false;
+                    }
+                    else {
+                        if (selectedVals.length === 0) return;
+
+                        let valMatch = false;
+                        if (!Array.isArray(selectedVals)) selectedVals = [selectedVals];
+
+                        if (operator === 'is') valMatch = selectedVals.some(v => cellValue.toLowerCase() === v.toLowerCase());
+                        else if (operator === 'is_not') valMatch = selectedVals.every(v => cellValue.toLowerCase() !== v.toLowerCase());
+                        else if (operator === 'contains') valMatch = selectedVals.some(v => cellValue.toLowerCase().includes(v.toLowerCase()));
+                        else if (operator === 'does_not_contain') valMatch = selectedVals.every(v => !cellValue.toLowerCase().includes(v.toLowerCase()));
+                        else if (operator === 'starts_with') valMatch = selectedVals.some(v => cellValue.toLowerCase().startsWith(v.toLowerCase()));
+                        else if (operator === 'ends_with') valMatch = selectedVals.some(v => cellValue.toLowerCase().endsWith(v.toLowerCase()));
+                        
+                        if (!valMatch) isMatch = false;
+                    }
+                });
+                return isMatch;
+            });
+
+            // Initialize DataTable 
+            var table = $('#plansTable').DataTable({
+                "data": masterData, // Loaded from local JSON block
+                "stateSave": true,
+                "autoWidth": false,
+                "orderCellsTop": true,
+                "pageLength": 100,
+                "deferRender": true,
+                "columns": [
+                    {
+                        "data": null,
+                        "orderable": false,
+                        "className": 'sticky-cb',
+                        "render": function (data, type, row) {
+                            return `<div class="d-flex align-items-center justify-content-start gap-2 w-100 ps-2">
+                                        <input class="form-check-input m-0 border-secondary row-cb" type="checkbox" value="${row.rawId}">
+                                    </div>`;
+                        }
+                    },
+                    { 
+                        "data": "id",
+                        "render": function (data, type, row) {
+                            return `<a href="javascript:void(0);" onclick="window.openEditModal(${row.rawId})" class="text-primary fw-bold text-decoration-none">${data}</a>`;
+                        }
+                    },
+                    { "data": "planDateDisplay" },
+                    { "data": "planTime" },
+                    { 
+                        "data": "callType",
+                        "render": function (data) {
+                            return data ? `<span class="badge-soft">${data}</span>` : "-";
+                        }
+                    },
+                    { "data": "place" },
+                    {
+                        "data": "customerNames",
+                        "render": function (data) {
+                            if (!data || data.length === 0 || data[0] === 'Unknown') return "-";
+                            return `<div class="d-flex flex-wrap gap-1">` + data.map(d => `<span class="badge-soft badge-primary">${d}</span>`).join('') + `</div>`;
+                        }
+                    },
+                    {
+                        "data": "contactNames",
+                        "render": function (data) {
+                            if (!data || data.length === 0) return "-";
+                            return `<div class="d-flex flex-wrap gap-1">` + data.map(d => `<span class="badge-soft badge-success">${d}</span>`).join('') + `</div>`;
+                        }
+                    },
+                    { "data": "salesPerson" },
+                    {
+                        "data": "associates",
+                        "render": function (data) {
+                            if (!data || data === "-") return "-";
+                            return `<div class="d-flex flex-wrap gap-1">` + data.split(',').map(d => `<span class="badge-soft">${d.trim()}</span>`).join('') + `</div>`;
+                        }
+                    },
+                    { "data": "business12m" },
+                    { "data": "lastSalesCall" },
+                    { "data": "lastOrderDate" },
+                    { "data": "ongoingOrders" },
+                    { "data": "overDueBalance" },
+                    { "data": "totalBalance" },
+                    { "data": "recommendations" },
+                    { "data": "newItems" },
+                    { "data": "customerAnalysis" },
+                    { "data": "createdBy" },
+                    {
+                        "data": null,
+                        "orderable": false,
+                        "className": 'sticky-actions text-center',
+                        "render": function (data, type, row) {
+                            return `<div class="d-flex flex-column gap-1">
+                                        <button class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2" title="Edit Plan" onclick="window.openEditModal(${row.rawId})"><i class="bi bi-pencil-square"></i></button>
+                                        <button class="btn btn-sm btn-success font-bold shadow-sm py-0 px-2" title="Log Call" onclick="alert('Log Call action will be implemented in Sales Call module.')"><i class="bi bi-telephone-plus"></i></button>
+                                    </div>`;
+                        }
+                    }
+                ],
+                "drawCallback": function(settings) {
+                    setTimeout(function () { table.columns.adjust(); }, 50);
+                },
+                "dom": "<'table-responsive custom-scroll'tr>" +
+                       "<'row m-0 px-3 py-2 bg-white border-top align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                "lengthMenu": [[25, 50, 100, 500], [25, 50, 100, "500"]],
+                "buttons": [
+                    {
+                        extend: 'colvis',
+                        text: '<i class="fa-solid fa-table-columns me-1"></i> Columns',
+                        className: 'btn-saas'
+                    }
+                ],
+                "initComplete": function(settings, json) {
+                    let api = this.api();
+                    let headerCells = api.columns().header();
+
+                    if (document.getElementById('columns-btn-container')) {
+                        api.buttons().container().appendTo('#columns-btn-container');
+                    }
+
+                    api.columns().every(function (index) {
+                        if (index === 0 || index === api.columns()[0].length - 1) return; // Skip Checkbox & Actions
+
+                        let title = $(headerCells[index]).text().trim();
+                        if (!title) return;
+
+                        let uniqueValues = api.column(index).data().unique().sort();
+                        let options = '';
+                        uniqueValues.each(function (d) {
+                            let textValue = '';
+                            if (Array.isArray(d)) {
+                                d.forEach(item => { 
+                                    let v = $('<div>').html(item).text().trim();
+                                    if(v && !options.includes(`value="${v}"`)) options += `<option value="${v}">${v}</option>`;
+                                });
+                            } else {
+                                textValue = $('<div>').html(d).text().trim(); 
+                                if (textValue !== '' && textValue !== '-') {
+                                    options += `<option value="${textValue}">${textValue}</option>`;
+                                }
+                            }
+                        });
+
+                        let filterHtml = `
+                                <div class="filter-field-item field-item-row" data-field-type="text">
+                                    <div class="d-flex align-items-center m-0 w-100">
+                                        <input class="form-check-input field-checkbox me-2 mt-0 flex-shrink-0" type="checkbox" id="chk_${index}" data-col-index="${index}" style="width: 14px; height: 14px; border-radius: 3px; cursor: pointer;">
+                                        <label class="form-check-label flex-grow-1 text-dark text-truncate" for="chk_${index}" style="font-size: 0.8rem; cursor: pointer;">
+                                            ${title}
+                                        </label>
+                                    </div>
+                                    <div class="filter-expanded-area" id="filter_container_${index}">
+                                        <select class="form-select form-select-sm mb-2 text-primary border-primary condition-select fw-semibold" id="op_${index}">
+                                            <option value="is">is exactly</option>
+                                            <option value="is_not">is not</option>
+                                            <option value="contains" selected>contains</option>
+                                            <option value="does_not_contain">does not contain</option>
+                                            <option value="is_empty">is empty</option>
+                                            <option value="is_not_empty">is not empty</option>
+                                        </select>
+                                        <div id="val_wrapper_${index}">
+                                            <select class="form-select form-select-sm condition-val select2-multi" id="sel_${index}" multiple="multiple" style="width: 100%;">
+                                                ${options}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        $('#filterFieldsContainer').append(filterHtml);
+                    });
+
+                    $('.select2-multi').select2({ width: '100%', placeholder: "Select values...", allowClear: true, tags: true });
+                }
+            });
+
+            // Filtering Triggers
+            $(document).on('change', '.field-checkbox', function () {
+                let item = $(this).closest('.filter-field-item');
+                if ($(this).is(':checked')) item.addClass('active');
+                else {
+                    item.removeClass('active');
+                    item.find('.condition-select').val('contains');
+                    item.find('.condition-val').val(null).trigger('change');
+                }
+            });
+
+            $(document).on('change', '.condition-select', function () {
+                let wrapper = $(this).siblings('div');
+                let op = $(this).val();
+                if (op === 'is_empty' || op === 'is_not_empty') wrapper.slideUp(200);
+                else wrapper.slideDown(200);
+            });
+
+            $('#searchFilterFields').on('input', function () {
+                let term = $(this).val().toLowerCase();
+                $('.filter-field-item').each(function () {
+                    let label = $(this).find('label').text().toLowerCase();
+                    $(this).toggle(label.includes(term));
+                });
+            });
+
+            $('#applyFiltersBtn').on('click', function () { table.draw(); });
+            $('#clearFiltersBtn').on('click', function () {
+                $('.field-checkbox').prop('checked', false).trigger('change');
+                table.draw();
+            });
+
+            $('table.dataTable tbody').on('click', 'tr', function (e) {
+                if ($(e.target).closest('a, button, input, select, .row-cb').length) return;
+                var data = table.row(this).data();
+                if (data) window.openEditModal(data.rawId);
+            });
+
+            // MODAL JAVASCRIPT LOGIC
+            window.custSearchTimer = null;
+            window.accountSkip = 0;
+            window.accountSearchTerm = "";
+            window.isLoadingAccounts = false;
+            window.hasMoreAccounts = true;
+
+            window.searchBackendCustomers = function () {
+                clearTimeout(window.custSearchTimer);
+                window.custSearchTimer = setTimeout(function () {
+                    window.accountSearchTerm = $('#modalCustSearch').val().trim().toLowerCase();
+                    window.loadAccounts(true);
+                }, 400); 
+            };
+
+            window.loadAccounts = function (reset = false) {
+                let container = $('#customerListContainer');
+                if (reset) {
+                    window.accountSkip = 0;
+                    window.hasMoreAccounts = true;
+                    container.find('.modal-cust-item:not(.selected-cust)').remove();
+                }
+
+                if (window.isLoadingAccounts || !window.hasMoreAccounts) return;
+                window.isLoadingAccounts = true;
+                container.append('<div id="accLoading" class="text-center py-2 text-primary"><div class="spinner-border spinner-border-sm"></div></div>');
+
+                let fetchUrl = '@Url.Action("SearchAccounts", "BeatRoute")' + '?searchTerm=' + encodeURIComponent(window.accountSearchTerm) + '&skip=' + window.accountSkip;
+                $.get(fetchUrl, function (data) {
+                    $('#accLoading').remove();
+                    if (data && data.length > 0) {
+                        data.forEach(cust => {
+                            if ($(`#modal_cust_${cust.accountId}`).length === 0) {
+                                container.append(`
+                                    <div class="modal-cust-item mb-1 border-bottom">
+                                        <div class="form-check px-3 py-2">
+                                            <input class="form-check-input modal-customer-check cursor-pointer" type="checkbox" value="${cust.accountId}" data-name="${cust.accountName.replace(/"/g, '&quot;')}" id="modal_cust_${cust.accountId}" onchange="window.handleModalCustomerChange(this)">
+                                            <label class="form-check-label fw-bold text-dark w-100 cursor-pointer small" for="modal_cust_${cust.accountId}">${cust.accountName}</label>
+                                        </div>
+                                    </div>`);
+                            }
+                        });
+                        window.accountSkip += data.length;
+                        if (data.length < 50) window.hasMoreAccounts = false;
+                    } else {
+                        window.hasMoreAccounts = false;
+                        if (window.accountSkip === 0 && container.find('.modal-cust-item').length === 0) {
+                            container.html('<div class="text-center py-5 text-muted fw-bold small">No accounts found.</div>');
+                        }
+                    }
+                    window.isLoadingAccounts = false;
+                }).fail(function () {
+                    $('#accLoading').remove();
+                    window.isLoadingAccounts = false;
+                });
+            };
+
+            window.handleCustomerScroll = function () {
+                let el = document.getElementById('customerListContainer');
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) window.loadAccounts();
+            };
+
+            window.handleModalCustomerChange = function (element) {
+                if (element.checked) $(element).closest('.modal-cust-item').addClass('selected-cust bg-light'); 
+                else $(element).closest('.modal-cust-item').removeClass('selected-cust bg-light');
+                window.fetchContactsForSelectedCustomers([]);
+            };
+
+            window.openCreateModal = function () {
+                $('#modalTitle').html('<i class="bi bi-calendar-plus text-success me-2"></i>Log Daily Plan');
+                $('#DailyPlanId').val(0);
+                $('#frmSavePlan')[0].reset();
+
+                let spNameElement = $(`.sp-item[data-id="${currentUserId}"]`);
+                if (spNameElement.length > 0) window.selectDropdownVal('SalesPersonId', 'spDropdownBtn', currentUserId, spNameElement.html());
+                else window.selectDropdownVal('SalesPersonId', 'spDropdownBtn', '', 'Select...');
+
+                $('#modalCustSearch').val('');
+                window.accountSearchTerm = "";
+                window.loadAccounts(true);
+
+                $('#modalContactList').html('<div class="text-center py-5 text-secondary fw-bold small"><i class="bi bi-arrow-left-circle fs-3 d-block mb-2 text-muted"></i>Select customers on the left to view their contacts.</div>');
+                $('#modalContactSearch').val('');
+                $('#associatesDropdownBtn').text('Select Associates...');
+                $('.associate-check').prop('checked', false); $('#assocSearchInput').val('');
+                window.handleCallTypeChange();
+                $('#planModal').modal('show');
+            };
+
+            window.openEditModal = function (planId) {
+                let plan = masterData.find(p => p.rawId === planId);
+                if (!plan) return;
+
+                $('#modalTitle').html('<i class="bi bi-pencil-square text-warning me-2"></i>Edit Daily Plan');
+                $('#DailyPlanId').val(plan.rawId);
+                $('#PlanDate').val(plan.planDate);
+                $('#PlanTime').val(plan.planTime);
+                $('#PlanCallType').val(plan.callType);
+                window.handleCallTypeChange();
+                $('#PlanPlaceText').val(plan.place);
+
+                let spHtml = plan.salesPersonId ? `<i class="bi bi-person me-2 text-secondary"></i>${plan.salesPerson}` : 'Select...';
+                window.selectDropdownVal('SalesPersonId', 'spDropdownBtn', plan.salesPersonId, spHtml);
+
+                let custContainer = $('#customerListContainer');
+                custContainer.empty();
+
+                if (plan.customerIds && plan.customerIds.length > 0) {
+                    plan.customerIds.forEach((id, index) => {
+                        let name = plan.customerNames[index];
+                        custContainer.append(`
+                            <div class="modal-cust-item mb-1 selected-cust bg-light border-bottom">
+                                <div class="form-check px-3 py-2">
+                                    <input class="form-check-input modal-customer-check cursor-pointer" type="checkbox" value="${id}" data-name="${name.replace(/"/g, '&quot;')}" id="modal_cust_${id}" checked onchange="window.handleModalCustomerChange(this)">
+                                    <label class="form-check-label fw-bold text-dark w-100 cursor-pointer small" for="modal_cust_${id}">${name}</label>
+                                </div>
+                            </div>`);
+                    });
+                    window.fetchContactsForSelectedCustomers(plan.contactIds);
+                } else {
+                    $('#modalContactList').html('<div class="text-center py-5 text-secondary fw-bold small"><i class="bi bi-arrow-left-circle fs-3 d-block mb-2 text-muted"></i>Select customers on the left to view their contacts.</div>');
+                }
+
+                $('#modalCustSearch').val('');
+                window.accountSearchTerm = "";
+                window.loadAccounts(false);
+
+                $('.associate-check').prop('checked', false);
+                if (plan.associates && plan.associates !== "-") {
+                    let assocs = plan.associates.split(',').map(a => a.trim());
+                    assocs.forEach(a => { $(`.associate-check[value="${a}"]`).prop('checked', true); });
+                    $('#associatesDropdownBtn').text(plan.associates);
+                } else {
+                    $('#associatesDropdownBtn').text('Select Associates...');
+                }
+                $('#planModal').modal('show');
+            };
+
+            window.handleCallTypeChange = function () {
+                let val = $('#PlanCallType').val();
+                let wrapper = $('#placeInputWrapper');
+                
+                if (val === 'Virtual') wrapper.html('<input type="url" id="PlanPlaceText" class="form-control form-control-sm fw-bold shadow-sm border-primary" placeholder="Paste Meeting Link here..." required>');
+                else if (val === 'Physical') wrapper.html(`<select id="PlanPlaceText" class="form-select form-select-sm fw-bold shadow-sm border-primary" required><option value="">Select Place...</option><option value="Event">Event</option><option value="Customer">Customer</option><option value="Company">Company</option></select>`);
+                else if (val === 'Phone') wrapper.html('<input type="tel" id="PlanPlaceText" class="form-control form-control-sm fw-bold shadow-sm border-primary" placeholder="Enter Phone No..." required>');
+                else wrapper.html('<input type="text" id="PlanPlaceText" class="form-control form-control-sm fw-bold shadow-sm bg-light" placeholder="Select Call Type first..." disabled>');
+            };
+
+            window.filterModalList = function (inputId, itemClass) {
+                let term = document.getElementById(inputId).value.toLowerCase();
+                let items = document.getElementsByClassName(itemClass);
+                for (let i = 0; i < items.length; i++) {
+                    let text = items[i].innerText.toLowerCase();
+                    items[i].style.display = text.includes(term) ? 'block' : 'none';
+                }
+            };
+
+            window.selectDropdownVal = function (hiddenInputId, btnId, val, displayHtml) {
+                document.getElementById(hiddenInputId).value = val;
+                document.getElementById(btnId).innerHTML = displayHtml;
+                var dropdownEl = document.getElementById(btnId);
+                var dropdown = bootstrap.Dropdown.getInstance(dropdownEl) || new bootstrap.Dropdown(dropdownEl);
+                if (dropdown) dropdown.hide();
+            };
+
+            window.fetchContactsForSelectedCustomers = function (preselectedContactIds) {
+                if (!Array.isArray(preselectedContactIds)) preselectedContactIds = [];
+                let selectedCustIds = [];
+                $('.modal-customer-check:checked').each(function () { selectedCustIds.push($(this).val()); });
+
+                let contactContainer = $('#modalContactList');
+                if (selectedCustIds.length === 0) {
+                    contactContainer.html('<div class="text-center py-5 text-secondary fw-bold small"><i class="bi bi-arrow-left-circle fs-3 d-block mb-2 text-muted"></i>Select customers on the left to view their contacts.</div>');
+                    return;
+                }
+
+                contactContainer.html('<div class="text-center py-5"><div class="spinner-border text-success"></div></div>');
+                let fetchUrl = '@Url.Action("GetContactsForCustomers", "BeatRoute")' + '?customerIds=' + selectedCustIds.join(',');
+
+                $.ajax({
+                    url: fetchUrl,
+                    type: 'GET',
+                    success: function (data) {
+                        contactContainer.empty();
+                        if (!data || data.length === 0) {
+                            contactContainer.html('<div class="text-center py-5 text-danger fw-bold small"><i class="bi bi-exclamation-circle fs-3 d-block mb-2 text-danger"></i>No contacts found.</div>');
+                            return;
+                        }
+
+                        data.forEach(function (c) {
+                            let isChecked = preselectedContactIds.includes(c.id) ? 'checked' : '';
+                            let bgClass = isChecked ? 'bg-success bg-opacity-10' : '';
+                            contactContainer.append(`
+                                <div class="modal-contact-item mb-1 border-bottom ${bgClass}">
+                                    <div class="form-check px-3 py-2">
+                                        <input class="form-check-input modal-contact-check cursor-pointer" type="checkbox" value="${c.id}" id="mcont_${c.id}" ${isChecked}>
+                                        <label class="form-check-label fw-bold text-dark w-100 cursor-pointer small" for="mcont_${c.id}">
+                                            ${c.name} <br><span class="text-muted" style="font-size:0.7rem;">${c.accountName}</span>
+                                        </label>
+                                    </div>
+                                </div>`);
+                        });
+                        window.sortCheckedToTop('modalContactList', 'modal-contact-item');
+                    },
+                    error: function () {
+                        contactContainer.html('<div class="text-center py-5 text-danger fw-bold small">Error loading contacts.</div>');
+                    }
+                });
+            };
+
+            window.sortCheckedToTop = function (containerId, itemClass) {
+                let container = document.getElementById(containerId);
+                if (!container) return;
+                let items = Array.from(container.getElementsByClassName(itemClass));
+                items.sort((a, b) => {
+                    let aChecked = a.querySelector('input[type="checkbox"]').checked;
+                    let bChecked = b.querySelector('input[type="checkbox"]').checked;
+                    if (aChecked === bChecked) return 0;
+                    return aChecked ? -1 : 1;
+                });
+                items.forEach(item => container.appendChild(item));
+            };
+
+            $(document).on('change', '.modal-contact-check', function () {
+                if ($(this).is(':checked')) $(this).closest('.modal-contact-item').addClass('bg-success bg-opacity-10');
+                else $(this).closest('.modal-contact-item').removeClass('bg-success bg-opacity-10');
+            });
+
+            $(document).on('change', '.associate-check', function () {
+                let selected = [];
+                $('.associate-check:checked').each(function () { selected.push($(this).val()); });
+                let btnText = selected.length > 0 ? selected.join(", ") : "Select Associates...";
+                $('#associatesDropdownBtn').text(btnText).attr('title', btnText);
+            });
+
+            $('#associatesDropdownBtn').on('click', function () { window.sortCheckedToTop('associatesListContainer', 'assoc-item'); });
+
+            $(document).off('click', '.sp-select-action').on('click', '.sp-select-action', function (e) {
+                e.preventDefault();
+                window.selectDropdownVal('SalesPersonId', 'spDropdownBtn', $(this).data('id'), `<i class="bi bi-person me-2 text-secondary"></i>` + $(this).data('name'));
+            });
+
+            $('#frmSavePlan').on('submit', function (e) {
+                e.preventDefault();
+                let btn = $('#btnSavePlan');
+
+                if (!$('#SalesPersonId').val()) return alert("Please select a Sales Person.");
+
+                let custIds = []; $('.modal-customer-check:checked').each(function () { custIds.push($(this).val()); });
+                let contIds = []; $('.modal-contact-check:checked').each(function () { contIds.push($(this).val()); });
+                let assocs = []; $('.associate-check:checked').each(function () { assocs.push($(this).val()); });
+
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+                let payload = {
+                    DailyPlanId: $('#DailyPlanId').val(),
+                    Date: $('#PlanDate').val(),
+                    Time: $('#PlanTime').val(),
+                    CallType: $('#PlanCallType').val(),
+                    Place: $('#PlanPlaceText').val(),
+                    SalesPersonId: $('#SalesPersonId').val(),
+                    Associates: assocs.join(", "),
+                    CustomerIds: custIds.length > 0 ? custIds : null,
+                    ContactIds: contIds.length > 0 ? contIds : null
+                };
+
+                $.ajax({
+                    url: '/BeatRoute/SaveDailyPlan',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (res) {
+                        if (res.success) location.reload();
+                        else { alert("Error: " + res.message); btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Save Plan'); }
+                    },
+                    error: function () {
+                        alert("Network error occurred.");
+                        btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Save Plan');
+                    }
+                });
+            });
+
+        });
+    </script>
+}

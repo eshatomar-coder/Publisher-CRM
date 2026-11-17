@@ -1,0 +1,852 @@
+﻿@model Publisher_CRM.Models.RetailerPointview
+
+@{
+    ViewData["Title"] = "Edit Retailer Point";
+}
+
+<style>
+    body {
+        background: radial-gradient(circle at top right, #1a2a42, #0d1627);
+        background-color: #0d1627;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        color: #333;
+    }
+
+    /* --- Sidebar Styles --- */
+    .sidebar-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        padding: 25px 0;
+        position: sticky;
+        top: 30px;
+        margin-bottom: 2.5rem;
+    }
+
+    .sidebar-header {
+        padding: 0 25px 15px 25px;
+        border-bottom: 2px solid #f0f2f5;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .sidebar-header h4 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #16305a;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+    .menu-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 25px;
+        color: #495057;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+    }
+
+        .menu-item:hover {
+            background-color: #f8fbff;
+            color: #16305a;
+            text-decoration: none;
+        }
+
+        .menu-item.active {
+            background-color: #f0f5ff;
+            color: #16305a;
+            border-left: 4px solid #ffb703;
+        }
+
+        .menu-item .badge {
+            background-color: #e9ecef;
+            color: #495057;
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .menu-item.active .badge {
+            background-color: #ffffff;
+            color: #16305a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .menu-item.disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+            .menu-item.disabled:hover {
+                background-color: transparent;
+            }
+
+    /* --- Main Content Styles --- */
+    .crm-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 2.5rem;
+    }
+
+    .crm-header {
+        background: linear-gradient(135deg, #16305a 0%, #254d92 100%);
+        color: white;
+        padding: 35px 40px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 4px solid #ffb703;
+    }
+
+    .crm-header-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .crm-header-icon {
+        width: 60px;
+        height: 60px;
+        filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.4));
+    }
+
+    .crm-header-text h2 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 2.2rem;
+        letter-spacing: 0.5px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+    }
+
+    .crm-header-text p {
+        margin: 5px 0 0 0;
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .btn-convert {
+        background: linear-gradient(135deg, #16305a 0%, #254d92 100%);
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 1.1rem;
+        border: none;
+        padding: 12px 35px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-left: 15px;
+    }
+
+        .btn-convert:hover {
+            background: #0d1627;
+            transform: translateY(-3px);
+            color: white;
+            box-shadow: 0 10px 25px rgba(13, 22, 39, 0.4);
+        }
+
+    .publisher-badge {
+        background-color: #ffffff;
+        color: #16305a;
+        font-weight: 800;
+        padding: 10px 25px;
+        border-radius: 30px;
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+        color: #16305a;
+        font-weight: 800;
+        font-size: 1.3rem;
+        margin-bottom: 1.8rem;
+        padding-bottom: 8px;
+        border-bottom: 4px solid #ffb703;
+        display: inline-block;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+
+    .form-section-alt {
+        background-color: #f8fbff;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border: 1px solid #d8e5f5;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #343a40;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        background-color: #ffffff;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 12px 15px;
+        color: #212529;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #ffb703;
+            box-shadow: 0 0 0 0.25rem rgba(255, 183, 3, 0.25);
+            background-color: #fffdf7;
+            outline: none;
+        }
+
+    .btn-save {
+        background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%);
+        color: #ffffff;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        font-weight: 800;
+        font-size: 1.1rem;
+        border: none;
+        padding: 12px 35px;
+        border-radius: 10px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 6px 20px rgba(251, 133, 0, 0.4);
+        cursor: pointer;
+    }
+
+    .retailer-cart-icon {
+        width: 65px;
+        height: 65px;
+        background-color: #fff0f0; /* Soft pink/red background */
+        color: #ef4444; /* Cart red color */
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+    }
+
+        .btn-save:hover {
+            background: linear-gradient(135deg, #fb8500 0%, #e85d04 100%);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(251, 133, 0, 0.6);
+        }
+
+    .help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 400;
+        display: block;
+        margin-top: 5px;
+    }
+</style>
+
+<div class="container-fluid mt-4" style="max-width: 1500px;">
+
+    <!-- Added Grid Layout for Sidebar + Main Content -->
+    <div class="row g-4">
+
+        <!-- Left Sidebar (Related List) -->
+        <div class="col-lg-3 col-md-4">
+            <div class="sidebar-card">
+                <div class="sidebar-header">
+                    <h4>Related List</h4>
+                    <i class="bi bi-list-ul text-muted"></i>
+                </div>
+                <div class="sidebar-menu">
+
+                    @if (ViewBag.LinkedAccountId != null)
+                    {
+                        <a href="/Account/Edit/@ViewBag.LinkedAccountId" class="menu-item active" title="View Linked Account">
+                            <span>Accounts</span>
+                            <span class="badge">1</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="menu-item disabled">
+                            <span>Accounts</span>
+                            <span class="badge">0</span>
+                        </div>
+                    }
+
+                    <!-- UI Placeholders matching your reference image -->
+                    <a href="#" class="menu-item">
+                        <span>Contacts</span>
+                        <span class="badge">0</span>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <span>Sales Call</span>
+                        <span class="badge">0</span>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <span>Complaints</span>
+                        <span class="badge">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Form Content -->
+        <div class="col-lg-9 col-md-8">
+            <div class="crm-card">
+                <div class="crm-header">
+                    <div class="crm-header-left">
+                        <!-- Custom Cart Icon matching reference -->
+                        <div class="retailer-cart-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                            </svg>
+                        </div>
+                        <div class="crm-header-text">
+                            <h2>Edit Retailer</h2>
+                            <p>Modify existing business partner details</p>
+                        </div>
+                    </div>
+                    <div class="publisher-badge">
+                        PUBLISHER CRM
+                    </div>
+                </div>
+
+                <form method="post" asp-action="Edit" class="p-4 p-md-5">
+
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="form-section">
+                        <h3 class="section-title">Core Information</h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Retailer Name <span class="text-danger">*</span></label>
+                                <input asp-for="RetailerName" class="form-control" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OwnerName" class="form-label fw-bold">Retailer Owner</label>
+                                <select asp-for="OwnerName" class="form-select shadow-sm" asp-items="ViewBag.OwnerList">
+                                    <option value="">-- Select Owner --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Mobile Number</label>
+                                <input asp-for="MobileNumber" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Email Address</label>
+                                <input asp-for="EmailAddress" class="form-control" type="email" />
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Address</label>
+                                <input asp-for="Address" class="form-control" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label text-primary">Google Map Location</label>
+                                <input asp-for="GoogleMapLocation" class="form-control bg-light" placeholder="Generated coordinates/link will appear here" />
+                                <span class="help-text">Captured by system at the time of creation. Update only if coordinates changed.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section-alt">
+                        <h3 class="section-title">Store Details</h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <select asp-for="Category" id="Category" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Bookstore">Bookstore</option>
+                                    <option value="Toy Store">Toy Store</option>
+                                    <option value="Stationery Store">Stationery Store</option>
+                                    <option value="Gift Store">Gift Store</option>
+                                    <option value="Kids Store">Kids Store</option>
+                                    <option value="School Supply Store">School Supply Store</option>
+                                    <option value="Activity / Hobby Store">Activity / Hobby Store</option>
+                                    <option value="General Store">General Store</option>
+                                    <option value="Local Chain">Local Chain</option>
+                                    <option value="Supermarket / Mini Market">Supermarket / Mini Market</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="divCategoryOther" style="display: none;">
+                                <label class="form-label text-primary">If Other, specify:</label>
+                                <input asp-for="CategoryOther" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Store Size</label>
+                                <select asp-for="StoreSize" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Below 200 sq ft">Below 200 sq ft</option>
+                                    <option value="200–500 sq ft">200–500 sq ft</option>
+                                    <option value="500–1000 sq ft">500–1000 sq ft</option>
+                                    <option value="Above 1000 sq ft">Above 1000 sq ft</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Estimated Footfall</label>
+                                <select asp-for="EstimatedFootfall" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Location Quality</label>
+                                <select asp-for="StoreLocationQuality" id="StoreLocationQuality" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="High street">High street</option>
+                                    <option value="Mall">Mall</option>
+                                    <option value="School area">School area</option>
+                                    <option value="Market cluster">Market cluster</option>
+                                    <option value="Residential colony">Residential colony</option>
+                                    <option value="Mixed commercial area">Mixed commercial area</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="divLocationOther" style="display: none;">
+                                <label class="form-label text-primary">If Other, specify:</label>
+                                <input asp-for="StoreLocationOther" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Customer Profile</label>
+                                <select asp-for="CustomerProfile" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Premium parents">Premium parents</option>
+                                    <option value="Middle-income families">Middle-income families</option>
+                                    <option value="School children">School children</option>
+                                    <option value="Gift buyers">Gift buyers</option>
+                                    <option value="Teachers / schools">Teachers / schools</option>
+                                    <option value="General walk-in customers">General walk-in customers</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">Inventory & Fit</h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Currently Sells</label>
+                                <select asp-for="CurrentlySells" id="CurrentlySells" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Children’s books">Children’s books</option>
+                                    <option value="Educational books">Educational books</option>
+                                    <option value="Activity books">Activity books</option>
+                                    <option value="Board books">Board books</option>
+                                    <option value="Story books">Story books</option>
+                                    <option value="Puzzles">Puzzles</option>
+                                    <option value="Games">Games</option>
+                                    <option value="Toys">Toys</option>
+                                    <option value="Craft kits">Craft kits</option>
+                                    <option value="Stationery">Stationery</option>
+                                    <option value="Gifts">Gifts</option>
+                                    <option value="School supplies">School supplies</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="divCurrentlySellsOther" style="display: none;">
+                                <label class="form-label text-primary">If Other, specify:</label>
+                                <input asp-for="CurrentlySellsOther" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Share of Children’s Products</label>
+                                <select asp-for="ShareOfChildrensProducts" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Below 10%">Below 10%</option>
+                                    <option value="10–25%">10–25%</option>
+                                    <option value="25–50%">25–50%</option>
+                                    <option value="Above 50%">Above 50%</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Pegasus Product Fit</label>
+                                <select asp-for="PegasusProductFit" id="PegasusProductFit" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Board books">Board books</option>
+                                    <option value="Story books">Story books</option>
+                                    <option value="Activity books">Activity books</option>
+                                    <option value="Workbooks">Workbooks</option>
+                                    <option value="Early learning books">Early learning books</option>
+                                    <option value="Puzzles">Puzzles</option>
+                                    <option value="Games">Games</option>
+                                    <option value="Flashcards">Flashcards</option>
+                                    <option value="Craft kits">Craft kits</option>
+                                    <option value="Stickers">Stickers</option>
+                                    <option value="Gift sets">Gift sets</option>
+                                    <option value="Screen-free activity products">Screen-free activity products</option>
+                                    <option value="Premium gifting range">Premium gifting range</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="divPegasusFitOther" style="display: none;">
+                                <label class="form-label text-primary">If Other, specify:</label>
+                                <input asp-for="PegasusProductFitOther" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Overall Pegasus Fit</label>
+                                <select asp-for="OverallPegasusFit" id="OverallPegasusFit" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8" id="divReasonForFit" style="display: none;">
+                                <label class="form-label text-primary">Reason for Fit:</label>
+                                <input asp-for="ReasonForOverallFit" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Is Pegasus Already Available?</label>
+                                <select asp-for="IsPegasusAvailable" id="IsPegasusAvailable" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8" id="divSourceOfSupply" style="display: none;">
+                                <label class="form-label text-primary">If yes, source of supply:</label>
+                                <input asp-for="SourceOfSupply" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section-alt">
+                        <h3 class="section-title">Buying Pattern & Operations</h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Buying Pattern</label>
+                                <select asp-for="BuyingPattern" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Through Distributor">Through Distributor</option>
+                                    <option value="Through HO - Local Ordering">Through HO - Local Ordering</option>
+                                    <option value="Through HO - Centralised Ordering">Through HO - Centralised Ordering</option>
+                                    <option value="Through Company">Through Company</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Frequency</label>
+                                <select asp-for="PurchaseFrequency" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Weekly">Weekly</option>
+                                    <option value="Fortnightly">Fortnightly</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Seasonal">Seasonal</option>
+                                    <option value="Irregular">Irregular</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Approx Monthly Purchase Value</label>
+                                <select asp-for="MonthlyPurchaseValue" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Below ₹10,000">Below ₹10,000</option>
+                                    <option value="₹10,000–₹25,000">₹10,000–₹25,000</option>
+                                    <option value="₹25,000–₹50,000">₹25,000–₹50,000</option>
+                                    <option value="₹50,000–₹1,00,000">₹50,000–₹1,00,000</option>
+                                    <option value="Above ₹1,00,000">Above ₹1,00,000</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">Display & Visibility</h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Space Available for Pegasus?</label>
+                                <select asp-for="DisplaySpaceAvailable" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="Limited">Limited</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Suitable Display Type</label>
+                                <select asp-for="SuitableDisplayType" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Counter display">Counter display</option>
+                                    <option value="Shelf display">Shelf display</option>
+                                    <option value="Floor stand">Floor stand</option>
+                                    <option value="Wall rack">Wall rack</option>
+                                    <option value="Table display">Table display</option>
+                                    <option value="Seasonal display">Seasonal display</option>
+                                    <option value="No display possible">No display possible</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Merchandising Support?</label>
+                                <select asp-for="MerchandisingSupport" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Willingness to Give Visibility</label>
+                                <select asp-for="WillingnessToGiveVisibility" id="WillingnessToGiveVisibility" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Remarks">Remarks</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8" id="divVisibilityRemarks" style="display: none;">
+                                <label class="form-label text-primary">Visibility Remarks:</label>
+                                <input asp-for="VisibilityRemarks" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section-alt">
+                        <h3 class="section-title">Interest & Assessment</h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Retailer Interest</label>
+                                <select asp-for="RetailerInterest" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Not interested">Not interested</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Reason for Interest/Concern:</label>
+                                <input asp-for="ReasonForInterest" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Main Objection</label>
+                                <select asp-for="MainObjection" id="MainObjection" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Price">Price</option>
+                                    <option value="Margin">Margin</option>
+                                    <option value="Slow movement concern">Slow movement concern</option>
+                                    <option value="Already has other brands">Already has other brands</option>
+                                    <option value="Credit terms">Credit terms</option>
+                                    <option value="Space issue">Space issue</option>
+                                    <option value="No demand">No demand</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8" id="divMainObjectionOther" style="display: none;">
+                                <label class="form-label text-primary">If Other, specify objection:</label>
+                                <input asp-for="MainObjectionOther" class="form-control" />
+                            </div>
+                        </div>
+
+                        <hr style="border-color: #d8e5f5; margin: 35px 0;">
+
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Grade the Retailer</label>
+                                <select asp-for="GradeTheRetailer" id="GradeTheRetailer" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="A Grade">A Grade</option>
+                                    <option value="B Grade">B Grade</option>
+                                    <option value="C Grade">C Grade</option>
+                                    <option value="Not suitable">Not suitable</option>
+                                </select>
+                                <span class="help-text"><strong>A:</strong> Strong fit, <strong>B:</strong> Moderate fit, <strong>C:</strong> Low fit</span>
+                            </div>
+
+                            <div class="col-md-8" id="divReasonForGrade" style="display: none;">
+                                <label class="form-label text-danger">Reason for Grade (Required):</label>
+                                <input asp-for="ReasonForGrade" id="ReasonForGrade" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Recommended Action</label>
+                                <select asp-for="RecommendedAction" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Add to Distribution Network">Add to Distribution Network</option>
+                                    <option value="Keep for later activation">Keep for later activation</option>
+                                    <option value="Supply only through wholesaler">Supply only through wholesaler</option>
+                                    <option value="Not suitable currently">Not suitable currently</option>
+                                    <option value="Needs second visit">Needs second visit</option>
+                                    <option value="Needs NSM review">Needs NSM review</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mt-1">
+                            <div class="col-12">
+                                <label class="form-label">Key Observations</label>
+                                <input asp-for="KeyObservations" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Risks</label>
+                                <input asp-for="Risks" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Opportunities</label>
+                                <input asp-for="Opportunities" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Final Recommendation</label>
+                                <input asp-for="FinalRecommendation" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="section-title">NSM Review & Status</h3>
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <label class="form-label">Reviewed by NSM?</label>
+                                <select asp-for="ReviewedByNSM" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">NSM Decision</label>
+                                <select asp-for="NSMDecision" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Approved for activation">Approved for activation</option>
+                                    <option value="Hold">Hold</option>
+                                    <option value="Reject">Reject</option>
+                                    <option value="Revisit">Revisit</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">NSM Remarks:</label>
+                                <input asp-for="NSMRemarks" class="form-control" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Final Retailer Status</label>
+                                <select asp-for="FinalRetailerStatus" class="form-select">
+                                    <option value="">-- Select --</option>
+                                    <option value="Target Retailer">Target Retailer</option>
+                                    <option value="Active Retailer">Active Retailer</option>
+                                    <option value="Future Retailer">Future Retailer</option>
+                                    <option value="Not Suitable">Not Suitable</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+      
+
+                    <div class="border-top pt-4 mt-4 d-flex justify-content-start">
+                        <button type="submit" asp-action="Edit" class="btn-save">Update Retailer</button>
+                        <button type="submit" asp-action="ConvertToAccount" class="btn-convert">Convert to Account</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // Standard generic toggle method
+            function bindToggle(selectId, divId, targetValue) {
+                var selectEl = document.getElementById(selectId);
+                var divEl = document.getElementById(divId);
+
+                if (!selectEl || !divEl) return;
+
+                function checkVisibility() {
+                    if (targetValue === "NOT_EMPTY") {
+                        divEl.style.display = (selectEl.value !== "") ? "block" : "none";
+                    } else {
+                        divEl.style.display = (selectEl.value === targetValue) ? "block" : "none";
+                    }
+                }
+
+                selectEl.addEventListener("change", checkVisibility);
+                checkVisibility(); // Trigger on page load to map existing data states
+            }
+
+            // Custom Required Toggle for Grade
+            function bindRequiredToggle(selectId, divId, inputId) {
+                var selectEl = document.getElementById(selectId);
+                var divEl = document.getElementById(divId);
+                var inputEl = document.getElementById(inputId);
+
+                if (!selectEl || !divEl || !inputEl) return;
+
+                function checkGradeVisibility() {
+                    if (selectEl.value !== "") {
+                        divEl.style.display = "block";
+                        inputEl.setAttribute("required", "required");
+                    } else {
+                        divEl.style.display = "none";
+                        inputEl.removeAttribute("required");
+
+                        // Only clear out the value if the user is actively making a change.
+                        // This preserves pre-filled edit data during initialization.
+                        if (document.activeElement === selectEl) {
+                            inputEl.value = "";
+                        }
+                    }
+                }
+                selectEl.addEventListener("change", checkGradeVisibility);
+                checkGradeVisibility();
+            }
+
+            // Bindings for "Other" conditions
+            bindToggle("Category", "divCategoryOther", "Other");
+            bindToggle("StoreLocationQuality", "divLocationOther", "Other");
+            bindToggle("CurrentlySells", "divCurrentlySellsOther", "Other");
+            bindToggle("PegasusProductFit", "divPegasusFitOther", "Other");
+            bindToggle("MainObjection", "divMainObjectionOther", "Other");
+
+            // Binding for "Yes" condition
+            bindToggle("IsPegasusAvailable", "divSourceOfSupply", "Yes");
+
+            // Bindings for Reasons/Remarks
+            bindToggle("OverallPegasusFit", "divReasonForFit", "NOT_EMPTY");
+            bindToggle("WillingnessToGiveVisibility", "divVisibilityRemarks", "Remarks");
+
+            // Required validation on Grade Selection
+            bindRequiredToggle("GradeTheRetailer", "divReasonForGrade", "ReasonForGrade");
+        });
+    </script>
+}

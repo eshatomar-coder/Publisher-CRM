@@ -1,0 +1,718 @@
+﻿@model IEnumerable<Publisher_CRM.Models.RetailerPointview>
+
+@{
+    ViewData["Title"] = "Retailer Points Master";
+}
+
+<!-- DataTables & Select2 CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<style>
+    /* --- Light Blue Modern Theme --- */
+    :root {
+        --theme-light-blue: #eef6ff;
+        --theme-border: #cce0fa;
+        --theme-primary: #0d6efd;
+        --theme-hover: #e0eeff;
+        --theme-text: #1a437a;
+        --sidebar-bg: #ffffff;
+    }
+
+    body {
+        background-color: #f4f7fb;
+    }
+
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.05) !important;
+    }
+
+    /* Layout */
+    .page-layout {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    /* Fixed Left Sidebar for Filters */
+    .filter-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+        background: var(--sidebar-bg);
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        position: sticky;
+        top: 20px;
+        height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--theme-border);
+        background-color: #f8fafc;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .filter-sidebar-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .filter-sidebar-footer {
+        padding: 15px 20px;
+        border-top: 1px solid var(--theme-border);
+        background-color: #f8fafc;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .main-content {
+        flex-grow: 1;
+        min-width: 0; /* Prevents datatables from overflowing flex container */
+    }
+
+    /* Advanced Filter Item Styling */
+    .filter-group {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .filter-controls {
+        background-color: #f8fafc;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-top: 8px;
+    }
+
+    /* Select2 Adjustments to match UI */
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        min-height: 36px;
+    }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #e0f2fe;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            border-radius: 4px;
+            padding: 2px 8px;
+        }
+
+    /* Table Header Styling */
+    .table-light-blue th {
+        background-color: var(--theme-light-blue) !important;
+        color: var(--theme-text) !important;
+        border-bottom: 2px solid var(--theme-primary);
+        font-weight: 700;
+        vertical-align: middle;
+        padding: 12px 15px;
+    }
+
+    /* Row Hover Effect */
+    table.dataTable tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+        table.dataTable tbody tr:hover {
+            background-color: var(--theme-hover) !important;
+            cursor: pointer;
+        }
+
+    /* Action Buttons */
+    .btn-select-columns {
+        background-color: #475569 !important;
+        color: white !important;
+        border: none;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+        .btn-select-columns:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(71, 85, 105, 0.3);
+        }
+
+    /* Offcanvas (Column Show/Hide) */
+    .column-checkbox-list {
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+
+    .form-check-custom {
+        padding: 10px 0;
+        border-bottom: 1px dashed #e9ecef;
+    }
+</style>
+
+<div class="container-fluid mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-dark fw-bold m-0" style="color: var(--theme-text) !important;">
+            <i class="bi bi-shop text-primary me-2"></i> Retailer Points Master
+        </h2>
+        <div class="d-flex gap-2">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <a asp-action="Create" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i> Create Retailer
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" style="background-color: #d1e7dd; color: #0f5132;" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="page-layout">
+        <!-- LEFT SIDEBAR: ADVANCED FILTERS -->
+        <div class="filter-sidebar">
+            <div class="filter-sidebar-header">
+                <h5 class="m-0 d-flex align-items-center fw-bold text-dark">
+                    <i class="bi bi-funnel text-primary me-2 fs-5"></i> Filter By Fields
+                </h5>
+            </div>
+
+            <div class="filter-sidebar-body">
+                <input type="text" id="filterSearchBox" class="form-control form-control-sm mb-3" placeholder="Search fields... (e.g. Status, Owner)">
+                <!-- Filter elements will be injected here dynamically by JS -->
+                <div id="advancedFilterContainer"></div>
+            </div>
+
+            <div class="filter-sidebar-footer d-flex gap-2">
+                <button id="applyFilterBtn" class="btn btn-primary w-50 fw-bold">Apply</button>
+                <button id="clearFilterBtn" class="btn btn-outline-secondary w-50 fw-bold">Clear All</button>
+            </div>
+        </div>
+
+        <!-- MAIN TABLE CONTENT -->
+        <div class="main-content">
+            <div class="card border-0">
+                <div class="card-body">
+
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-4" id="dt-length-container"></div>
+                        <div class="col-md-8 d-flex justify-content-md-end align-items-center gap-2" id="dt-search-container">
+
+                            <!-- BULK CONVERT BUTTON -->
+                            <button class="btn btn-success ms-2 shadow-sm fw-bold px-3 py-2 rounded-3" type="button" id="btnBulkConvert">
+                                <i class="bi bi-briefcase-fill me-1"></i> Convert to Account
+                            </button>
+
+                            <!-- SHOW/HIDE COLUMNS BUTTON -->
+                            <button class="btn btn-select-columns ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#columnSidebar">
+                                <i class="bi bi-layout-three-columns me-1"></i> Show/Hide Columns
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="retailersTable" class="table align-middle w-100" style="white-space: nowrap;">
+                            <thead class="table-light-blue">
+                                <tr>
+                                    <th class="text-center" style="width: 40px;">
+                                        <input class="form-check-input" type="checkbox" id="selectAllRetailers">
+                                    </th>
+                                    <!-- All Fields from RetailerPointview Model -->
+                                    <th>RP Code</th>
+                                    <th>Retailer Name</th>
+                                    <th>Owner</th>
+                                    <th>Category</th>
+                                    <th>Store Size</th>
+                                    <th>Grade</th>
+                                    <th>Status</th>
+                                    <th>Overall Fit</th>
+                                    <th>Buying Pattern</th>
+                                    <th>Mobile</th>
+                                    <th>Email</th>
+                                    <th>Account Code</th>
+                                    <th>Address</th>
+                                    <th>Google Map Location</th>
+                                    <th>Category Other</th>
+                                    <th>Location Quality</th>
+                                    <th>Location Other</th>
+                                    <th>Estimated Footfall</th>
+                                    <th>Customer Profile</th>
+                                    <th>Currently Sells</th>
+                                    <th>Sells Other</th>
+                                    <th>Childrens Products %</th>
+                                    <th>Pegasus Fit</th>
+                                    <th>Pegasus Fit Other</th>
+                                    <th>Reason For Fit</th>
+                                    <th>Is Pegasus Available</th>
+                                    <th>Source Of Supply</th>
+                                    <th>Purchase Frequency</th>
+                                    <th>Monthly Purchase Value</th>
+                                    <th>Space Available</th>
+                                    <th>Display Type</th>
+                                    <th>Merchandising Support</th>
+                                    <th>Give Visibility</th>
+                                    <th>Visibility Remarks</th>
+                                    <th>Retailer Interest</th>
+                                    <th>Reason For Interest</th>
+                                    <th>Main Objection</th>
+                                    <th>Objection Other</th>
+                                    <th>Reason For Grade</th>
+                                    <th>Recommended Action</th>
+                                    <th>Key Observations</th>
+                                    <th>Risks</th>
+                                    <th>Opportunities</th>
+                                    <th>Final Recommendation</th>
+                                    <th>Reviewed By NSM</th>
+                                    <th>NSM Decision</th>
+                                    <th>NSM Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null && Model.Any())
+                                {
+                                    foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td class="text-center" onclick="event.stopPropagation();">
+                                                <input class="form-check-input row-checkbox" type="checkbox" value="@item.Id">
+                                            </td>
+                                            <td class="fw-bold">@(string.IsNullOrEmpty(item.RPCode) ? "-" : item.RPCode)</td>
+                                            <td>
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="text-decoration-none fw-bold" style="color: var(--theme-primary);">
+                                                    @item.RetailerName
+                                                </a>
+                                            </td>
+                                            <td>@item.OwnerName</td>
+                                            <td>@item.Category</td>
+                                            <td>@item.StoreSize</td>
+                                            <td>
+                                                @if (item.GradeTheRetailer == "A Grade")
+                                                {
+                                                    <span class="badge bg-success">A</span>
+                                                }
+                                                else if (item.GradeTheRetailer == "B Grade")
+                                                {
+
+                                                    <span class="badge bg-primary">B</span>
+                                                }
+                                                else if (item.GradeTheRetailer == "C Grade")
+                                                {
+
+                                                    <span class="badge bg-warning text-dark">C</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="text-muted small">Unassigned</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (item.FinalRetailerStatus == "Active Retailer")
+                                                {
+                                                    <span class="badge bg-success rounded-pill px-3">@item.FinalRetailerStatus</span>
+                                                }
+                                                else if (item.FinalRetailerStatus == "Target Retailer" || item.FinalRetailerStatus == "Future Retailer")
+                                                {
+
+                                                    <span class="badge bg-warning text-dark rounded-pill px-3">@item.FinalRetailerStatus</span>
+                                                }
+                                                else if (item.FinalRetailerStatus == "Not Suitable")
+                                                {
+
+                                                    <span class="badge bg-danger rounded-pill px-3">@item.FinalRetailerStatus</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="badge bg-secondary rounded-pill px-3">Pending</span>
+                                                }
+                                            </td>
+                                            <td>@item.OverallPegasusFit</td>
+                                            <td>@item.BuyingPattern</td>
+                                            <td>@item.MobileNumber</td>
+                                            <td>@item.EmailAddress</td>
+
+                                            <!-- Extra Data Fields (Hidden by default in JS) -->
+                                            <td>@item.AccountCode</td>
+                                            <td>@item.Address</td>
+                                            <td>@item.GoogleMapLocation</td>
+                                            <td>@item.CategoryOther</td>
+                                            <td>@item.StoreLocationQuality</td>
+                                            <td>@item.StoreLocationOther</td>
+                                            <td>@item.EstimatedFootfall</td>
+                                            <td>@item.CustomerProfile</td>
+                                            <td>@item.CurrentlySells</td>
+                                            <td>@item.CurrentlySellsOther</td>
+                                            <td>@item.ShareOfChildrensProducts</td>
+                                            <td>@item.PegasusProductFit</td>
+                                            <td>@item.PegasusProductFitOther</td>
+                                            <td>@item.ReasonForOverallFit</td>
+                                            <td>@item.IsPegasusAvailable</td>
+                                            <td>@item.SourceOfSupply</td>
+                                            <td>@item.PurchaseFrequency</td>
+                                            <td>@item.MonthlyPurchaseValue</td>
+                                            <td>@item.DisplaySpaceAvailable</td>
+                                            <td>@item.SuitableDisplayType</td>
+                                            <td>@item.MerchandisingSupport</td>
+                                            <td>@item.WillingnessToGiveVisibility</td>
+                                            <td>@item.VisibilityRemarks</td>
+                                            <td>@item.RetailerInterest</td>
+                                            <td>@item.ReasonForInterest</td>
+                                            <td>@item.MainObjection</td>
+                                            <td>@item.MainObjectionOther</td>
+                                            <td>@item.ReasonForGrade</td>
+                                            <td>@item.RecommendedAction</td>
+                                            <td>@item.KeyObservations</td>
+                                            <td>@item.Risks</td>
+                                            <td>@item.Opportunities</td>
+                                            <td>@item.FinalRecommendation</td>
+                                            <td>@item.ReviewedByNSM</td>
+                                            <td>@item.NSMDecision</td>
+                                            <td>@item.NSMRemarks</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas for Show/Hide Columns ONLY -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="columnSidebar">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title d-flex align-items-center">
+            <i class="bi bi-layout-three-columns text-primary me-2 fs-4"></i> Show/Hide Columns
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <p class="text-muted small mb-3">Select the columns you want to display in the table.</p>
+        <input type="text" id="columnSearchBox" class="form-control mb-3" placeholder="Search columns...">
+
+        <div class="column-checkbox-list" id="sidebarCheckboxes">
+            <!-- Checkboxes injected by JS -->
+        </div>
+
+        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+            <button class="btn btn-outline-secondary w-100" id="resetColumnsBtn">Reset Defaults</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+        // ==========================================
+        // PREDEFINED OPTIONS FOR FILTERS
+        // Maps Column Titles to their full options
+        // ==========================================
+        const predefinedOptions = {
+        "Category": ["Bookstore", "Toy Store", "Stationery Store", "Gift Store", "Kids Store", "School Supply Store", "Activity / Hobby Store", "General Store", "Local Chain", "Supermarket / Mini Market", "Other"],
+        "Store Size": ["Below 200 sq ft", "200–500 sq ft", "500–1000 sq ft", "Above 1000 sq ft"],
+        "Grade": ["A Grade", "B Grade", "C Grade", "Not suitable"],
+        "Status": ["Target Retailer", "Active Retailer", "Future Retailer", "Not Suitable", "Pending"],
+        "Overall Fit": ["High", "Medium", "Low"],
+        "Buying Pattern": ["Through Distributor", "Through HO - Local Ordering", "Through HO - Centralised Ordering", "Through Company"],
+        "Location Quality": ["High street", "Mall", "School area", "Market cluster", "Residential colony", "Mixed commercial area", "Other"],
+        "Estimated Footfall": ["Low", "Medium", "High"],
+        "Customer Profile": ["Premium parents", "Middle-income families", "School children", "Gift buyers", "Teachers / schools", "General walk-in customers"],
+        "Currently Sells": ["Children’s books", "Educational books", "Activity books", "Board books", "Story books", "Puzzles", "Games", "Toys", "Craft kits", "Stationery", "Gifts", "School supplies", "Other"],
+        "Childrens Products %": ["Below 10%", "10–25%", "25–50%", "Above 50%"],
+        "Pegasus Fit": ["Board books", "Story books", "Activity books", "Workbooks", "Early learning books", "Puzzles", "Games", "Flashcards", "Craft kits", "Stickers", "Gift sets", "Screen-free activity products", "Premium gifting range", "Other"],
+        "Is Pegasus Available": ["Yes", "No"],
+        "Purchase Frequency": ["Weekly", "Fortnightly", "Monthly", "Seasonal", "Irregular"],
+        "Monthly Purchase Value": ["Below ₹10,000", "₹10,000–₹25,000", "₹25,000–₹50,000", "₹50,000–₹1,00,000", "Above ₹1,00,000"],
+        "Space Available": ["Yes", "Limited", "No"],
+        "Display Type": ["Counter display", "Shelf display", "Floor stand", "Wall rack", "Table display", "Seasonal display", "No display possible"],
+        "Merchandising Support": ["Yes", "No"],
+        "Give Visibility": ["High", "Medium", "Low", "Remarks"],
+        "Retailer Interest": ["High", "Medium", "Low", "Not interested"],
+        "Main Objection": ["Price", "Margin", "Slow movement concern", "Already has other brands", "Credit terms", "Space issue", "No demand", "Other"],
+        "Recommended Action": ["Add to Distribution Network", "Keep for later activation", "Supply only through wholesaler", "Not suitable currently", "Needs second visit", "Needs NSM review"],
+        "Reviewed By NSM": ["Yes", "No"],
+        "NSM Decision": ["Approved for activation", "Hold", "Reject", "Revisit"]
+        };
+
+        // Columns 1 to 11 are visible by default. 12+ are hidden by default.
+        var defaultHiddenTargets = [];
+        for (var i = 12; i <= 47; i++) {
+        defaultHiddenTargets.push(i);
+        }
+
+        var table = $('#retailersTable').DataTable({
+        "pageLength": 15,
+        "scrollX": true,
+        "stateSave": false,
+        "lengthMenu": [[15, 25, 50, 100, -1], [15, 25, 50, 100, "All"]],
+        "dom": "<'row'<'col-sm-12'tr>>" +
+        "<'row mt-4 align-items-center'<'col-sm-12 col-md-5 text-muted'i><'col-sm-12 col-md-7'p>>",
+        "columnDefs": [
+        { "visible": false, "targets": defaultHiddenTargets },
+        { "orderable": false, "targets": 0 }
+        ],
+        initComplete: function () {
+        var api = this.api();
+
+        $('#retailersTable_length').appendTo('#dt-length-container');
+        $('#retailersTable_filter').prependTo('#dt-search-container');
+        $('#retailersTable_filter input').addClass('form-control').attr('placeholder', 'Global Search...');
+
+        api.columns().every(function (index) {
+        if (index === 0) return;
+
+        let column = this;
+        let title = $(column.header()).text().trim();
+        let isVisible = column.visible();
+
+        // --- A. SHOW/HIDE COLUMNS ---
+        let colCheckboxHtml = `
+        <div class="form-check-custom column-item">
+        <input class="form-check-input col-toggle-cb" type="checkbox" id="col_cb_${index}" data-column="${index}" ${isVisible ? 'checked' : ''}>
+        <label class="form-check-label" for="col_cb_${index}">${title}</label>
+        </div>
+        `;
+        $('#sidebarCheckboxes').append(colCheckboxHtml);
+
+        // --- B. ADVANCED FILTERS SIDEBAR ---
+        let filterHtml = `
+        <div class="filter-group filter-field-item">
+        <div class="form-check mb-1">
+        <input class="form-check-input filter-enable-cb" type="checkbox" id="filter_cb_${index}" data-col="${index}">
+        <label class="form-check-label fw-bold" for="filter_cb_${index}">${title}</label>
+        </div>
+        <div class="filter-controls" id="filter_controls_${index}" style="display: none;">
+        <select class="form-select form-select-sm mb-2 filter-operator" data-col="${index}">
+        <option value="is">is</option>
+        <option value="isnt">isn't</option>
+        <option value="contains">contains</option>
+        <option value="not_contains">doesn't contain</option>
+        <option value="starts_with">starts with</option>
+        <option value="ends_with">ends with</option>
+        <option value="empty">is empty</option>
+        <option value="not_empty">is not empty</option>
+        </select>
+        <select class="form-select form-select-sm filter-value select2-multi" multiple="multiple" data-col="${index}" style="width: 100%;">
+        </select>
+        </div>
+        </div>
+        `;
+        $('#advancedFilterContainer').append(filterHtml);
+
+        // --- C. POPULATE SELECT2 OPTIONS ---
+        let select = $(`#filter_controls_${index} .filter-value`);
+
+        // Check if we have predefined options for this column title
+        if (predefinedOptions[title]) {
+        // Inject predefined standard options
+        predefinedOptions[title].forEach(function(val) {
+        select.append(new Option(val, val));
+        });
+        } else {
+        // Dynamic fallback (Owner Name, Address, etc.) - pull from table
+        let uniqueValues = new Set();
+        column.data().each(function (d) {
+        if (d !== null && d !== undefined) {
+        let cleanData = $('<div>').html(d).text().trim();
+        if (cleanData !== "") uniqueValues.add(cleanData);
+        }
+        });
+        Array.from(uniqueValues).sort().forEach(function (val) {
+        select.append(new Option(val, val));
+        });
+        }
+        });
+
+        $('.select2-multi').select2({
+        placeholder: "Select or type...",
+        allowClear: true,
+        dropdownParent: $('.filter-sidebar')
+        });
+
+        $('.col-toggle-cb').on('change', function () {
+        let colIdx = $(this).data('column');
+        let isChecked = $(this).is(':checked');
+        api.column(colIdx).visible(isChecked);
+        });
+
+        $('.filter-enable-cb').on('change', function() {
+        let colIdx = $(this).data('col');
+        if($(this).is(':checked')) {
+        $(`#filter_controls_${colIdx}`).slideDown(200);
+        } else {
+        $(`#filter_controls_${colIdx}`).slideUp(200);
+        $(`#filter_controls_${colIdx} .filter-value`).val(null).trigger('change');
+        }
+        });
+        }
+        });
+
+        // ----------------------------------------------------
+        // CUSTOM DATATABLES FILTERING LOGIC
+        // ----------------------------------------------------
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        let showRow = true;
+
+        $('.filter-enable-cb:checked').each(function() {
+        let colIdx = $(this).data('col');
+        let operator = $(`#filter_controls_${colIdx} .filter-operator`).val();
+        let selectedValues = $(`#filter_controls_${colIdx} .filter-value`).val() || [];
+
+        let rawData = (data[colIdx] !== undefined && data[colIdx] !== null) ? data[colIdx] : "";
+        let cellValue = $('<div>').html(rawData).text().trim();
+        let lowerCell = cellValue.toLowerCase();
+
+        if (operator === 'empty') {
+        if (cellValue !== '') showRow = false;
+        return;
+        }
+        if (operator === 'not_empty') {
+        if (cellValue === '') showRow = false;
+        return;
+        }
+
+        if (selectedValues.length === 0) return;
+
+        let match = false;
+
+        if (['is', 'contains', 'starts_with', 'ends_with'].includes(operator)) {
+        for (let val of selectedValues) {
+        val = val.toLowerCase();
+        if (operator === 'is' && lowerCell === val) match = true;
+        if (operator === 'contains' && lowerCell.includes(val)) match = true;
+        if (operator === 'starts_with' && lowerCell.startsWith(val)) match = true;
+        if (operator === 'ends_with' && lowerCell.endsWith(val)) match = true;
+        }
+        }
+        else if (['isnt', 'not_contains'].includes(operator)) {
+        match = true;
+        for (let val of selectedValues) {
+        val = val.toLowerCase();
+        if (operator === 'isnt' && lowerCell === val) match = false;
+        if (operator === 'not_contains' && lowerCell.includes(val)) match = false;
+        }
+        }
+
+        if (!match) {
+        showRow = false;
+        return false;
+        }
+        });
+
+        return showRow;
+        });
+
+        $('#applyFilterBtn').on('click', function() {
+        table.draw();
+        });
+
+        $('#clearFilterBtn').on('click', function() {
+        $('.filter-enable-cb').prop('checked', false).trigger('change');
+        $('.select2-multi').val(null).trigger('change');
+        table.draw();
+        });
+
+        $('#filterSearchBox').on('keyup', function() {
+        var value = $(this).val().toLowerCase();
+        $('.filter-field-item').filter(function() {
+        $(this).toggle($(this).find('.form-check-label').text().toLowerCase().indexOf(value) > -1);
+        });
+        });
+
+        $('#columnSearchBox').on('keyup', function() {
+        var value = $(this).val().toLowerCase();
+        $('.column-item').filter(function() {
+        $(this).toggle($(this).find('label').text().toLowerCase().indexOf(value) > -1);
+        });
+        });
+
+        $('#resetColumnsBtn').on('click', function() {
+        $('.col-toggle-cb').each(function() {
+        let colIdx = $(this).data('column');
+        let shouldBeVisible = colIdx <= 11;
+
+        if ($(this).is(':checked') !== shouldBeVisible) {
+        $(this).prop('checked', shouldBeVisible).trigger('change');
+        }
+        });
+        });
+
+        // ----------------------------------------------------
+        // CHECKBOX & BULK CONVERT LOGIC
+        // ----------------------------------------------------
+        $('#selectAllRetailers').on('click', function () {
+        var isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        });
+
+        $('table.dataTable tbody').on('click', '.row-checkbox', function(e) {
+        e.stopPropagation();
+        if (!$(this).prop('checked')) {
+        $('#selectAllRetailers').prop('checked', false);
+        }
+        });
+
+        $('table.dataTable tbody').on('click', 'tr', function (e) {
+        if ($(e.target).closest('a, button, input, select').length) return;
+        var editUrl = $(this).find('a').attr('href');
+        if (editUrl) window.location.href = editUrl;
+        });
+
+        $('#btnBulkConvert').on('click', function () {
+        var selectedIds = [];
+        $('.row-checkbox:checked').each(function () {
+        selectedIds.push(parseInt($(this).val()));
+        });
+
+        if (selectedIds.length === 0) {
+        alert("Please select at least one retailer to convert.");
+        return;
+        }
+
+        if (confirm("Are you sure you want to convert " + selectedIds.length + " selected retailer(s) to Accounts?")) {
+        var btn = $(this);
+        var originalText = btn.html();
+        btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Converting...').prop('disabled', true);
+
+        $.ajax({
+        url: '@Url.Action("BulkConvertToAccount", "RetailerPoint")',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(selectedIds),
+        success: function (response) {
+        if (response.success) {
+        alert(response.message);
+        location.reload();
+        } else {
+        alert(response.message);
+        btn.html(originalText).prop('disabled', false);
+        }
+        },
+        error: function () {
+        alert("An error occurred while converting records.");
+        btn.html(originalText).prop('disabled', false);
+        }
+        });
+        }
+        });
+        });
+    </script>
+}
