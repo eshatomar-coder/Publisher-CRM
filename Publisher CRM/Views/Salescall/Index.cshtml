@@ -467,7 +467,7 @@
                     <i class="fa-solid fa-trash"></i> Delete (<span id="selectedCount">0</span>)
                 </button>
                 <div id="columns-btn-container" class="d-none d-md-block"></div>
-                <a href="/SalesCall/Create" class="btn-saas btn-saas-primary shadow-sm text-white border-0 text-decoration-none">
+                <a href="@Url.Action("Create", "SalesCall")" class="btn-saas btn-saas-primary shadow-sm text-white border-0 text-decoration-none">
                     <i class="fa-solid fa-plus"></i> Log Action
                 </a>
             </div>
@@ -580,7 +580,7 @@
             // Initialize DataTable
             var table = $('#salesCallTable').DataTable({
                 "ajax": {
-                    "url": '/SalesCall/GetSalesCallsList',
+                    "url": '@Url.Action("GetSalesCallsList", "SalesCall")',
                     "dataSrc": ""
                 },
                 "stateSave": true,
@@ -602,7 +602,7 @@
                     { 
                         "data": "id",
                         "render": function (data, type, row) {
-                            return `<a href="/SalesCall/Edit/${row.id}" class="text-primary fw-bold text-decoration-none">${data}</a>`;
+                            return `<a href="@Url.Action("Edit", "SalesCall")/${row.id}" class="text-primary fw-bold text-decoration-none">${data}</a>`;
                         }
                     },
                     { "data": "callDateTime", "defaultContent": "-" },
@@ -645,7 +645,7 @@
                         "orderable": false,
                         "className": 'sticky-actions text-center',
                         "render": function (data, type, row) {
-                            return `<a href="/SalesCall/Edit/${row.id}" class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2 text-decoration-none"><i class="bi bi-pencil-square"></i></a>`;
+                            return `<a href="@Url.Action("Edit", "SalesCall")/${row.id}" class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2 text-decoration-none"><i class="bi bi-pencil-square"></i></a>`;
                         }
                     }
                 ],
@@ -797,7 +797,7 @@
 
                     // MAKE SURE TO CREATE THIS METHOD IN YOUR CONTROLLER IF IT DOES NOT EXIST
                     $.ajax({
-                        url: '/SalesCall/DeleteBulk', 
+                        url: '@Url.Action("DeleteBulk", "SalesCall")',
                         type: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify(selectedIds),
@@ -824,7 +824,7 @@
             $('table.dataTable tbody').on('click', 'tr', function (e) {
                 if ($(e.target).closest('a, button, input, select, .row-cb').length) return;
                 var data = table.row(this).data();
-                if (data && data.id) window.location.href = '/SalesCall/Edit/' + data.id;
+                if (data && data.id) window.location.href = '@Url.Action("Edit", "SalesCall")/' + data.id;
             });
         });
     </script>

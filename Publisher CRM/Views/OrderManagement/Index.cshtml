@@ -503,7 +503,7 @@
 
                 <div id="columns-btn-container" class="d-none d-md-block"></div>
                 
-                <a href="/OrderManagement/Create" class="btn-saas btn-saas-primary shadow-sm text-white border-0 text-decoration-none">
+                <a href="@Url.Action("Create", "OrderManagement")" class="btn-saas btn-saas-primary shadow-sm text-white border-0 text-decoration-none">
                     <i class="fa-solid fa-plus"></i> New Order
                 </a>
             </div>
@@ -618,7 +618,7 @@
             
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Syncing...');
 
-            $.post('/OrderManagement/SyncBCOrders', function (res) {
+            $.post('@Url.Action("SyncBCOrders", "OrderManagement")', function (res) {
                 btn.prop('disabled', false).html(originalHtml);
                 if (res.success) {
                     alert(res.message);
@@ -689,7 +689,7 @@
             // Initialize DataTable
             var table = $('#ordersTable').DataTable({
                 "ajax": {
-                    "url": '/OrderManagement/GetOrdersList',
+                    "url": '@Url.Action("GetOrdersList", "OrderManagement")',
                     "dataSrc": function (json) {
                         let data = json.data || json;
                         
@@ -722,7 +722,7 @@
                     { 
                         "data": "orderId",
                         "render": function (data, type, row) {
-                            return `<a href="/OrderManagement/Details/${row.recordId}" class="text-primary fw-bold text-decoration-none">${data || '-'}</a>`;
+                            return `<a href="@Url.Action("Details", "OrderManagement")/${row.recordId}" class="text-primary fw-bold text-decoration-none">${data || '-'}</a>`;
                         }
                     },
                     { "data": "accountName", "defaultContent": "-" },
@@ -764,7 +764,7 @@
                         "orderable": false,
                         "className": 'sticky-actions text-center',
                         "render": function (data, type, row) {
-                            return `<a href="/OrderManagement/Edit/${row.recordId}" class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2 text-decoration-none"><i class="bi bi-pencil-square"></i></a>`;
+                            return `<a href="@Url.Action("Edit", "OrderManagement")/${row.recordId}" class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2 text-decoration-none"><i class="bi bi-pencil-square"></i></a>`;
                         }
                     }
                 ],
@@ -907,7 +907,7 @@
                     btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Deleting...');
 
                     $.ajax({
-                        url: '/OrderManagement/DeleteBulk', // Ensure this action exists in your controller!
+                        url: '@Url.Action("DeleteBulk", "OrderManagement")', // Ensure this action exists in your controller!
                         type: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify(selectedIds),
@@ -935,7 +935,7 @@
             $('table.dataTable tbody').on('click', 'tr', function (e) {
                 if ($(e.target).closest('a, button, input, select, .row-cb').length) return;
                 var data = table.row(this).data();
-                if (data && data.recordId) window.location.href = '/OrderManagement/Edit/' + data.recordId;
+                if (data && data.recordId) window.location.href = '@Url.Action("Edit", "OrderManagement")/' + data.recordId;
             });
         });
     </script>

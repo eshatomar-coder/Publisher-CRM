@@ -9,7 +9,6 @@ namespace Publisher_CRM.Models
         [Key]
         [Ignore]
         public int AccountId { get; set; }
-
         public string? RecordId { get; set; }
 
         // ==========================================
@@ -19,7 +18,7 @@ namespace Publisher_CRM.Models
         public int? PostCodeId { get; set; }
 
         [ForeignKey("PostCodeId")]
-        [Ignore] // CRITICAL: Stop CSV Helper from creating a Postcode object
+        [Ignore]
         public virtual Postcode PostCode { get; set; }
 
         [NotMapped]
@@ -35,10 +34,9 @@ namespace Publisher_CRM.Models
         [Required]
         public string AccountName { get; set; }
 
+        public string? ContactName { get; set; } // NEW
         public string? Phone { get; set; }
-
         public string? CompanyName { get; set; }
-
         public string? Mobile { get; set; }
         public string? Email { get; set; }
 
@@ -48,17 +46,28 @@ namespace Publisher_CRM.Models
         public string? City { get; set; }
         public string? State { get; set; }
 
-        // ADDED MAPPING HERE: Ensures the raw postcode text from the CSV maps into this string field
         [Name("Postcode", "Post Code", "Zip", "Zip Code", "ZipCode")]
         public string? Postcode { get; set; }
-
         public string? Country { get; set; }
 
         // Custom CRM Data
+        public string? Status { get; set; } // NEW: Potential, Active, In-Active, Dormant, New, Closed
+        public string? AccountStatus { get; set; } // NEW: Hold, Pending, Approved
+        public string? Source { get; set; } // NEW
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TwelveMonthBusiness { get; set; } // NEW
+
         public string? CustomerRelationship { get; set; }
         public string? Description { get; set; }
         public bool? NoOutputAccount { get; set; }
+
+        // INTERACTION COUNTS
         public int? SalesCallCount { get; set; }
+        public int? RemarkCount { get; set; }
+        public int? IssueCount { get; set; }
+        public int? EnquiryCount { get; set; }
+        public int? OrderCount { get; set; }
 
         // PROFILE SECTION
         public string? Website { get; set; }

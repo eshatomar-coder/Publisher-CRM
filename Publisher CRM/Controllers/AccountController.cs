@@ -454,7 +454,6 @@ namespace Publisher_CRM.Controllers
             var usersList = await _context.Users.Where(u => !string.IsNullOrEmpty(u.RecordId)).ToListAsync();
             var accountsQuery = _context.Account.AsQueryable();
 
-            // SECURITY FILTER: Check for Administrator Profile OR Role Hierarchy
             if (User.Identity.IsAuthenticated)
             {
                 string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -463,65 +462,52 @@ namespace Publisher_CRM.Controllers
                 if (userProfile != "Administrator" && !string.IsNullOrEmpty(currentUserId))
                 {
                     var currentUser = usersList.FirstOrDefault(u => u.RecordId == currentUserId);
-                    List<string> allowedUserIds = new List<string> { currentUserId }; // User can always see their own records
+                    List<string> allowedUserIds = new List<string> { currentUserId };
 
                     if (currentUser != null && !string.IsNullOrEmpty(currentUser.Role))
                     {
                         var currentRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == currentUser.Role);
-
                         if (currentRole != null)
                         {
-                            // 1. Fetch the whole tree and find all subordinate role IDs
                             var allRoles = await _context.Roles.ToListAsync();
                             var subordinateRoleIds = GetSubordinateRoleIds(allRoles, currentRole.Id);
-
-                            // 2. Get the string names of all those subordinate roles
-                            var allowedRoleNames = allRoles
-                                .Where(r => subordinateRoleIds.Contains(r.Id))
-                                .Select(r => r.Name)
-                                .ToList();
-
-                            // 3. Find all users who have those subordinate roles
-                            var subordinateUserIds = usersList
-                                .Where(u => allowedRoleNames.Contains(u.Role))
-                                .Select(u => u.RecordId)
-                                .ToList();
-
+                            var allowedRoleNames = allRoles.Where(r => subordinateRoleIds.Contains(r.Id)).Select(r => r.Name).ToList();
+                            var subordinateUserIds = usersList.Where(u => allowedRoleNames.Contains(u.Role)).Select(u => u.RecordId).ToList();
                             allowedUserIds.AddRange(subordinateUserIds);
                         }
                     }
-
-                    // FILTER: Only show accounts where the owner is in the allowed list
                     accountsQuery = accountsQuery.Where(a => allowedUserIds.Contains(a.AccountOwner));
                 }
             }
 
-            // Execute the filtered query and map the names for the frontend
             var accountsData = await accountsQuery.ToListAsync();
 
             var accounts = accountsData.Select(a => {
                 var ownerUser = usersList.FirstOrDefault(u => !string.IsNullOrEmpty(a.AccountOwner) && u.RecordId.Trim() == a.AccountOwner.Trim());
                 string mappedOwnerName = ownerUser != null ? $"{ownerUser.FirstName} {ownerUser.LastName}" : (a.AccountOwner ?? "");
 
+                // Determine Activation Status (Draft vs Pending) for Potential Accounts
+                bool hasExtraFields = !string.IsNullOrEmpty(a.Website) || !string.IsNullOrEmpty(a.GSTRegistrationNo) ||
+                                      !string.IsNullOrEmpty(a.State) || !string.IsNullOrEmpty(a.City) || !string.IsNullOrEmpty(a.Description);
+                string activationStatus = hasExtraFields ? "Draft" : "Pending";
+
                 return new
                 {
                     accountId = a.AccountId,
                     accountName = a.AccountName?.Trim() ?? "",
+                    status = a.Status ?? "Potential",
                     accountOwner = mappedOwnerName,
-                    country = a.Country?.Trim() ?? "",
-                    state = a.State?.Trim() ?? "",
-                    city = a.City?.Trim() ?? "",
-                    customerChannel = a.CustomerChannel ?? "",
-                    customerActivity = a.CustomerActivity ?? "",
-                    customerRelationship = a.CustomerRelationship ?? "",
-                    balance = a.Balance,
-                    phone = a.Phone ?? "",
-                    email = a.Email ?? "",
-                    customerGeography = a.CustomerGeography ?? "",
-                    description = a.Description ?? "",
-                    website = a.Website ?? "",
-                    gstRegistrationNo = a.GSTRegistrationNo ?? "",
-                    erpCustomerCode = a.ERPCustomerCode ?? ""
+                    accountStatus = a.AccountStatus ?? "Pending",
+                    source = a.Source ?? "-",
+                    twelveMonthBusiness = a.TwelveMonthBusiness ?? 0,
+                    contactName = a.ContactName ?? "-",
+                    activationStatus = activationStatus,
+
+                    remarkCount = a.RemarkCount ?? 0,
+                    issueCount = a.IssueCount ?? 0,
+                    salesCallCount = a.SalesCallCount ?? 0,
+                    enquiryCount = a.EnquiryCount ?? 0,
+                    orderCount = a.OrderCount ?? 0
                 };
             }).ToList();
 

@@ -37,6 +37,9 @@ namespace Publisher_CRM.Migrations
                     b.Property<string>("AccountOwner")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("AccountStatus")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
 
@@ -56,6 +59,9 @@ namespace Publisher_CRM.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompanyRegNoCIN")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Country")
@@ -94,6 +100,9 @@ namespace Publisher_CRM.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("EnquiryCount")
+                        .HasColumnType("int");
+
                     b.Property<string>("FrequencyOfOrder")
                         .HasColumnType("nvarchar(max)");
 
@@ -102,6 +111,9 @@ namespace Publisher_CRM.Migrations
 
                     b.Property<decimal?>("InitialOrderValue")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("IssueCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("Location")
                         .HasColumnType("nvarchar(max)");
@@ -114,6 +126,9 @@ namespace Publisher_CRM.Migrations
 
                     b.Property<bool?>("NoOutputAccount")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("OrderCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("PanNo")
                         .HasColumnType("nvarchar(max)");
@@ -133,10 +148,16 @@ namespace Publisher_CRM.Migrations
                     b.Property<string>("RecordId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("RemarkCount")
+                        .HasColumnType("int");
+
                     b.Property<int?>("SalesCallCount")
                         .HasColumnType("int");
 
                     b.Property<string>("SalespersonCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Source")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("State")
@@ -144,6 +165,12 @@ namespace Publisher_CRM.Migrations
 
                     b.Property<string>("StateCode")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("TwelveMonthBusiness")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Website")
                         .HasColumnType("nvarchar(max)");

@@ -51,6 +51,7 @@ namespace Pegasus_Project1.Controllers
             return null;
         }
 
+
         [HttpGet("orders/by-date")]
         public async Task<IActionResult> GetOrdersForBusinessCentral([FromQuery] string? date)
         {
@@ -66,7 +67,6 @@ namespace Pegasus_Project1.Controllers
 
             string queryArgument = "";
 
-            // --- DATE LOGIC UPDATED TO ONLY FETCH TODAY BY DEFAULT ---
             if (string.IsNullOrWhiteSpace(date))
             {
                 string startDate = DateTime.Now.ToString("yyyy-MM-dd");
@@ -111,6 +111,10 @@ namespace Pegasus_Project1.Controllers
                                     name
                                     tags
                                     currencyCode
+                                    customAttributes {{
+                                        key
+                                        value
+                                    }}
                                     shippingAddress {{
                                         firstName
                                         lastName
@@ -235,14 +239,46 @@ namespace Pegasus_Project1.Controllers
                         continue;
                     }
 
-                    totalOrdersProcessed++;
-                    var orderId = orderNode.SelectToken("name")?.ToString()?.TrimStart('#');
-
+                    // --- Extract Address & Country Code early to filter ---
                     var addressNode = orderNode.SelectToken("shippingAddress");
                     if (addressNode == null || addressNode.Type == JTokenType.Null)
                     {
                         addressNode = orderNode.SelectToken("billingAddress");
                     }
+                    string countryCode = addressNode?.SelectToken("countryCodeV2")?.ToString() ?? "";
+
+                    // FILTER 1: Skip if Country Code is NOT "IN"
+                    if (!countryCode.Equals("IN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // --- Extract Currency Code ---
+                    string currencyCode = orderNode.SelectToken("currencyCode")?.ToString() ?? "";
+                    var customAttributes = orderNode.SelectToken("customAttributes") as JArray;
+                    if (customAttributes != null)
+                    {
+                        var invoiceCurrencyObj = customAttributes.FirstOrDefault(a =>
+                            a["key"]?.ToString().Equals("Invoice Currency", StringComparison.OrdinalIgnoreCase) == true);
+
+                        if (invoiceCurrencyObj != null && !string.IsNullOrWhiteSpace(invoiceCurrencyObj["value"]?.ToString()))
+                        {
+                            currencyCode = invoiceCurrencyObj["value"]!.ToString();
+                        }
+                    }
+
+                    // FILTER 2: Skip if Currency Code is NOT "INR"
+                    if (!currencyCode.Equals("INR", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // --- Apply previous formatting logic for INR ---
+                    // Since it passed the filter above, we know it is INR. Now we set it to empty string.
+                    currencyCode = "";
+
+                    totalOrdersProcessed++;
+                    var orderId = orderNode.SelectToken("name")?.ToString()?.TrimStart('#');
 
                     string fName = addressNode?.SelectToken("firstName")?.ToString() ?? "";
                     string lName = addressNode?.SelectToken("lastName")?.ToString() ?? "";
@@ -254,11 +290,8 @@ namespace Pegasus_Project1.Controllers
 
                     string city = addressNode?.SelectToken("city")?.ToString() ?? "";
                     string postCode = addressNode?.SelectToken("zip")?.ToString() ?? "";
-                    string countryCode = addressNode?.SelectToken("countryCodeV2")?.ToString() ?? "";
                     string phoneNumber = addressNode?.SelectToken("phone")?.ToString() ?? "";
                     string stateCode = addressNode?.SelectToken("provinceCode")?.ToString() ?? "";
-
-                    string currencyCode = orderNode.SelectToken("currencyCode")?.ToString() ?? "";
 
                     decimal.TryParse(orderNode.SelectToken("subtotalPriceSet.shopMoney.amount")?.ToString(), out decimal orderSubtotal);
                     decimal.TryParse(orderNode.SelectToken("totalDiscountsSet.shopMoney.amount")?.ToString(), out decimal orderTotalDiscount);
@@ -286,10 +319,12 @@ namespace Pegasus_Project1.Controllers
                                 continue;
                             }
 
-                            var isbnNo = node.SelectToken("variant.barcode")?.ToString();
-                            if (string.IsNullOrEmpty(isbnNo))
+                            // --- Check SKU first, fallback to barcode if SKU is missing or says "ISBN" ---
+                            var isbnNo = node.SelectToken("sku")?.ToString();
+
+                            if (string.IsNullOrWhiteSpace(isbnNo) || isbnNo.Equals("ISBN", StringComparison.OrdinalIgnoreCase))
                             {
-                                isbnNo = node.SelectToken("sku")?.ToString();
+                                isbnNo = node.SelectToken("variant.barcode")?.ToString();
                             }
 
                             if (isbnNo != null && isbnNo.Equals("COD", StringComparison.OrdinalIgnoreCase))
@@ -335,7 +370,6 @@ namespace Pegasus_Project1.Controllers
                                     ["PhoneNumber"] = phoneNumber,
                                     ["StateCode"] = stateCode,
                                     ["CurrencyCode"] = currencyCode,
-                                    // CurrencyRate removed
                                     ["OrderId"] = orderId,
                                     ["IsbnNo"] = isbnNo,
                                     ["Quantity"] = quantity,
@@ -376,7 +410,6 @@ namespace Pegasus_Project1.Controllers
                             ["PhoneNumber"] = phoneNumber,
                             ["StateCode"] = stateCode,
                             ["CurrencyCode"] = currencyCode,
-                            // CurrencyRate removed
                             ["OrderId"] = orderId,
                             ["IsbnNo"] = "COD+Shipping",
                             ["Quantity"] = 1,

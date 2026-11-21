@@ -1,1085 +1,2452 @@
 ﻿@{
-    ViewData["Title"] = "Accounts List";
+    ViewData["Title"] = "Customer Management";
 }
 
-<!-- External Libraries -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
 
 <style>
-    /* =========================================
-           PREMIUM SAAS ZOHO-STYLE DESIGN SYSTEM
-           ========================================= */
-    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    :root {
-        --bg-body: #f3f4f6;
-        --bg-surface: #ffffff;
-        --primary-blue: #0f172a;
-        --primary-hover: #1e293b;
-        --text-dark: #111827;
-        --text-main: #374151;
-        --text-muted: #6b7280;
-        --border-soft: #e5e7eb;
-        --border-dark: #d1d5db;
-        --blue-soft: #eff6ff;
-        --blue-active: #2563eb;
-        --radius-md: 6px;
-        --radius-lg: 8px;
-        --font: 'Inter', -apple-system, sans-serif;
-    }
-
-    body {
-        background: var(--bg-body);
-        color: var(--text-main);
-        font-family: var(--font);
-        font-size: 13.5px;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-    }
-
-    /* Buttons */
-    .btn-saas {
-        background-color: #f9fafb;
-        color: var(--text-dark);
-        border: 1px solid #d1d5db;
-        font-weight: 500;
-        border-radius: var(--radius-md);
-        padding: 6px 14px;
-        font-size: 0.85rem;
-        transition: all 0.1s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-        .btn-saas:hover {
-            background-color: #f3f4f6;
-        }
-
-    .btn-saas-primary {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-        border: none !important;
-        color: #ffffff !important;
-        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3), 0 2px 4px -2px rgba(37, 99, 235, 0.2);
-        border-radius: 6px;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        transition: all 0.2s ease;
-    }
-
-        .btn-saas-primary:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
-            box-shadow: 0 6px 8px -2px rgba(37, 99, 235, 0.4);
-            transform: translateY(-1px);
-        }
-
-    /* App Layout Container */
-    .crm-container {
-        display: flex;
-        width: 100%;
-        height: calc(100vh - 64px); /* Exactly fills height under the header */
-        background: var(--bg-surface);
-        margin: 0;
-        overflow: hidden;
-        border: none;
-    }
-
-    /* =========================================
-       SCROLLBAR & MOBILE SIDEBAR FIXES
-       ========================================= */
-
-    /* Fix horizontal scrollbar so you don't have to scroll down the page */
-    body {
-        overflow: hidden !important; /* Prevents the main page from scrolling */
-    }
-
-    .crm-container {
-        height: calc(100dvh - 65px); /* Uses dvh for accurate mobile viewport sizing */
-        position: relative;
-    }
-
-    .table-responsive {
-        flex: 1 1 auto;
-        height: 100% !important;
-        max-height: calc(100dvh - 180px) !important; /* Adjust if toolbar height changes */
-        overflow: auto !important;
-    }
-
-    /* Mobile Sidebar Overlay */
-    @@media (max-width: 768px) {
-        .filter-sidebar {
-            position: absolute;
-            z-index: 1050;
-            left: -300px; /* Hidden off-screen by default */
-            width: 260px !important;
-            min-width: 260px !important;
-            height: 100%;
-            transition: left 0.3s ease-in-out;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
-        }
-            /* Class applied via JS when opened on mobile */
-            .filter-sidebar.mobile-open {
-                left: 0;
-            }
-            /* Prevent desktop rules from breaking mobile layout */
-            .filter-sidebar.hidden-sidebar {
-                width: 260px !important;
-                min-width: 260px !important;
-                opacity: 1 !important;
-            }
-    }
-
-    /* =========================================
-       MOBILE VIEW OPTIMIZATIONS
-       ========================================= */
-    @@media (max-width: 768px) {
-        /* --- 1. Fix Toolbar & Buttons --- */
-        .table-toolbar {
-            flex-direction: column; /* Stack the left and right sides */
-            align-items: stretch !important;
-            padding: 10px;
-        }
-
-            .table-toolbar > div {
-                width: 100%;
-                flex-wrap: wrap; /* Allow buttons to wrap to next line if needed */
-                margin-bottom: 8px;
-            }
-            /* Make buttons flexible and uniform on mobile */
-            .table-toolbar .btn-saas {
-                flex: 1 1 auto;
-                justify-content: center;
-                padding: 8px 10px;
-                font-size: 0.8rem;
-            }
-            /* Hide the "All Accounts" label on mobile to save space, keep icon */
-            .table-toolbar .rounded {
-                flex-grow: 1;
-                text-align: center;
-            }
-        /* --- 2. Hide All Columns Except Account Name --- */
-        /* Checkbox is nth-child(1), Account Name is nth-child(2). Hide everything from 3 onwards */
-        table.dataTable thead th:nth-child(n+3),
-        table.dataTable tbody td:nth-child(n+3) {
-            display: none !important;
-        }
-        /* --- 3. Expand Account Name Column --- */
-        table.dataTable thead th:nth-child(2),
-        table.dataTable tbody td:nth-child(2) {
-            width: 100% !important;
-            max-width: none !important;
-            white-space: normal !important; /* Allow long account names to wrap */
-            border-right: none !important; /* Clean up edge */
-        }
-    }
-
-    /* ---------------------------------------------------------
-           TABLE ALIGNMENT FIX: Let DataTables calculate exact widths
-           --------------------------------------------------------- */
-    .dataTables_scrollHeadInner,
-    .dataTables_scrollHeadInner table.dataTable,
-    .dataTables_scrollBody table.dataTable,
-    table.dataTable {
-        margin: 0 !important;
-        border-collapse: collapse !important;
-        /* DO NOT add table-layout: fixed or width: 100% here.
-               It breaks alignment when scrolling horizontally! */
-    }
-
-
-
-    /* Flat Sidebar - Darkened and Narrowed */
-    .filter-sidebar {
-        width: 240px; /* Narrower width */
-        min-width: 240px;
-        background: #0f172a; /* Navy Blue / Dark */
-        border-right: 1px solid var(--border-soft);
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
-
-        .filter-sidebar.hidden-sidebar {
-            width: 0 !important;
-            min-width: 0 !important;
-            border-right: none !important;
-            opacity: 0;
-        }
-
-    .filter-header {
-        padding: 12px 16px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #1e293b; /* Slightly lighter navy */
-    }
-
-        .filter-header h6, .filter-header i {
-            color: #ffffff !important;
-            margin: 0;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .filter-header a, .filter-header button i {
-            color: #94a3b8 !important; /* Muted light gray */
-        }
-
-    .filter-search-box {
-        padding: 12px 20px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        background-color: #1e293b;
-    }
-
-        /* Dark Theme Search Input */
-        .filter-search-box .input-group-text,
-        .filter-search-box input {
-            background-color: #0f172a !important;
-            border-color: rgba(255,255,255,0.1) !important;
-            color: #ffffff !important;
-        }
-
-            .filter-search-box input::placeholder {
-                color: #64748b !important;
-            }
-
-    .filter-body {
-        overflow-y: auto;
-        flex-grow: 1;
-        padding: 0;
-    }
-
-    .filter-footer {
-        flex-shrink: 0;
-        background: #0f172a;
-        z-index: 10;
-        border-top: 1px solid rgba(255,255,255,0.1) !important;
-    }
-
-    .filter-field-item {
-        padding: 14px 20px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        transition: background-color 0.2s;
-    }
-
-        /* Make list text white so it can be seen on dark background */
-        .filter-field-item label {
-            color: #f8fafc !important;
-        }
-
-        .filter-field-item:hover {
-            background-color: #1e293b;
-        }
-
-    .filter-expanded-area {
-        display: none;
-        margin-top: 12px;
-        padding-left: 24px;
-    }
-
-    .filter-field-item.active .filter-expanded-area {
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Workspace constraints for scrolling */
-    .workspace {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+    /* SalesONE / Account / Index: Consolidated Single-Topbar Layout */
+    .cm-page {
+        --cm-blue: #0754f8;
+        --cm-ink: #10224d;
+        --cm-muted: #7380a0;
+        --cm-line: #e4eafb;
+        --cm-pale: #f4f7ff;
+        --cm-white: #fff;
+        box-sizing: border-box;
+        height: calc(100dvh - 64px);
         min-height: 0;
-        width: 100%;
-    }
-    /* FIXED: Added missing closing bracket here */
-
-    /* DataTables Overrides for Layout & Scrolling */
-    .dataTables_wrapper {
-        flex: 1;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
-        width: 100%;
+        gap: 10px;
+        padding: 12px 16px 12px;
+        color: var(--cm-ink);
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        background: radial-gradient(ellipse 46% 22% at 49% 4%, #ebf0ff, transparent 100%), #f5f7ff;
     }
 
-    .table-responsive {
-        overflow-x: auto !important;
-        overflow-y: auto !important;
-        flex: 1;
-        width: 100%;
-        min-height: 0; /* CRITICAL: Allows flexbox to scroll instead of expanding infinitely */
-        height: calc(100vh - 190px);
-    }
-
-    .dataTables_scroll {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    /* Ensures the bottom horizontal scrollbar appears properly */
-    .dataTables_scrollBody {
-        flex: 1 1 auto;
-        overflow-x: auto !important;
-        overflow-y: auto !important;
-        height: calc(100vh - 190px) !important;
-        max-height: calc(100vh - 190px) !important;
-    }
-
-    .dataTables_scrollHeadInner {
-        width: 100% !important;
-        padding-right: 0 !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Hide the icons inside the cloned header so they don't create an empty ghost row */
-    .dataTables_scrollBody table.dataTable thead th * {
-        display: none !important;
-    }
-
-    .dataTables_scrollBody table.dataTable thead th,
-    .dataTables_scrollBody table.dataTable thead td {
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        height: 0 !important;
-    }
-
-    /* Force cloned header and body to auto layout for pixel-perfect alignment */
-    .dataTables_scrollHeadInner table.dataTable,
-    .dataTables_scrollBody table.dataTable,
-    table.dataTable {
-        border-collapse: separate !important;
-        border-spacing: 0;
-        margin: 0 !important;
-        /* CRITICAL: Force the table to be as wide as its content to trigger the horizontal scrollbar */
-        width: max-content !important;
-        min-width: 100% !important;
-    }
-
-        /* Standardize cell formatting and add vertical dividing lines */
-        table.dataTable thead th,
-        table.dataTable tbody td {
-            box-sizing: border-box !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            border-right: 1px solid var(--border-soft) !important;
-            max-width: 250px;
+        .cm-page *, .cm-page *::before, .cm-page *::after {
+            box-sizing: border-box;
         }
 
-            /* Clean up the far-right edge by removing the border on the last column */
-            table.dataTable thead th:last-child,
-            table.dataTable tbody td:last-child {
-                border-right: none !important;
-            }
-
-        table.dataTable thead th {
-            background-color: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 12px 40px 12px 16px !important;
-            border-bottom: 2px solid var(--border-soft) !important;
-            position: sticky; /* ADDED: Native sticky positioning */
-            top: 0; /* ADDED: Native sticky positioning */
-            z-index: 10; /* ADDED: Native sticky positioning */
+        .cm-page button, .cm-page input, .cm-page select, .cm-page textarea {
+            font: inherit;
         }
 
-        table.dataTable tbody td {
-            padding: 10px 16px !important;
-            font-size: 0.85rem;
-            border-bottom: 1px solid var(--border-soft) !important;
-            vertical-align: middle;
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        table.dataTable tbody tr:hover td {
-            background-color: #f8fafc;
+        .cm-page button {
             cursor: pointer;
         }
 
-    
-    /* Filter Icon positioned to avoid overlap with DataTables sorting arrows */
-    .header-icon-filter {
-        position: absolute;
-        right: 22px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #cbd5e1;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: color 0.2s;
-        z-index: 10;
+            .cm-page button:focus-visible, .cm-page a:focus-visible, .cm-page input:focus-visible,
+            .cm-page select:focus-visible, .cm-page summary:focus-visible {
+                outline: 3px solid #93b6ff;
+                outline-offset: 2px;
+            }
+
+    .cm-hidden {
+        display: none !important;
     }
 
-        .header-icon-filter:hover {
-            color: var(--blue-active);
+    .cm-visually-hidden, .cm-caption.visually-hidden {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* ================= SINGLE UNIFIED TOP BAR ================= */
+    .cm-toolbar {
+        flex: 0 0 auto;
+        position: relative;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0;
+        min-height: 54px;
+        padding: 6px 12px;
+        background: #fff;
+        border: 1px solid #e6ecfa;
+        border-radius: 14px;
+        box-shadow: 0 3px 14px rgba(24, 56, 130, .05);
+        overflow: visible;
+    }
+
+    .cm-left-tools {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-right: 14px;
+        margin-right: 14px;
+        border-right: 1px solid #ebeffb;
+    }
+
+    .cm-btn {
+        min-height: 36px;
+        border: 1px solid #e4ebfc;
+        background: #fff;
+        color: #152b57;
+        border-radius: 10px;
+        padding: 6px 11px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        text-decoration: none !important;
+        transition: background .16s, border-color .16s, box-shadow .16s, color .16s;
+        white-space: nowrap;
+        line-height: 1.1;
+    }
+
+        .cm-btn:hover {
+            background: #f2f6ff;
+            border-color: #c7d8ff;
+            color: #0754f8;
         }
 
-    /* Sticky Checkbox and Action Columns */
-    .sticky-cb {
-        position: sticky !important;
-        left: 0;
-        width: 45px !important;
-        min-width: 45px !important;
-        max-width: 45px !important;
+        .cm-btn[disabled] {
+            opacity: .55;
+            pointer-events: none;
+        }
+
+        .cm-btn .cm-caret {
+            font-size: 10px;
+            opacity: .75;
+            margin-left: -1px;
+        }
+
+    .cm-filter-trigger {
+        background: #eef3ff;
+        border-color: #dde7ff;
+    }
+
+    .cm-btn-quiet {
+        background: #f5f7ff;
+        border-color: #e7edfc;
+    }
+
+    .cm-btn-primary {
+        color: #fff !important;
+        border-color: #0754f8;
+        background: #0754f8;
+        padding: 7px 14px;
+        min-height: 37px;
+        box-shadow: 0 4px 12px rgba(7, 84, 248, .22);
+    }
+
+        .cm-btn-primary:hover {
+            background: #0040dd;
+            border-color: #0040dd;
+            color: #fff !important;
+        }
+
+    .cm-btn-danger {
+        border-color: #ffcad1;
+        background: #fff0f2;
+        color: #ad2a41;
+    }
+
+        .cm-btn-danger:hover {
+            border-color: #ee9faa;
+            background: #ffe2e7;
+            color: #9e1730;
+        }
+
+    .cm-count {
+        border-radius: 999px;
+        background: #0754f8;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 2px 6px;
+        min-width: 19px;
         text-align: center;
-        z-index: 11 !important; /* UPDATED: Higher than standard headers */
-        border-right: 1px solid var(--border-soft) !important;
-        background-color: var(--bg-surface) !important;
+        line-height: 1.2;
     }
 
-    .sticky-actions {
-        position: sticky !important;
-        right: 0;
-        width: 60px !important;
-        min-width: 60px !important;
-        max-width: 60px !important;
-        text-align: center;
-        z-index: 11 !important; /* UPDATED: Higher than standard headers */
-        border-left: 1px solid var(--border-soft) !important;
-        background-color: var(--bg-surface) !important;
+    .cm-clear {
+        padding: 6px 5px;
+        background: transparent;
+        border: 0;
+        color: #0754f8;
+        font-size: 12px;
+        font-weight: 750;
+        white-space: nowrap;
     }
 
-    /* The corners where Sticky Headers meet Sticky Columns */
-    table.dataTable thead th.sticky-cb,
-    table.dataTable thead th.sticky-actions {
-        z-index: 12 !important; /* ADDED: Highest z-index to prevent overlapping corners */
-        background-color: #f8fafc !important; /* Matches standard header background */
-    }
+        .cm-clear:hover {
+            text-decoration: underline;
+        }
 
-    .dataTables_scrollHead .sticky-cb,
-    .dataTables_scrollHead .sticky-actions {
-        z-index: 12 !important;
-        background-color: #f8fafc !important;
-    }
-
-    /* Table Toolbar */
-    .table-container {
-        flex: 1;
+    /* Tabs inside single top bar */
+    .cm-tabs {
+        flex: 1 1 auto;
         min-width: 0;
-        background: var(--bg-surface);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+        .cm-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+    .cm-tab {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        height: 40px;
+        padding: 0 4px;
+        color: #50628d;
+        background: transparent;
+        border: 0;
+        border-bottom: 2.5px solid transparent;
+        font-size: 12.5px;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: color .15s, border-color .15s;
+    }
+
+        .cm-tab:hover {
+            color: #0754f8;
+        }
+
+        .cm-tab.active {
+            color: #0754f8;
+            border-bottom-color: #0754f8;
+            font-weight: 800;
+        }
+
+    .cm-tab-count {
+        background: #eaeffb;
+        color: #4a5d87;
+        padding: 2px 7px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+
+    .cm-tab.active .cm-tab-count {
+        background: #0754f8;
+        color: #fff;
+    }
+
+    /* Right action buttons inside single top bar */
+    .cm-toolbar-end {
+        flex: 0 0 auto;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding-left: 14px;
+        margin-left: 12px;
+        border-left: 1px solid #ebeffb;
+    }
+
+    .cm-hero-dropdown {
+        position: relative;
+    }
+
+    .cm-view-dropdown {
+        display: none;
+        min-width: 180px !important;
+        padding: 6px;
+        border: 1px solid #e0e9fc;
+        border-radius: 12px;
+        box-shadow: 0 14px 30px rgba(20, 44, 93, .16);
+        z-index: 50;
+    }
+
+    .cm-hero-dropdown .cm-view-dropdown.show {
+        display: block;
+    }
+
+    .cm-view-dropdown .dropdown-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #1b315c;
+    }
+
+        .cm-view-dropdown .dropdown-item:hover {
+            color: #0754f8;
+            background: #f1f5ff;
+        }
+
+    /* Floating search box triggered from View -> Search customers */
+    .cm-inline-search {
+        position: static;
+    }
+
+    .cm-search-floating {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        z-index: 45;
+        width: 260px;
+        padding: 6px;
+        background: #fff;
+        border: 1px solid #dfe7fb;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px rgba(26, 45, 89, .18);
+    }
+
+    .cm-inline-search.is-open .cm-search-floating {
+        display: block;
+    }
+
+    .cm-search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 0 10px;
+        border: 1px solid #e0e8fa;
+        border-radius: 9px;
+        background: #f9fbff;
+        color: #7d8cb0;
+    }
+
+        .cm-search-box input {
+            width: 100%;
+            min-width: 0;
+            height: 34px;
+            background: transparent;
+            border: 0;
+            outline: none;
+            font-size: 12px;
+            font-weight: 600;
+            color: #162a57;
+        }
+
+    /* ================= MAIN SHELL: FILTERS + RESULTS ================= */
+    .cm-shell {
+        flex: 1 1 auto;
+        min-height: 0;
+        min-width: 0;
+        display: flex;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .cm-filter-scrim {
+        display: none;
+    }
+
+    .cm-filters {
+        flex: 0 0 242px;
+        width: 242px;
+        height: 100%;
+        min-height: 0;
         display: flex;
         flex-direction: column;
-        height: 100%;
+        background: #fff;
+        border: 1px solid #e5ebfb;
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgba(25, 57, 132, .05);
         overflow: hidden;
     }
 
-    .table-toolbar {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border-soft);
+    .cm-shell:not(.filters-open) .cm-filters {
+        display: none;
+    }
+
+    .cm-filter-head {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px 6px;
+        flex: 0 0 auto;
+    }
+
+        .cm-filter-head strong {
+            font-size: 13.5px;
+            font-weight: 800;
+        }
+
+    .cm-icon-plain {
+        border: 0;
+        background: #f1f4ff;
+        border-radius: 9px;
+        width: 30px;
+        height: 30px;
+        display: inline-grid;
+        place-items: center;
+        color: #52658d;
+    }
+
+    .cm-filter-search {
+        flex: 0 0 auto;
         display: flex;
         align-items: center;
-        background-color: var(--bg-surface);
+        gap: 9px;
+        margin: 10px 13px 6px;
+        padding: 8px 10px;
+        border: 1px solid #e7edfb;
+        border-radius: 10px;
+        background: #f8faff;
+        color: #7082ad;
+    }
+
+        .cm-filter-search input {
+            border: 0;
+            outline: 0;
+            background: transparent;
+            min-width: 0;
+            flex: 1;
+            width: 100%;
+            font-size: 12px;
+            color: #273b64;
+        }
+
+    .cm-filter-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 2px 14px 10px;
+        scrollbar-width: thin;
+    }
+
+    .cm-filter-section {
+        border-bottom: 1px solid #f0f3fc;
+        padding: 10px 0;
+    }
+
+        .cm-filter-section:last-child {
+            border-bottom: 0;
+        }
+
+        .cm-filter-section.is-disabled {
+            opacity: .62;
+        }
+
+            .cm-filter-section.is-disabled .cm-choice,
+            .cm-filter-section.is-disabled .cm-choice input {
+                cursor: not-allowed;
+            }
+
+        .cm-filter-section summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            list-style: none;
+            cursor: pointer;
+            color: #102250;
+            font-size: 12.5px;
+            font-weight: 800;
+            margin-bottom: 9px;
+        }
+
+            .cm-filter-section summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .cm-filter-section summary i {
+                font-size: 11px;
+                color: #6a7ca5;
+                transition: transform .2s;
+            }
+
+        .cm-filter-section:not([open]) summary i {
+            transform: rotate(180deg);
+        }
+
+    .cm-filter-options {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .cm-choice {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        font-weight: 550;
+        color: #263b64;
+        min-height: 20px;
+        cursor: pointer;
+    }
+
+        .cm-choice input {
+            width: 15px;
+            height: 15px;
+            accent-color: #0754f8;
+            margin: 0;
+            flex: none;
+        }
+
+    .cm-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+    }
+
+    .cm-date {
+        width: 100%;
+        max-width: 100%;
+        padding: 7px 9px;
+        border: 1px solid #e2e9fc;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #1e335c;
+    }
+
+    .cm-disabled-date {
+        background: #f1f4fb !important;
+        cursor: not-allowed;
+    }
+
+    .cm-filter-note {
+        color: #7282a2;
+        font-size: 10px;
+        line-height: 1.45;
+        background: #f6f8ff;
+        border-radius: 8px;
+        padding: 7px 9px;
+    }
+
+    .cm-filter-footer {
+        flex: 0 0 auto;
+        display: flex;
+        gap: 8px;
+        padding: 10px 12px;
+        background: #fff;
+        border-top: 1px solid #edf1fc;
+    }
+
+        .cm-filter-footer .cm-btn {
+            flex: 1;
+            min-width: 0;
+            min-height: 38px;
+            padding: 8px 10px;
+        }
+
+    /* ================= RESULTS CARD & TABLE ================= */
+    .cm-results {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border: 1px solid #e5ebfb;
+        border-radius: 14px;
+        box-shadow: 0 4px 16px rgba(33, 65, 153, .05);
+        overflow: hidden;
+    }
+
+    .cm-notice {
+        margin: 10px 14px 0;
+        padding: 9px 12px;
+        border-radius: 10px;
+        background: #fff6df;
+        color: #805700;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1px solid #ffe9af;
+    }
+
+    .cm-table-scroller {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 0;
+        width: 100%;
+        overflow: auto;
+        overscroll-behavior: contain;
+        position: relative;
+        isolation: isolate;
+        scrollbar-width: thin;
+    }
+
+    .cm-page .cm-table-scroller .table > :not(caption) > * > * {
+        box-shadow: none;
+    }
+
+    #cmTable {
+        width: 100% !important;
+        min-width: 1140px !important;
+        margin: 0 !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        table-layout: fixed;
+        font-size: 12px;
+    }
+
+        #cmTable thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            height: 40px !important;
+            padding: 8px 10px !important;
+            background: #f3f6ff;
+            color: #293c69;
+            font-size: 11.2px;
+            font-weight: 800;
+            text-align: left;
+            letter-spacing: -.01em;
+            border-top: 0;
+            border-bottom: 1px solid #e3e9fa;
+            border-right: 0;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+            /* Reserve right padding for DataTables sort icons so header text never overlaps */
+            #cmTable thead th.sorting,
+            #cmTable thead th.sorting_asc,
+            #cmTable thead th.sorting_desc {
+                padding-right: 24px !important;
+            }
+
+                #cmTable thead th.sorting::before, #cmTable thead th.sorting::after,
+                #cmTable thead th.sorting_asc::before, #cmTable thead th.sorting_asc::after,
+                #cmTable thead th.sorting_desc::before, #cmTable thead th.sorting_desc::after {
+                    opacity: .35;
+                    right: 7px !important;
+                }
+
+        #cmTable tbody td {
+            height: 36px !important;
+            padding: 6px 10px !important;
+            background: #fff;
+            border-right: 0;
+            border-bottom: 1px solid #eff2fa;
+            vertical-align: middle;
+            color: #182b53;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #cmTable tbody tr {
+            cursor: pointer;
+        }
+
+            #cmTable tbody tr:hover td {
+                background: #f6f9ff;
+            }
+
+        /* Sticky Left Columns */
+        #cmTable th.cm-col-check, #cmTable td.cm-col-check {
+            width: 42px !important;
+            min-width: 42px !important;
+            max-width: 42px !important;
+            text-align: center;
+            position: sticky;
+            left: 0;
+            z-index: 7;
+        }
+
+        #cmTable th.cm-col-status, #cmTable td.cm-col-status {
+            width: 142px !important;
+            min-width: 142px !important;
+            max-width: 142px !important;
+            position: sticky;
+            left: 42px;
+            z-index: 7;
+        }
+
+        #cmTable th.cm-col-name, #cmTable td.cm-col-name {
+            width: 240px !important;
+            min-width: 240px !important;
+            max-width: 240px !important;
+            position: sticky;
+            left: 184px;
+            z-index: 7;
+        }
+
+        #cmTable th.cm-col-id, #cmTable td.cm-col-id {
+            width: 58px !important;
+            min-width: 58px !important;
+            max-width: 58px !important;
+            text-align: center;
+        }
+
+        /* Prevent 12 Month Business column from squeezing */
+        #cmTable th.text-end, #cmTable td.text-end {
+            width: 160px !important;
+            min-width: 160px !important;
+            text-align: right;
+        }
+
+        /* Sticky Right Actions Column */
+        #cmTable th.cm-col-actions, #cmTable td.cm-col-actions {
+            width: 72px !important;
+            min-width: 72px !important;
+            max-width: 72px !important;
+            position: sticky;
+            right: 0;
+            z-index: 8;
+            text-align: center;
+            border-left: 1px solid #edf1fb;
+            overflow: visible;
+        }
+
+        #cmTable thead th.cm-col-check,
+        #cmTable thead th.cm-col-status,
+        #cmTable thead th.cm-col-name,
+        #cmTable thead th.cm-col-actions {
+            z-index: 12;
+            background: #f3f6ff;
+        }
+
+        #cmTable input[type="checkbox"] {
+            margin: 0;
+            width: 15px;
+            height: 15px;
+            accent-color: #0754f8;
+            vertical-align: middle;
+        }
+
+        #cmTable .cm-name {
+            display: inline-block;
+            max-width: 100%;
+            color: #0754f8;
+            text-decoration: none;
+            font-weight: 780;
+            font-size: 12px;
+            line-height: 1.2;
+            letter-spacing: -.015em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+
+            #cmTable .cm-name:hover {
+                text-decoration: underline;
+            }
+
+    .cm-status-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .cm-bookmark {
+        color: #ff8a00;
+        font-size: 14px;
+        flex: none;
+    }
+
+    .cm-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 10.8px;
+        line-height: 1.1;
+        min-width: 72px;
+        font-weight: 760;
+        white-space: nowrap;
+        border: 1px solid transparent;
+    }
+
+    .cm-pill-potential {
+        background: #dff9e8;
+        color: #047137;
+    }
+
+    .cm-pill-active {
+        background: #fff1d8;
+        color: #a85c00;
+    }
+
+    .cm-pill-inactive {
+        background: #dcf0ff;
+        color: #0564ce;
+    }
+
+    .cm-pill-dormant {
+        background: #e9e0ff;
+        color: #673bd1;
+    }
+
+    .cm-pill-new {
+        background: #ffe5e9;
+        color: #cf233e;
+    }
+
+    .cm-pill-closed {
+        background: #e8edf6;
+        color: #425779;
+    }
+
+    .cm-pill-pending {
+        background: #dfedff;
+        color: #0754f8;
+    }
+
+    .cm-pill-approved {
+        background: #d9f8e2;
+        color: #09702e;
+    }
+
+    .cm-pill-hold {
+        background: #ffe2e5;
+        color: #ba1b31;
+    }
+
+    .cm-pill-draft {
+        background: #fff2d6;
+        color: #ae6100;
+    }
+
+    .cm-pill-review {
+        background: #e5eaff;
+        color: #3c4c9b;
+    }
+
+    .cm-ellipsis {
+        color: #8d9cb9;
+    }
+
+    .cm-more {
+        display: inline-grid;
+        place-items: center;
+        width: 36px;
+        height: 26px;
+        background: #f4f7ff;
+        border: 1px solid #e3e9fc;
+        border-radius: 9px;
+        color: #18366a;
+        font-size: 17px;
+        line-height: 1;
+        padding: 0;
+    }
+
+        .cm-more:hover, .cm-more[aria-expanded="true"] {
+            color: #0754f8;
+            background: #e9f0ff;
+            border-color: #bcd1ff;
+        }
+
+    /* Floating Row Actions Menu */
+    .cm-action-popover {
+        position: fixed;
+        width: 226px;
+        z-index: 1080;
+        padding: 7px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #dce6fc;
+        border-radius: 13px;
+        background: #fff;
+        box-shadow: 0 16px 46px rgba(20, 44, 93, .22);
+        max-height: min(70dvh, 440px);
+        overflow: auto;
+    }
+
+        .cm-action-popover[hidden] {
+            display: none !important;
+        }
+
+    .cm-menu-heading {
+        padding: 9px 10px 10px;
+        font-size: 11px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #233968;
+        border-bottom: 1px solid #edf2fb;
+        margin-bottom: 5px;
+    }
+
+    .cm-menu-divider {
+        border-top: 1px solid #edf2fb;
+        margin: 4px 0;
+    }
+
+    .cm-action {
+        text-decoration: none !important;
+        color: #23457a;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        padding: 9px 10px;
+        min-height: 36px;
+        gap: 10px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+        .cm-action:hover {
+            background: #edf4ff;
+            color: #0754f8;
+        }
+
+        .cm-action i {
+            width: 17px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+    .cm-action-label {
+        display: block;
+        flex: 1;
+    }
+
+    .cm-action-count {
+        margin-left: auto;
+        font-size: 10px;
+        border-radius: 6px;
+        background: #e6ecfb;
+        padding: 2px 6px;
+    }
+
+    .cm-action-send {
+        color: #0754f8;
+    }
+
+    /* ================= CARD VIEW ================= */
+    .cm-card-list {
+        display: none;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        align-content: start;
+        gap: 12px;
+        padding: 12px;
+        background: #f9fbff;
+    }
+
+    .cm-results[data-mode="grid"] .cm-table-scroller {
+        display: none;
+    }
+
+    .cm-results[data-mode="grid"] .cm-card-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+    }
+
+    .cm-results[data-mode="table"] .cm-card-list {
+        display: none;
+    }
+
+    .cm-card {
+        border: 1px solid #e2eafb;
+        border-radius: 14px;
+        background: #fff;
+        padding: 14px;
+        box-shadow: 0 3px 8px rgba(28, 68, 151, .05);
+        min-width: 0;
+        cursor: pointer;
+    }
+
+    .cm-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         gap: 10px;
     }
 
-    /* Badges */
-    .badge-soft { /* FIXED: Removed duplicated .badge-soft selector */
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: var(--radius-md);
-        font-size: 0.75rem;
+    .cm-card-main {
+        min-width: 0;
+    }
+
+    .cm-card-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: none;
+    }
+
+    .cm-card h3 {
+        font-size: 13.5px;
+        line-height: 1.3;
+        margin: 4px 0 6px;
+        font-weight: 800;
+    }
+
+        .cm-card h3 a {
+            color: #0754f8;
+            text-decoration: none;
+        }
+
+    .cm-card-id {
+        font-size: 10px;
+        color: #8896b2;
+        font-weight: 750;
+    }
+
+    .cm-card-details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 11px;
+        margin-top: 12px;
+        margin-bottom: 0;
+    }
+
+        .cm-card-details dt {
+            font-size: 10px;
+            color: #7a89a8;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .cm-card-details dd {
+            font-size: 12px;
+            color: #1b315a;
+            font-weight: 700;
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+    /* ================= FOOTER & PAGINATION ================= */
+    .cm-empty, .cm-loading {
+        text-align: center;
+        padding: 45px 20px;
+        color: #7382a4;
+    }
+
+        .cm-loading i {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #0754f8;
+        }
+
+    .cm-footer {
+        flex: 0 0 auto;
+        position: relative;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: nowrap;
+        min-height: 48px;
+        padding: 8px 14px;
+        background: #fff;
+        border-top: 1px solid #e8edfa;
+        color: #3e5081;
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+        .cm-footer #cmShowing {
+            flex: 1 1 auto;
+            white-space: nowrap;
+            font-size: 11.8px;
+        }
+
+        .cm-footer label {
+            white-space: nowrap;
+            font-size: 11.5px;
+            margin: 0;
+        }
+
+    .cm-pagination {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 5px;
+    }
+
+    .cm-page-btn {
+        width: 29px;
+        height: 29px;
+        border: 1px solid #dce5fc;
+        background: #fff;
+        border-radius: 8px;
+        color: #35517e;
+        font-size: 11.5px;
+        font-weight: 750;
+        display: inline-grid;
+        place-items: center;
+    }
+
+        .cm-page-btn.current {
+            color: #fff;
+            background: #0754f8;
+            border-color: #0754f8;
+        }
+
+        .cm-page-btn[disabled] {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+    .cm-page-size {
+        font-size: 11.5px;
+        border: 1px solid #dae3fa;
+        border-radius: 8px;
+        background: #fff;
+        color: #243d70;
+        padding: 5px 8px;
+        min-width: 60px;
+    }
+
+    /* ================= OFFCANVAS & TOAST ================= */
+    .cm-offcanvas {
+        width: min(470px, 100vw) !important;
+        border: 0 !important;
+        box-shadow: -10px 0 40px rgba(12, 37, 83, .18);
+    }
+
+        .cm-offcanvas .offcanvas-header {
+            padding: 18px 19px;
+            border-bottom: 1px solid #e7ecf9;
+            background: #f8faff;
+        }
+
+        .cm-offcanvas .offcanvas-title {
+            font-size: 17px;
+            color: #102754;
+            font-weight: 850;
+        }
+
+    .cm-panel-account {
+        color: #607395;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .cm-panel-list {
+        padding: 15px;
+        overflow: auto;
+        flex: 1;
+    }
+
+    .cm-log-item {
+        padding: 13px;
+        margin-bottom: 9px;
+        border: 1px solid #e7edfc;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .cm-log-meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 6px;
+        color: #7f8ca8;
+        font-size: 10px;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .cm-log-text {
+        font-size: 12px;
+        color: #1c3159;
         font-weight: 600;
-        background: #f1f5f9;
-        color: var(--text-dark);
-        border: 1px solid var(--border-soft);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 
-    .badge-success {
-        background: #dcfce3;
-        color: #166534;
-        border-color: #86efac;
+    .cm-panel-bottom {
+        padding: 15px;
+        border-top: 1px solid #e7edfa;
+        background: #f9fbff;
     }
 
-    /* Scrollbars */
-    .custom-scroll::-webkit-scrollbar,
-    .table-responsive::-webkit-scrollbar { /* ADDED: Applies to the native CSS wrapper */
-        width: 8px; /* UPDATED: Thicker for easier grabbing */
-        height: 12px; /* UPDATED: Thicker horizontal scrollbar */
-    }
-
-    .custom-scroll::-webkit-scrollbar-track,
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f8fafc;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .custom-scroll::-webkit-scrollbar-thumb,
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #94a3b8;
-        border-radius: 8px;
-        border: 3px solid #f8fafc; /* Creates a padded inset look */
-    }
-
-        .custom-scroll::-webkit-scrollbar-thumb:hover,
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+        .cm-panel-bottom textarea {
+            border-radius: 11px;
+            font-size: 13px;
+            min-height: 85px;
+            resize: vertical;
         }
 
-    .table-responsive::-webkit-scrollbar {
-        width: 8px;
-        height: 14px; /* Thick horizontal scrollbar for easy grabbing */
-    }
-
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-top: 1px solid var(--border-soft);
-    }
-
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #94a3b8;
-        border-radius: 8px;
-        border: 3px solid #f1f5f9; /* Creates a padded look */
-    }
-
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+        .cm-panel-bottom .cm-btn {
+            margin-top: 9px;
+            width: 100%;
         }
 
+    .cm-panel-error {
+        color: #aa2d2d;
+        background: #fff0f0;
+        border: 1px solid #ffd1d1;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .cm-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1200;
+        max-width: min(400px, calc(100vw - 40px));
+        color: #fff;
+        background: #132d58;
+        box-shadow: 0 6px 24px rgba(32, 58, 103, .28);
+        border-radius: 13px;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 750;
+        display: none;
+    }
+
+        .cm-toast.is-visible {
+            display: block;
+        }
+
+        .cm-toast.is-error {
+            background: #ad2a39;
+        }
+
+    /* ================= RESPONSIVE BREAKPOINTS ================= */
+    @@media (max-width: 1340px) {
+        .cm-left-tools {
+            padding-right: 10px;
+            margin-right: 10px;
+        }
+
+        .cm-toolbar-end {
+            padding-left: 10px;
+            margin-left: 8px;
+            gap: 5px;
+        }
+
+        .cm-tabs {
+            gap: 10px;
+        }
+
+        .cm-btn {
+            padding: 6px 9px;
+            font-size: 11.5px;
+            gap: 5px;
+        }
+
+        .cm-tab {
+            font-size: 11.5px;
+        }
+    }
+
+    @@media (max-width: 1160px) {
+        .cm-toolbar {
+            flex-wrap: wrap;
+            row-gap: 6px;
+            padding: 8px 10px;
+        }
+
+        .cm-left-tools {
+            order: 1;
+            border-right: 0;
+            padding-right: 0;
+            margin-right: 0;
+        }
+
+        .cm-toolbar-end {
+            order: 2;
+            margin-left: auto;
+            border-left: 0;
+            padding-left: 0;
+        }
+
+        .cm-tabs {
+            order: 3;
+            flex: 1 1 100%;
+            border-top: 1px solid #eef2fc;
+            padding-top: 4px;
+            gap: 14px;
+        }
+    }
+
+    @@media (max-width: 850px) {
+        .cm-page {
+            padding: 9px;
+            gap: 8px;
+        }
+
+        .cm-left-tools .cm-save-text {
+            display: none;
+        }
+
+        .cm-toolbar-end {
+            width: 100%;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+            .cm-toolbar-end .cm-btn {
+                flex: 1 1 auto;
+                min-height: 34px;
+                font-size: 11px;
+            }
+
+        .cm-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 2px;
+        }
+
+        .cm-tab {
+            height: auto;
+            min-height: 40px;
+            flex-direction: column;
+            gap: 2px;
+            padding: 5px 3px;
+            font-size: 10.5px;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.15;
+        }
+
+        .cm-shell {
+            gap: 0;
+        }
+
+            .cm-shell:not(.filters-ready) .cm-filters,
+            .cm-shell:not(.filters-ready) .cm-filter-scrim {
+                display: none !important;
+            }
+
+            .cm-shell .cm-filters {
+                position: fixed;
+                inset: 0 auto 0 0;
+                top: 0;
+                width: min(330px, 88vw);
+                height: 100dvh;
+                z-index: 1102;
+                border-radius: 0 16px 16px 0;
+                box-shadow: 12px 0 40px rgba(21, 41, 85, .3);
+            }
+
+            .cm-shell.filters-open .cm-filter-scrim {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 1101;
+                background: rgba(9, 22, 54, .54);
+            }
+
+        .cm-filter-head {
+            display: flex;
+        }
+
+        .cm-results[data-mode="auto"] .cm-table-scroller {
+            display: none;
+        }
+
+        .cm-results[data-mode="auto"] .cm-card-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+        }
+
+        .cm-footer {
+            flex-wrap: wrap;
+            padding: 8px 10px;
+            gap: 7px;
+        }
+
+            .cm-footer #cmShowing {
+                flex: 1 1 100%;
+                white-space: normal;
+                font-size: 10.5px;
+            }
+    }
+
+    @@media (max-width: 520px) {
+        .cm-results[data-mode="auto"] .cm-card-list,
+        .cm-results[data-mode="grid"] .cm-card-list {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .cm-offcanvas {
+            width: 100vw !important;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .cm-page *, .cm-page *::before, .cm-page *::after {
+            scroll-behavior: auto !important;
+            transition: none !important;
+        }
+    }
+
+    /* =====================================================================
+           UI PARITY POLISH — Matches Reference Design (Lines, Typography, Controls)
+           ===================================================================== */
+
+    /* 1. Page canvas & crisp standard font rendering */
+    .cm-page {
+        padding: 10px 14px 12px !important;
+        gap: 10px !important;
+        background: #eef3fc !important;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* 2. Top bar: flat ghost buttons + clean vertical dividers */
+    .cm-toolbar {
+        min-height: 50px !important;
+        padding: 5px 14px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e4eaf6 !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, .04) !important;
+    }
+
+    .cm-left-tools {
+        gap: 6px !important;
+        padding-right: 14px !important;
+        margin-right: 14px !important;
+        border-right: 1px solid #e6ebf5 !important;
+    }
+
+    .cm-toolbar-end {
+        gap: 4px !important;
+        padding-left: 12px !important;
+        margin-left: 12px !important;
+        border-left: 1px solid #e6ebf5 !important;
+    }
+
+    .cm-toolbar .cm-btn {
+        min-height: 34px !important;
+        padding: 6px 10px !important;
+        border: 1px solid transparent !important;
+        background: transparent !important;
+        color: #1e293b !important;
+        font-size: 12.8px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        gap: 6px !important;
+    }
+
+        .cm-toolbar .cm-btn:hover {
+            background: #f1f5ff !important;
+            border-color: transparent !important;
+            color: #1d4ed8 !important;
+        }
+
+    .cm-toolbar .cm-filter-trigger {
+        background: #f1f5fe !important;
+        border-color: #e4ecfc !important;
+        padding: 6px 11px !important;
+        font-weight: 700 !important;
+    }
+
+    .cm-toolbar .cm-btn-quiet {
+        background: transparent !important;
+        border-color: transparent !important;
+        font-weight: 600 !important;
+    }
+
+    .cm-clear {
+        font-size: 12.8px !important;
+        font-weight: 600 !important;
+        color: #1d4ed8 !important;
+        padding: 6px 6px !important;
+    }
+
+    .cm-count {
+        background: #1d4ed8 !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        padding: 2px 6px !important;
+    }
+
+    /* Subtle divider between right-side ghost actions (Export | Upload | View) */
+    .cm-toolbar-end #cmExportBtn,
+    .cm-toolbar-end [data-bs-target="#cmImportModal"] {
+        position: relative;
+    }
+
+    .cm-toolbar .cm-btn-primary {
+        background: #1a56f0 !important;
+        border-color: #1a56f0 !important;
+        color: #fff !important;
+        padding: 7px 15px !important;
+        min-height: 36px !important;
+        border-radius: 9px !important;
+        font-size: 12.8px !important;
+        font-weight: 600 !important;
+        margin-left: 6px;
+        box-shadow: 0 3px 10px rgba(26, 86, 240, .24) !important;
+    }
+
+        .cm-toolbar .cm-btn-primary:hover {
+            background: #1446cc !important;
+            border-color: #1446cc !important;
+            color: #fff !important;
+        }
+
+    .cm-tabs {
+        gap: 20px !important;
+    }
+
+    .cm-tab {
+        height: 40px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        border-bottom-width: 2.5px !important;
+        padding: 0 2px !important;
+    }
+
+        .cm-tab.active {
+            color: #1a56f0 !important;
+            border-bottom-color: #1a56f0 !important;
+            font-weight: 700 !important;
+        }
+
+    .cm-tab-count {
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        padding: 2px 7px !important;
+        background: #eef2fa !important;
+        color: #475569 !important;
+    }
+
+    .cm-tab.active .cm-tab-count {
+        background: #1a56f0 !important;
+        color: #fff !important;
+    }
+
+    /* 3. Filter Sidebar: clean bottom-line search, bolder headings, crisp checkboxes */
+    .cm-filters {
+        flex: 0 0 236px !important;
+        width: 236px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e4eaf6 !important;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, .04) !important;
+    }
+
+    .cm-filter-search {
+        margin: 4px 14px 4px !important;
+        padding: 10px 2px 9px !important;
+        border: 0 !important;
+        border-bottom: 1px solid #eaeff8 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        color: #64748b !important;
+    }
+
+        .cm-filter-search input {
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            color: #1e293b !important;
+        }
+
+    .cm-filter-section {
+        border-bottom: 1px solid #f1f4fa !important;
+        padding: 11px 0 !important;
+    }
+
+        .cm-filter-section summary {
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            margin-bottom: 9px !important;
+        }
+
+    .cm-choice {
+        font-size: 12.5px !important;
+        font-weight: 500 !important;
+        color: #334155 !important;
+        gap: 9px !important;
+    }
+
+    .cm-filter-footer {
+        padding: 10px 14px !important;
+        gap: 10px !important;
+        border-top: 1px solid #eef2f9 !important;
+    }
+
+        .cm-filter-footer .cm-btn {
+            min-height: 36px !important;
+            border-radius: 9px !important;
+            font-size: 12.5px !important;
+            font-weight: 600 !important;
+        }
+
+        .cm-filter-footer #cmFilterReset {
+            background: #f4f7fe !important;
+            border-color: #e2e9f8 !important;
+            color: #1e40af !important;
+        }
+
+        .cm-filter-footer #cmFilterApply {
+            background: #1a56f0 !important;
+            border-color: #1a56f0 !important;
+        }
+
+    /* 4. Custom soft rounded checkboxes across Filter Panel & Table */
+    .cm-choice input[type="checkbox"],
+    #cmTable input[type="checkbox"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 15px !important;
+        height: 15px !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        background: #fff !important;
+        cursor: pointer;
+        display: inline-grid;
+        place-content: center;
+        transition: background .12s, border-color .12s;
+        flex: none;
+    }
+
+        .cm-choice input[type="checkbox"]:hover,
+        #cmTable input[type="checkbox"]:hover {
+            border-color: #94a3b8 !important;
+        }
+
+        .cm-choice input[type="checkbox"]:checked,
+        #cmTable input[type="checkbox"]:checked {
+            background: #1a56f0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2.2 6.2l2.5 2.5 5.1-5.4'/%3E%3C/svg%3E") center/10px no-repeat !important;
+            border-color: #1a56f0 !important;
+        }
+
+        #cmTable input[type="checkbox"]:indeterminate {
+            background: #1a56f0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath stroke='%23fff' stroke-width='2' stroke-linecap='round' d='M2.5 6h7'/%3E%3C/svg%3E") center/10px no-repeat !important;
+            border-color: #1a56f0 !important;
+        }
+
+    /* 5. Table: crisp vertical + horizontal grid lines, tighter density (fits ~15-16 rows) */
+    .cm-results {
+        border-radius: 12px !important;
+        border: 1px solid #e4eaf6 !important;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, .04) !important;
+    }
+
+    #cmTable thead th {
+        height: 36px !important;
+        padding: 6px 10px !important;
+        background: #f5f8fe !important;
+        color: #1e293b !important;
+        font-size: 11.8px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0 !important;
+        border-bottom: 1px solid #e2e8f4 !important;
+        border-right: 1px solid #eaeff8 !important;
+    }
+
+        #cmTable thead th:last-child {
+            border-right: 0 !important;
+        }
+
+    #cmTable tbody td {
+        height: 32px !important;
+        padding: 4px 10px !important;
+        font-size: 12.2px !important;
+        font-weight: 500 !important;
+        color: #1e293b !important;
+        border-bottom: 1px solid #edf1f8 !important;
+        border-right: 1px solid #f1f4fa !important;
+    }
+
+        #cmTable tbody td:last-child {
+            border-right: 0 !important;
+        }
+
+    #cmTable tbody tr:hover td {
+        background: #f6f9ff !important;
+    }
+
+    #cmTable .cm-name {
+        color: #1d4ed8 !important;
+        font-size: 12.2px !important;
+        font-weight: 600 !important;
+        letter-spacing: -.01em !important;
+    }
+
+    #cmTable td.text-end {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+    }
+
+    #cmTable th.cm-col-actions,
+    #cmTable td.cm-col-actions {
+        border-left: 1px solid #eaeff8 !important;
+    }
+
+    /* 6. Status badges: soft rounded rectangles (not oval pills) */
+    #cmTable .cm-pill,
+    .cm-pill {
+        border-radius: 6px !important;
+        padding: 3px 10px !important;
+        min-width: 78px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        line-height: 1.25 !important;
+    }
+
+    .cm-pill-potential {
+        background: #dcfce7 !important;
+        color: #15803d !important;
+    }
+
+    .cm-pill-active {
+        background: #fef3c7 !important;
+        color: #b45309 !important;
+    }
+
+    .cm-pill-inactive {
+        background: #dbeafe !important;
+        color: #1d4ed8 !important;
+    }
+
+    .cm-pill-dormant {
+        background: #ede9fe !important;
+        color: #6d28d9 !important;
+    }
+
+    .cm-pill-new {
+        background: #ffe4e6 !important;
+        color: #be123c !important;
+    }
+
+    .cm-pill-closed {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+    }
+
+    .cm-pill-pending {
+        background: #dbeafe !important;
+        color: #1d4ed8 !important;
+    }
+
+    .cm-pill-approved {
+        background: #dcfce7 !important;
+        color: #15803d !important;
+    }
+
+    .cm-pill-hold {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+    }
+
+    .cm-bookmark {
+        color: #f59e0b !important;
+        font-size: 13.5px !important;
+    }
+
+    /* 7. Borderless clean ellipsis action button */
+    .cm-more {
+        width: 30px !important;
+        height: 24px !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        border-radius: 6px !important;
+        color: #64748b !important;
+        font-size: 16px !important;
+    }
+
+        .cm-more:hover,
+        .cm-more[aria-expanded="true"] {
+            background: #eef3ff !important;
+            border-color: #d8e4ff !important;
+            color: #1d4ed8 !important;
+        }
+
+    /* 8. Footer: ghost pagination numbers + unified "Show: 16 v" box */
+    .cm-footer {
+        min-height: 44px !important;
+        padding: 6px 14px !important;
+        border-top: 1px solid #e6ebf5 !important;
+    }
+
+        .cm-footer #cmShowing {
+            font-size: 12.2px !important;
+            font-weight: 500 !important;
+            color: #475569 !important;
+        }
+
+    .cm-page-btn {
+        width: 30px !important;
+        height: 30px !important;
+        border: 0 !important;
+        background: transparent !important;
+        color: #334155 !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+    }
+
+        .cm-page-btn:hover:not([disabled]):not(.current) {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        .cm-page-btn.current {
+            background: #1a56f0 !important;
+            color: #fff !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 8px rgba(26, 86, 240, .25);
+        }
+
+    .cm-footer label {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 4px 8px 4px 10px;
+        background: #fff;
+        color: #475569;
+        font-size: 12px !important;
+        font-weight: 600;
+        gap: 4px !important;
+    }
+
+    .cm-page-size {
+        border: 0 !important;
+        background: transparent !important;
+        padding: 0 2px !important;
+        min-width: auto !important;
+        font-size: 12px !important;
+        font-weight: 700;
+        color: #0f172a !important;
+        outline: none;
+        cursor: pointer;
+    }
 </style>
 
-<div class="crm-container">
+<div class="cm-page" id="cmPage">
+    @* Used for antiforgery-protected AJAX writes. The application's layout loads Bootstrap and jQuery. *@
+    <form id="cmAntiforgery" hidden>@Html.AntiForgeryToken()</form>
 
-    <!-- LEFT SIDEBAR -->
-    <aside class="filter-sidebar custom-scroll" id="filterSidebarWrapper">
-        <div class="filter-header">
-            <h6 class="d-flex align-items-center m-0">
-                <i class="fa-solid fa-filter text-primary me-2"></i> Filters
-            </h6>
-            <div class="d-flex align-items-center gap-2">
-                <a href="javascript:void(0);" id="clearFiltersBtn" class="btn btn-sm btn-link text-decoration-none p-0 text-muted">Clear</a>
-                <button class="btn btn-sm text-muted border-0 bg-transparent p-1 ms-1" onclick="window.toggleFilterSidebar(event)" title="Hide Filters">
-                    <i class="fa-solid fa-chevron-left fs-6"></i>
+    
+
+    <div class="cm-toolbar" aria-label="Account controls">
+        <div class="cm-left-tools">
+            <button class="cm-btn cm-filter-trigger" type="button" id="cmFilterBtn" aria-controls="cmFilterPanel" aria-expanded="true">
+                <i class="bi bi-funnel-fill"></i> Filters <span class="cm-count" id="cmFilterCount">0</span>
+            </button>
+            <button class="cm-btn cm-btn-quiet" type="button" id="cmSaveFilter" title="Save filter selections in this browser">
+                <i class="bi bi-bookmark-fill"></i><span class="cm-save-text">Save Filter</span>
+            </button>
+            <button class="cm-clear" type="button" id="cmClearFilters">Clear</button>
+        </div>
+
+        <div class="cm-tabs" id="cmTabs" role="tablist" aria-label="Customer account views">
+            <button type="button" class="cm-tab active" data-tab="All" role="tab" aria-selected="true">
+                All Accounts <span class="cm-tab-count" id="cmCountAll">0</span>
+            </button>
+            <button type="button" class="cm-tab" data-tab="Activation" role="tab" aria-selected="false">
+                Send for Activation <span class="cm-tab-count" id="cmCountActivation">0</span>
+            </button>
+            <button type="button" class="cm-tab" data-tab="Approval" role="tab" aria-selected="false">
+                Pending Approval <span class="cm-tab-count" id="cmCountApproval">0</span>
+            </button>
+        </div>
+
+        <div class="cm-toolbar-end">
+            <button type="button" class="cm-btn cm-btn-danger cm-hidden" id="cmDeleteSelected" aria-live="polite" title="Delete selected customers">
+                <i class="bi bi-trash3"></i><span>Delete (<span id="cmSelectedCount">0</span>)</span>
+            </button>
+
+            <button class="cm-btn" id="cmExportBtn" type="button">
+                <i class="bi bi-download"></i> Export <i class="bi bi-chevron-down cm-caret"></i>
+            </button>
+
+            <button class="cm-btn" type="button" data-bs-toggle="modal" data-bs-target="#cmImportModal">
+                <i class="bi bi-cloud-arrow-up-fill"></i> Upload File
+            </button>
+
+            <div class="dropdown cm-hero-dropdown">
+                <button class="cm-btn" type="button" id="cmHeroViewMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-label="View options">
+                    <i class="bi bi-eye"></i> View <i class="bi bi-chevron-down cm-caret"></i>
                 </button>
+                <ul class="dropdown-menu dropdown-menu-end cm-view-dropdown" aria-labelledby="cmHeroViewMenu">
+                    <li><button class="dropdown-item" type="button" id="cmViewListMenu"><i class="bi bi-list-ul"></i> Table view</button></li>
+                    <li><button class="dropdown-item" type="button" id="cmViewGridMenu"><i class="bi bi-grid-3x3-gap"></i> Card view</button></li>
+                    <li><button class="dropdown-item" type="button" id="cmViewSearchMenu"><i class="bi bi-search"></i> Search customers</button></li>
+                    <li><button class="dropdown-item" type="button" id="cmViewReloadMenu"><i class="bi bi-arrow-clockwise"></i> Refresh accounts</button></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><button class="dropdown-item" type="button" id="btnSyncBc"><i class="bi bi-arrow-repeat"></i> Sync BC</button></li>
+                </ul>
             </div>
-        </div>
-        <div class="filter-search-box">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                <input type="text" class="form-control border-start-0 ps-0 fw-medium" placeholder="Search fields..." id="searchFilterFields">
-            </div>
-        </div>
 
-        <!-- Filters will inject directly into here -->
-        <div class="filter-body custom-scroll" id="filterFieldsContainer">
-        </div>
+            <a class="cm-btn cm-btn-primary" href="@Url.Action("Create", "Account")">
+                <i class="bi bi-plus-lg"></i> Create Customer
+            </a>
 
-        <div class="filter-footer p-3 border-top bg-white mt-auto" style="flex-shrink: 0; z-index: 10;">
-            <button id="applyFiltersBtn" class="btn-saas-primary w-100 justify-content-center" style="padding: 8px;">Apply Filters</button>
-        </div>
-    </aside>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="table-container">
-
-        <!-- Table Toolbar -->
-        <div class="table-toolbar d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn-saas" onclick="window.toggleFilterSidebar(event)" title="Hide/Show Filters" style="border: none; box-shadow: none;">
-                    <i class="fa-solid fa-filter text-muted"></i>
+            @* Kept in DOM for existing JS bindings (search popover opened via View -> Search customers) *@
+            <div class="cm-inline-search" id="cmInlineSearch">
+                <button type="button" class="cm-small-icon cm-hidden" id="cmSearchToggle" aria-label="Search customers" aria-expanded="false" aria-controls="cmSearchFloating">
+                    <i class="bi bi-search"></i>
                 </button>
-                <div class="px-3 py-1 rounded" style="background-color: #eff6ff; color: var(--blue-active); font-weight: 600;">
-                    <i class="fa-solid fa-building me-2"></i> All Accounts
+                <div class="cm-search-floating" id="cmSearchFloating">
+                    <label class="cm-search-box" aria-label="Search current view">
+                        <i class="bi bi-search"></i>
+                        <input type="search" id="cmLocalSearch" placeholder="Search customers..." autocomplete="off" />
+                    </label>
                 </div>
             </div>
-
-            <!-- Buttons on the far right -->
-            <div class="d-flex gap-2 align-items-center">
-
-                <button type="button" id="btnDeleteSelected" class="btn-saas text-danger" style="display: none; border-color: #fca5a5; background-color: #fef2f2;">
-                    <i class="fa-solid fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
-                </button>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#uploadCsvModal" class="btn-saas">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Import
-                </button>
-
-                <!-- NEW SYNC BUTTON -->
-                <button type="button" id="btnSyncBc" class="btn-saas text-primary" style="font-weight: 600;">
-                    <i class="fa-solid fa-rotate"></i> Sync BC Record
-                </button>
-
-                <!-- Target container for DataTables 'Columns' button -->
-                <div id="columns-btn-container" class="d-none d-md-block"></div>
-
-                <a asp-action="Create" class="btn-saas btn-saas-primary shadow-sm">
-                    <i class="fa-solid fa-plus"></i> Create Account
-                </a>
+            <button class="cm-small-icon cm-hidden" id="cmReload" type="button" aria-label="Refresh accounts">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <div class="cm-view-switch cm-hidden" role="group" aria-label="Display mode">
+                <button type="button" id="cmTableMode" class="cm-view-btn active" data-mode="table"></button>
+                <button type="button" id="cmCardMode" class="cm-view-btn" data-mode="grid"></button>
             </div>
         </div>
+    </div>
 
-        <!-- Data Workspace -->
-        <div class="workspace">
-            <div class="table-responsive">
-            <table id="accountsTable" class="table display nowrap" style="width:100%">
-                <thead>
-                    <tr>
-                        <th class="sticky-cb">
-                            <input class="form-check-input m-0 border-secondary" type="checkbox" id="selectAllCb">
-                        </th>
-                        <th>Account Name <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Owner <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Country <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>State <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>City <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Channel <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Activity <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Relationship <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Balance <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Phone <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Email <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Geography <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Description <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>Website <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>GST No <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th>ERP Code <i class="fa-solid fa-filter header-icon-filter" onclick="window.toggleFilterSidebar(event)" title="Filter"></i></th>
-                        <th class="sticky-actions text-center"><i class="fa-solid fa-bolt text-muted"></i></th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
-        </div>
-    </main>
+    <div class="cm-shell filters-open" id="cmShell">
+        <div class="cm-filter-scrim" id="cmFilterScrim" aria-hidden="true"></div>
+        <aside class="cm-filters" id="cmFilterPanel" aria-label="Account filters">
+            <div class="cm-filter-head"><strong>Search filters...</strong><button type="button" id="cmCloseFilters" class="cm-icon-plain" aria-label="Close filters"><i class="bi bi-x-lg"></i></button></div>
+            <label class="cm-filter-search"><i class="bi bi-search"></i><input id="cmFilterFind" placeholder="Find filter..." type="search" autocomplete="off" /></label>
+            <div class="cm-filter-body" id="cmFilterBody">
+                <details class="cm-filter-section" data-filter-section="type" id="cmCustomerTypeSection" open>
+                    <summary>Customer Type <i class="bi bi-chevron-up"></i></summary>
+                    <div class="cm-filter-options">
+                        <label class="cm-choice"><input type="checkbox" name="cmCustomerType" value="Customer" />Customer</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmCustomerType" value="Prospect" />Prospect</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmCustomerType" value="Partner" />Partner</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmCustomerType" value="Other" />Other</label>
+                        <div class="cm-filter-note" id="cmCustomerTypeHelp" hidden>Customer Type requires the customerType field in GetAccountsList.</div>
+                    </div>
+                </details>
+                <details class="cm-filter-section" data-filter-section="status" open>
+                    <summary> Status <i class="bi bi-chevron-up"></i></summary>
+                    <div class="cm-filter-options">
+                        <label class="cm-choice"><input type="checkbox" name="cmStatus" value="Potential" /><span class="cm-dot" style="background:#13be65"></span>Potential</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmStatus" value="Active" /><span class="cm-dot" style="background:#ff9500"></span>Active</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmStatus" value="In-Active" /><span class="cm-dot" style="background:#0764fa"></span>In-Active</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmStatus" value="Dormant" /><span class="cm-dot" style="background:#7247e9"></span>Dormant</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmStatus" value="New" /><span class="cm-dot" style="background:#ff3953"></span>New</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmStatus" value="Closed" /><span class="cm-dot" style="background:#9aa9c9"></span>Closed</label>
+                    </div>
+                </details>
+                <details class="cm-filter-section" data-filter-section="owner">
+                    <summary>Owner <i class="bi bi-chevron-up"></i></summary>
+                    <div class="cm-filter-options" id="cmOwnerOptions"><span class="cm-ellipsis" style="font-size:11px">Loading owners...</span></div>
+                </details>
+                <details class="cm-filter-section" data-filter-section="date" id="cmCreatedDateSection">
+                    <summary>Created Date <i class="bi bi-chevron-up"></i></summary>
+                    <label class="cm-choice" for="cmStartDate">From</label><input id="cmStartDate" type="date" class="cm-date" />
+                    <label class="cm-choice mt-2" for="cmEndDate">To</label><input id="cmEndDate" type="date" class="cm-date" />
+                    <div class="cm-filter-note mt-2" id="cmCreatedDateHelp" hidden>Created Date requires a createdAt field in GetAccountsList.</div>
+                </details>
+                <details class="cm-filter-section" data-filter-section="accountstatus" open>
+                    <summary>Account Status <i class="bi bi-chevron-up"></i></summary>
+                    <div class="cm-filter-options">
+                        <label class="cm-choice"><input type="checkbox" name="cmAccountStatus" value="Hold" /><span class="cm-dot" style="background:#f03c54"></span>Hold</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmAccountStatus" value="Pending" /><span class="cm-dot" style="background:#0754f8"></span>Pending</label>
+                        <label class="cm-choice"><input type="checkbox" name="cmAccountStatus" value="Approved" /><span class="cm-dot" style="background:#0fc071"></span>Approved</label>
+                    </div>
+                </details>
+                <details class="cm-filter-section" data-filter-section="source">
+                    <summary>Source <i class="bi bi-chevron-up"></i></summary>
+                    <div class="cm-filter-options" id="cmSourceOptions"><span class="cm-ellipsis" style="font-size:11px">Loading sources...</span></div>
+                </details>
+            </div>
+            <div class="cm-filter-footer">
+                <button type="button" class="cm-btn" id="cmFilterReset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                <button type="button" class="cm-btn cm-btn-primary" id="cmFilterApply">Apply</button>
+            </div>
+        </aside>
+
+        <section class="cm-results" id="cmResults" data-mode="auto" aria-label="Accounts list">
+            <h2 class="cm-visually-hidden" id="cmCurrentTitle">All Accounts</h2>
+            <span id="cmViewCaption" class="cm-caption visually-hidden">Manage customer status, business, enquiries, and account activity.</span>
+            <div id="cmDataError" class="cm-notice cm-hidden" role="alert"></div>
+            <div class="cm-table-scroller" id="cmTableScroll">
+                <table id="cmTable" class="table" aria-label="Customer accounts"></table>
+            </div>
+            <div class="cm-card-list" id="cmCardList" aria-live="polite"></div>
+            <div id="cmEmptyState" class="cm-empty cm-hidden">No accounts match this view and your filters.</div>
+            <div class="cm-footer">
+                <span id="cmShowing" aria-live="polite">Loading accounts...</span>
+                <div class="cm-pagination" id="cmPagination" aria-label="Accounts pagination"></div>
+                <label class="d-flex align-items-center gap-2">Show: <select id="cmPageSize" class="cm-page-size"><option value="10">10</option><option value="16" selected>16</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
+            </div>
+        </section>
+    </div>
+
+    <!-- Single floating actions menu for desktop table and mobile cards. -->
+    <div class="cm-action-popover" id="cmActionPopover" role="menu" aria-label="Account actions" hidden></div>
+    <div class="cm-toast" id="cmToast" role="status" aria-live="polite"></div>
 </div>
 
-<!-- UPLOAD MODAL -->
-<div class="modal fade" id="uploadCsvModal" tabindex="-1" aria-hidden="true">
+@* Bootstrap Offcanvas: real loading and saving require the four endpoints listed in integration notes. *@
+<div class="offcanvas offcanvas-end cm-offcanvas" tabindex="-1" id="cmRemarksSlider" aria-labelledby="cmRemarksTitle">
+    <div class="offcanvas-header">
+        <div><h2 class="offcanvas-title" id="cmRemarksTitle"><i class="bi bi-chat-left-text-fill text-primary"></i> Account Remarks</h2><div class="cm-panel-account" id="cmRemarksAccount"></div></div>
+        <button class="btn-close" type="button" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <div class="cm-panel-list" id="cmRemarksList" aria-live="polite">Loading remarks...</div>
+        <form class="cm-panel-bottom" id="cmRemarkForm"><label for="cmRemarkText" class="form-label fw-bold">Add a remark</label><textarea id="cmRemarkText" class="form-control" maxlength="4000" placeholder="Write your remark..." required></textarea><button type="submit" class="cm-btn cm-btn-primary" id="cmRemarkSubmit"><i class="bi bi-plus-circle"></i> Create Remark</button></form>
+    </div>
+</div>
+<div class="offcanvas offcanvas-end cm-offcanvas" tabindex="-1" id="cmIssuesSlider" aria-labelledby="cmIssuesTitle">
+    <div class="offcanvas-header">
+        <div><h2 class="offcanvas-title" id="cmIssuesTitle"><i class="bi bi-exclamation-circle-fill" style="color:#e65e64"></i> Pending Issues</h2><div class="cm-panel-account" id="cmIssuesAccount"></div></div>
+        <button class="btn-close" type="button" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <div class="cm-panel-list" id="cmIssuesList" aria-live="polite">Loading issues...</div>
+        <form class="cm-panel-bottom" id="cmIssueForm"><label for="cmIssueText" class="form-label fw-bold">Raise an issue</label><textarea id="cmIssueText" class="form-control" maxlength="4000" placeholder="Describe the issue..." required></textarea><button type="submit" class="cm-btn cm-btn-primary" id="cmIssueSubmit"><i class="bi bi-plus-circle"></i> Create Issue</button></form>
+    </div>
+</div>
+
+<div class="modal fade" id="cmImportModal" tabindex="-1" aria-labelledby="cmImportTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 12px; border: 1px solid var(--border-soft);">
-            <div class="modal-header border-bottom-0 bg-light" style="padding: 20px 24px 10px;">
-                <h5 class="modal-title fw-bold text-dark">
-                    <i class="bi bi-filetype-csv text-primary me-2"></i> Bulk Import Accounts
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="padding: 0 24px 24px;">
-                <p class="text-muted mb-4 mt-2" style="font-size: 13.5px;">Ensure your CSV headers map precisely to your Account model fields before uploading.</p>
-                <form asp-action="ImportCsv" method="post" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Select CSV File <span class="text-danger">*</span></label>
-                        <input type="file" name="file" class="form-control" accept=".csv" required style="border-radius: 8px;" />
-                    </div>
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn-saas btn-saas-primary" style="justify-content: center; padding: 10px;">
-                            <i class="bi bi-cloud-upload"></i> Start Upload
-                        </button>
-                    </div>
-                </form>
-            </div>
+        <div class="modal-content" style="border:0;border-radius:17px;overflow:hidden">
+            <div class="modal-header" style="background:#f5f8ff"><h2 class="modal-title fs-6 fw-bold" id="cmImportTitle"><i class="bi bi-cloud-arrow-up-fill text-primary"></i> Import Accounts (CSV)</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <form action="@Url.Action("ImportCsv", "Account")" method="post" enctype="multipart/form-data">
+                <div class="modal-body"><p class="small text-muted">Select a CSV file with headers matching your account import format.</p>@Html.AntiForgeryToken()<input type="file" name="file" class="form-control" accept=".csv,text/csv" required /></div>
+                <div class="modal-footer"><button type="button" class="cm-btn" data-bs-dismiss="modal">Cancel</button><button class="cm-btn cm-btn-primary" type="submit"><i class="bi bi-upload"></i> Start Upload</button></div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
     <script>
-        // Attach to window globally to fix "Uncaught ReferenceError: toggleFilterSidebar is not defined"
-                   window.toggleFilterSidebar = function(event) {
-                if(event) {
-                    event.stopPropagation(); // Prevents DataTables from sorting
-                }
-
-                const sidebar = document.getElementById('filterSidebarWrapper');
-
-                // Check if on mobile or desktop
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.toggle('mobile-open'); // Slide in/out on mobile
-                } else {
-                    sidebar.classList.toggle('hidden-sidebar'); // Shrink width on desktop
-                }
-
-                // Force DataTables to realign columns and headers
-                setTimeout(function() {
-                    if ($.fn.DataTable.isDataTable('#accountsTable')) {
-                        $('#accountsTable').DataTable().columns.adjust();
-                    }
-                }, 300);
+        (function () {
+            'use strict';
+            const E = {
+                list: '@Url.Action("GetAccountsList", "Account")',
+                sync: '@Url.Action("TriggerBcSync", "Account")',
+                deleteBulk: '@Url.Action("DeleteBulk", "Account")',
+                edit: '@Url.Action("Edit", "Account")',
+                accountCreate: '@Url.Action("Create", "Account")',
+                salesCall: '@Url.Action("Create", "SalesCall")',
+                enquiry: '@Url.Action("Create", "Lead")',
+                order: '@Url.Action("Create", "OrderManagement")',
+                // NEW SERVER ENDPOINTS: implement as described in Account_Index_Integration_Guide.md
+                remarksGet: '@Url.Action("GetAccountRemarks", "Account")',
+                remarkAdd: '@Url.Action("AddAccountRemark", "Account")',
+                issuesGet: '@Url.Action("GetPendingAccountIssues", "Account")',
+                issueAdd: '@Url.Action("AddAccountIssue", "Account")'
             };
+            const root = document.getElementById('cmPage');
+            const shell = document.getElementById('cmShell');
+            const results = document.getElementById('cmResults');
+            const antiforgery = document.querySelector('#cmAntiforgery input[name="__RequestVerificationToken"]')?.value || '';
+            const numberFmt = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const allStatuses = ['Potential', 'Active', 'In-Active', 'Dormant', 'New', 'Closed'];
+            const state = { rows: [], tab: 'All', table: null, selected: new Set(), panelAccountId: null, filter: { status: [], accountStatus: [], owner: [], source: [], type: [], start: '', end: '' }, currentMode: 'auto', busy: false };
+            const $table = $('#cmTable');
+            let searchTimer;
+            let toastTimer;
 
-        $(document).ready(function () {
-
-            $('#btnSyncBc').on('click', function () {
-                const btn = $(this);
-                const originalHtml = btn.html();
-    
-                btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
-
-                $.ajax({
-                    url: '@Url.Action("TriggerBcSync", "Account")',
-                    type: 'POST',
-                    success: function (res) {
-                        if (res.success) {
-                            alert('Sync completed successfully!');
-                            $('#accountsTable').DataTable().ajax.reload(null, false); 
-                        } else {
-                            alert('Sync failed: ' + res.error);
-                        }
-                    },
-                    error: function () {
-                        alert('A server error occurred while trying to sync.');
-                    },
-                    complete: function () {
-                        btn.prop('disabled', false).html(originalHtml);
-                    }
-                });
-            });
-
-            // Custom DataTables Filter Engine
-            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                if (settings.nTable.id !== 'accountsTable') return true;
-                let isMatch = true;
-
-                $('.field-checkbox:checked').each(function () {
-                    if (!isMatch) return;
-
-                    let index = $(this).data('col-index');
-                    let item = $(this).closest('.filter-field-item');
-                    let operator = item.find('.condition-select').val();
-                    let selectedVals = item.find('.condition-val').val() || [];
-
-                    let cellRaw = data[index] || "";
-                    let cellValue = cellRaw.replace(/<[^>]*>?/gm, '').trim();
-
-                    if (operator === 'is_empty') {
-                        if (cellValue !== '') isMatch = false;
-                    }
-                    else if (operator === 'is_not_empty') {
-                        if (cellValue === '') isMatch = false;
-                    }
-                    else {
-                        if (selectedVals.length === 0) return;
-
-                        let valMatch = false;
-                        if (!Array.isArray(selectedVals)) {
-                            selectedVals = [selectedVals];
-                        }
-
-                        if (operator === 'is') {
-                            valMatch = selectedVals.some(v => cellValue.toLowerCase() === v.toLowerCase());
-                        }
-                        else if (operator === 'is_not') {
-                            valMatch = selectedVals.every(v => cellValue.toLowerCase() !== v.toLowerCase());
-                        }
-                        else if (operator === 'contains') {
-                            valMatch = selectedVals.some(v => cellValue.toLowerCase().includes(v.toLowerCase()));
-                        }
-                        else if (operator === 'does_not_contain') {
-                            valMatch = selectedVals.every(v => !cellValue.toLowerCase().includes(v.toLowerCase()));
-                        }
-                        else if (operator === 'starts_with') {
-                            valMatch = selectedVals.some(v => cellValue.toLowerCase().startsWith(v.toLowerCase()));
-                        }
-                        else if (operator === 'ends_with') {
-                            valMatch = selectedVals.some(v => cellValue.toLowerCase().endsWith(v.toLowerCase()));
-                        }
-                        if (!valMatch) isMatch = false;
-                    }
-                });
-                return isMatch;
-            });
-
-            // Initialize DataTable
-            var table = $('#accountsTable').DataTable({
-                "ajax": {
-                    "url": '@Url.Action("GetAccountsList", "Account")',
-                    "dataSrc": ""
-                },
-                "stateSave": true,
-                "autoWidth": false,
-               // "scrollCollapse": true,
-                "columns": [
-                    {
-                        "data": null,
-                        "orderable": false,
-                        "className": 'sticky-cb',
-                        "render": function (data, type, row) {
-                            return `<div class="d-flex align-items-center justify-content-start gap-2 w-100 ps-2">
-                                        <input class="form-check-input m-0 border-secondary row-cb" type="checkbox" value="${row.accountId}">
-                                    </div>`;
-                        }
-                    },
-                    {
-                        "data": "accountName",
-                        "render": function (data, type, row) {
-                            return `<a href="@Url.Action("Edit", "Account")/${row.accountId}" class="text-primary fw-bold text-decoration-none">${data || ''}</a>`;
-                        }
-                    },
-                    { "data": "accountOwner", "defaultContent": "" },
-                    { "data": "country", "defaultContent": "" },
-                    { "data": "state", "defaultContent": "" },
-                    { "data": "city", "defaultContent": "" },
-                    {
-                        "data": "customerChannel",
-                        "render": function (data) {
-                            return data ? `<span class="badge-soft">${data}</span>` : "";
-                        }
-                    },
-                    { "data": "customerActivity", "defaultContent": "" },
-                    {
-                        "data": "customerRelationship",
-                        "render": function (data) {
-                            if (data === "Primary") return `<span class="badge-soft badge-success">${data}</span>`;
-                            return data ? `<span class="badge-soft">${data}</span>` : "";
-                        }
-                    },
-                    {
-                        "data": "balance",
-                        "render": function (data) {
-                            if (data === null || data === undefined) return "-";
-                            return "₹" + parseFloat(data).toFixed(2);
-                        }
-                    },
-                    { "data": "phone", "defaultContent": "" },
-                    { "data": "email", "defaultContent": "" },
-                    { "data": "customerGeography", "defaultContent": "" },
-                    {
-                        "data": "description",
-                        "render": function (data) {
-                            if (!data) return "";
-                            return data.length > 20 ? data.substring(0, 20) + "..." : data;
-                        }
-                    },
-                    { "data": "website", "defaultContent": "" },
-                    { "data": "gstRegistrationNo", "defaultContent": "" },
-                    { "data": "erpCustomerCode", "defaultContent": "" },
-                    {
-                        "data": null,
-                        "orderable": false,
-                        "className": 'sticky-actions text-center',
-                        "render": function (data, type, row) {
-                            return ``;
-                        }
-                    }
-                ],
-                "orderCellsTop": true,
-               // "scrollY": "calc(100vh - 280px)",
-               // "scrollX": true,
-                "pageLength": 100,
-                "deferRender": true,
-                "drawCallback": function(settings) {
-                    // Forces layout perfect alignment after data fetch
-                    setTimeout(function () {
-                        table.columns.adjust();
-                    }, 50);
-                },
-                    // Replace your current "dom" setting with this:
-                    "dom": "<'table-responsive custom-scroll'tr>" +
-                           "<'row m-0 px-3 py-2 bg-white border-top align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                "lengthMenu": [[25, 50, 100, 500], [25, 50, 100, "500"]],
-                "buttons": [
-                    {
-                        extend: 'colvis',
-                        text: '<i class="fa-solid fa-table-columns me-1"></i> Columns',
-                        className: 'btn-saas'
-                    }
-                ],
-                "columnDefs": [
-                    { "visible": false, "targets": [10, 11, 12, 13, 14, 15, 16] }
-                ]
-            });
-
-            // Bulk Delete Logic
-            function toggleDeleteButton() {
-                var selectedCount = table.$('.row-cb:checked').length; 
-                if (selectedCount > 0) {
-                    $('#selectedCount').text(selectedCount);
-                    $('#btnDeleteSelected').fadeIn(150); 
-                } else {
-                    $('#btnDeleteSelected').fadeOut(150);
-                }
+            function s(v) { return v == null ? '' : String(v); }
+            function esc(v) { return s(v).replace(/[&<>"']/g, x => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[x])); }
+            function attr(v) { return esc(v); }
+            function first(obj, keys, fallback = '') { for (const key of keys) if (obj[key] !== undefined && obj[key] !== null && s(obj[key]).trim() !== '') return obj[key]; return fallback; }
+            function txt(obj, keys, fallback = '') { return s(first(obj, keys, fallback)).trim(); }
+            function amount(v) { const n = Number(String(v ?? 0).replace(/[,₹]/g, '')); return Number.isFinite(n) ? n : 0; }
+            function count(v) { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0; }
+            function truthy(v) { return v === true || v === 1 || ['1', 'true', 'yes'].includes(s(v).toLowerCase()); }
+            function canonStatus(v) { const val = s(v).toLowerCase().replace(/[\s_-]/g, ''); const options = { potential: 'Potential', active: 'Active', inactive: 'In-Active', dormant: 'Dormant', new: 'New', closed: 'Closed' }; return options[val] || 'Potential'; }
+            function canonAccountStatus(v) { const val = s(v).trim().toLowerCase(); if (val === 'hold') return 'Hold'; if (val === 'approved') return 'Approved'; return 'Pending'; }
+            function toDate(v) { if (!v) return null; if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v) && !v.endsWith('Z') && !/[+-]\d\d:\d\d$/.test(v)) { v += 'Z'; } const d = new Date(v); return Number.isFinite(d.getTime()) ? d : null; }
+            function dateLabel(v) { const d = toDate(v); return d ? new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(d) : '—'; }
+            function toDateYmd(v) { const d = toDate(v); return d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : ''; }
+            function urlWithId(url, id, parameter = 'accountId') { const joiner = url.includes('?') ? '&' : '?'; return url + joiner + encodeURIComponent(parameter) + '=' + encodeURIComponent(s(id)); }
+            function editUrl(row) { return E.edit.replace(/\/$/, '') + '/' + encodeURIComponent(row.accountId); }
+            function normalizeRow(raw) {
+                const accountId = first(raw, ['accountId', 'AccountId', 'id', 'Id']);
+                const source = txt(raw, ['source', 'Source']);
+                const status = canonStatus(first(raw, ['status', 'Status'], 'Potential'));
+                const accountStatusRaw = txt(raw, ['accountStatus', 'AccountStatus'], 'Pending');
+                const activationRaw = txt(raw, ['activationStatus', 'ActivationStatus']);
+                const sent = truthy(first(raw, ['activationRequested', 'ActivationRequested', 'sentForActivation', 'SentForActivation', 'isSentForActivation', 'IsSentForActivation'], false))
+                    || Boolean(first(raw, ['activationSentAtUtc', 'ActivationSentAtUtc', 'approvalSubmittedAtUtc', 'ApprovalSubmittedAtUtc']))
+                    || accountStatusRaw.toLowerCase() === 'pending approval'
+                    || ['submitted', 'sent', 'pending approval'].includes(activationRaw.toLowerCase());
+                // Draft per business rule: any additional business/address detail was filled.
+                // Prefer server-calculated ActivationStatus or HasExtendedDetails when available.
+                const extendedKeys = ['address', 'addressLine1', 'address1', 'address2', 'city', 'state', 'pinCode', 'postalCode', 'gstNumber', 'gstNo', 'panNumber', 'creditLimit', 'paymentTerms', 'businessType', 'companyType', 'country', 'website', 'taxRegistrationNumber'];
+                const extended = extendedKeys.some(key => raw[key] !== undefined && raw[key] !== null && s(raw[key]).trim() !== '' && s(raw[key]).trim() !== '0');
+                const hasDetails = truthy(first(raw, ['hasExtendedDetails', 'HasExtendedDetails'], false)) || extended;
+                const readiness = hasDetails || activationRaw.toLowerCase() === 'draft' ? 'Draft' : 'Pending';
+                return {
+                    accountId, accountName: txt(raw, ['accountName', 'AccountName', 'customerName', 'CustomerName'], 'Untitled Account'), status,
+                    accountOwner: txt(raw, ['accountOwner', 'AccountOwner', 'owner', 'Owner'], '—'), accountStatus: canonAccountStatus(accountStatusRaw),
+                    accountStatusRaw, source: source || '—', twelveMonthBusiness: amount(first(raw, ['twelveMonthBusiness', 'TwelveMonthBusiness'], 0)),
+                    contactName: txt(raw, ['contactName', 'ContactName'], '—'),
+                    mobile: txt(raw, ['mobile', 'Mobile', 'phone', 'Phone', 'phoneNumber', 'PhoneNumber', 'mobileNumber', 'MobileNumber'], '—'),
+                    email: txt(raw, ['email', 'Email', 'emailAddress', 'EmailAddress'], '—'),
+                    customerType: txt(raw, ['customerType', 'CustomerType']), createdAt: first(raw, ['createdAtUtc', 'CreatedAtUtc', 'createdAt', 'CreatedAt', 'createdOn', 'CreatedOn']),
+                    updatedAt: first(raw, ['updatedAtUtc', 'UpdatedAtUtc', 'lastUpdatedUtc', 'LastUpdatedUtc', 'modifiedAt', 'ModifiedAt', 'modifiedOn', 'ModifiedOn']),
+                    activationSentAt: first(raw, ['activationSentAtUtc', 'ActivationSentAtUtc', 'approvalSubmittedAtUtc', 'ApprovalSubmittedAtUtc']),
+                    sent, readiness, remarkCount: count(first(raw, ['remarkCount', 'RemarkCount'], 0)),
+                    issueCount: count(first(raw, ['pendingIssueCount', 'PendingIssueCount', 'issueCount', 'IssueCount'], 0)),
+                    salesCallCount: count(first(raw, ['salesCallCount', 'SalesCallCount'], 0)),
+                    enquiryCount: count(first(raw, ['enquiryCount', 'EnquiryCount'], 0)),
+                    orderCount: count(first(raw, ['orderCount', 'OrderCount'], 0))
+                };
             }
-
-            $(document).on('change', '#selectAllCb', function () {
-                var isChecked = $(this).prop('checked');
-                table.$('.row-cb').prop('checked', isChecked);
-                $('.row-cb').prop('checked', isChecked); 
-                toggleDeleteButton();
-            });
-
-            $(document).on('change', '.row-cb', function () {
-                if (!$(this).prop('checked')) {
-                    $('#selectAllCb').prop('checked', false);
-                }
-                toggleDeleteButton();
-            });
-
-            $(document).on('click', '#btnDeleteSelected', function () {
-                var selectedIds = [];
-                table.$('.row-cb:checked').each(function () {
-                    selectedIds.push(parseInt($(this).val()));
-                });
-
-                if (selectedIds.length === 0) return;
-
-                if (confirm(`Are you sure you want to delete ${selectedIds.length} account(s)? This cannot be undone.`)) {
-                    var btn = $(this);
-                    var originalHtml = btn.html();
-                    btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Deleting...');
-
-                    $.ajax({
-                        url: '@Url.Action("DeleteBulk", "Account")',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(selectedIds),
-                        success: function (res) {
-                            if (res.success) {
-                                $('#selectAllCb').prop('checked', false);
-                                table.ajax.reload(function() {
-                                    toggleDeleteButton(); 
-                                }, false); 
-                            } else {
-                                alert("Delete failed: " + res.message);
-                            }
-                        },
-                        error: function () {
-                            alert("A server error occurred while trying to delete.");
-                        },
-                        complete: function () {
-                            btn.prop('disabled', false).html(originalHtml);
-                        }
-                    });
-                }
-            });
-
-            // Build the Zoho Style Sidebar Dynamically
-            table.on('init.dt', function () {
-                let headerCells = table.columns().header();
-
-                if (document.getElementById('columns-btn-container')) {
-                    table.buttons().container().appendTo('#columns-btn-container');
-                }
-
-                table.columns().every(function (index) {
-                    if (index === 0 || index === table.columns()[0].length - 1) return;
-
-                    let title = $(headerCells[index]).text().trim();
-                    if (!title) return;
-
-                    let uniqueValues = table.column(index).data().unique().sort();
-                    let options = '';
-                    uniqueValues.each(function (d) {
-                        let textValue = $('<div>').html(d).text().trim();
-                        if (textValue !== '') {
-                            options += `<option value="${textValue}">${textValue}</option>`;
-                        }
-                    });
-
-                    let filterHtml = `
-                            <div class="filter-field-item field-item-row" data-field-type="text">
-                                <div class="d-flex align-items-center m-0 w-100">
-                                    <input class="form-check-input field-checkbox me-2 mt-0 flex-shrink-0" type="checkbox" id="chk_${index}" data-col-index="${index}" style="width: 14px; height: 14px; border-radius: 3px; cursor: pointer;">
-                                    <label class="form-check-label flex-grow-1 text-dark text-truncate" for="chk_${index}" style="font-size: 0.8rem; cursor: pointer;">
-                                        ${title}
-                                    </label>
-                                </div>
-                                <div class="filter-expanded-area" id="filter_container_${index}">
-                                    <select class="form-select form-select-sm mb-2 text-primary border-primary condition-select fw-semibold" id="op_${index}">
-                                        <option value="is">is exactly</option>
-                                        <option value="is_not">is not</option>
-                                        <option value="contains" selected>contains</option>
-                                        <option value="does_not_contain">does not contain</option>
-                                        <option value="is_empty">is empty</option>
-                                        <option value="is_not_empty">is not empty</option>
-                                    </select>
-                                    <div id="val_wrapper_${index}">
-                                        <select class="form-select form-select-sm condition-val select2-multi" id="sel_${index}" multiple="multiple" style="width: 100%;">
-                                            ${options}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>`;
-
-                    $('#filterFieldsContainer').append(filterHtml);
-                });
-
-                $('.select2-multi').select2({
-                    width: '100%',
-                    placeholder: "Select values...",
-                    allowClear: true,
-                    tags: true
-                });
-
-                $(document).on('change', '.field-checkbox', function () {
-                    let item = $(this).closest('.filter-field-item');
-                    if ($(this).is(':checked')) {
-                        item.addClass('active');
-                    } else {
-                        item.removeClass('active');
-                        item.find('.condition-select').val('contains');
-                        item.find('.condition-val').val(null).trigger('change');
+            function viewRows() { if (state.tab === 'Activation') return state.rows.filter(r => r.status === 'Potential' && !r.sent); if (state.tab === 'Approval') return state.rows.filter(r => r.status === 'Potential' && r.sent); return state.rows; }
+            function pills(name, type) { const key = type === 'status' ? ({ 'Potential': 'potential', 'Active': 'active', 'In-Active': 'inactive', 'Dormant': 'dormant', 'New': 'new', 'Closed': 'closed' }[name] || 'potential') : type === 'account' ? ({ 'Hold': 'hold', 'Pending': 'pending', 'Approved': 'approved' }[name] || 'pending') : (name === 'Draft' ? 'draft' : 'pending'); return `<span class="cm-pill cm-pill-${key}">${esc(name)}</span>`; }
+            function statusDisplay(r) { return `<div class="cm-status-cell"><i class="bi bi-bookmark-fill cm-bookmark" aria-hidden="true"></i>${pills(r.status, 'status')}</div>`; }
+            function nameDisplay(r) { return `<a class="cm-name" href="${attr(editUrl(r))}" title="Edit ${attr(r.accountName)}">${esc(r.accountName)}</a>`; }
+            function emptyVal(v) { return s(v).trim() === '' || s(v) === '—' ? '<span class="cm-ellipsis">—</span>' : esc(v); }
+            function currency(v) { return `₹${numberFmt.format(amount(v))}`; }
+            function action(kind, label, icon, n, id) {
+                return `<button class="cm-action" type="button" title="${attr(label)}" aria-label="${attr(label)} (${n})" data-cm-action="${kind}" data-id="${attr(id)}"><i class="bi bi-${icon}"></i><span class="cm-action-label">${esc(label)}</span><span class="cm-action-count">${count(n)}</span></button>`;
+            }
+            function actionLink(label, icon, n, id, url, kind = 'link') {
+                return `<a class="cm-action" href="${attr(urlWithId(url, id))}" title="${attr(label)}" aria-label="${attr(label)} (${n})"><i class="bi bi-${icon}"></i><span class="cm-action-label">${esc(label)}</span><span class="cm-action-count">${count(n)}</span></a>`;
+            }
+            function sendLink(r) { return `<a class="cm-action cm-action-send cm-action-activate" href="${attr(urlWithId(E.accountCreate, r.accountId, 'id'))}" title="Send ${attr(r.accountName)} for activation"><i class="bi bi-send-fill"></i><span class="cm-action-label">Send for Activation</span></a>`; }
+            function viewRequestLink(r) { return `<a class="cm-action cm-action-activate" href="${attr(editUrl(r))}" title="View submitted request"><i class="bi bi-eye"></i><span class="cm-action-label">View Request</span></a>`; }
+            // Keeps the table compact and matches the ellipsis-only Actions column in the design.
+            function actions(r) {
+                return `<button type="button" class="cm-more" data-menu-id="${attr(r.accountId)}"
+                                  aria-label="Actions for ${attr(r.accountName)}" aria-haspopup="menu"
+                                  aria-controls="cmActionPopover" aria-expanded="false" title="Account actions">
+                                  <i class="bi bi-three-dots" aria-hidden="true"></i></button>`;
+            }
+            function menuContents(r) {
+                // Activation and approval views deliberately have only their view-specific action.
+                if (state.tab === 'Activation') return `<div class="cm-menu-heading">${esc(r.accountName)}</div>${sendLink(r)}`;
+                if (state.tab === 'Approval') return `<div class="cm-menu-heading">${esc(r.accountName)}</div>${viewRequestLink(r)}`;
+                return `<div class="cm-menu-heading">${esc(r.accountName)}</div>
+                                ${action('remarks', 'Remarks', 'chat-left-text', r.remarkCount, r.accountId)}
+                                ${action('issues', 'Pending Issues', 'exclamation-circle', r.issueCount, r.accountId)}
+                                ${actionLink('Sales Call', 'telephone', r.salesCallCount, r.accountId, E.salesCall)}
+                                ${actionLink('Enquiry', 'clipboard2-check', r.enquiryCount, r.accountId, E.enquiry)}
+                                ${r.status === 'Potential' ? (r.sent ? viewRequestLink(r) : sendLink(r)) : actionLink('Order', 'bag', r.orderCount, r.accountId, E.order)}
+                                <div class="cm-menu-divider"></div>
+                                <a class="cm-action" href="${attr(editUrl(r))}"><i class="bi bi-pencil-square"></i><span class="cm-action-label">Edit Customer</span></a>`;
+            }
+            const actionPopover = document.getElementById('cmActionPopover');
+            let menuAnchor = null;
+            function closeActionPopover(restoreFocus = false) {
+                if (actionPopover.hidden) return;
+                actionPopover.hidden = true;
+                if (menuAnchor) { menuAnchor.setAttribute('aria-expanded', 'false'); if (restoreFocus && menuAnchor.isConnected) menuAnchor.focus(); }
+                menuAnchor = null;
+            }
+            function toggleActionPopover(button) {
+                const alreadyOpen = !actionPopover.hidden && menuAnchor === button;
+                closeActionPopover();
+                if (alreadyOpen) return;
+                const row = panelAccount(button.dataset.menuId);
+                if (!row) return;
+                actionPopover.innerHTML = menuContents(row);
+                actionPopover.hidden = false;
+                menuAnchor = button;
+                button.setAttribute('aria-expanded', 'true');
+                // The menu is fixed rather than nested in a sticky cell, so it cannot be clipped by the table scroller.
+                const rect = button.getBoundingClientRect();
+                const width = actionPopover.getBoundingClientRect().width || 224;
+                const height = actionPopover.getBoundingClientRect().height || 240;
+                const left = Math.max(8, Math.min(window.innerWidth - width - 8, rect.right - width));
+                const top = rect.bottom + height + 8 > window.innerHeight ? Math.max(8, rect.top - height - 7) : rect.bottom + 7;
+                actionPopover.style.left = `${left}px`;
+                actionPopover.style.top = `${top}px`;
+                const focusable = actionPopover.querySelector('a,button');
+                if (focusable) focusable.focus({ preventScroll: true });
+            }
+            function fieldColumn(title, key, options = {}) {
+                return {
+                    title, data: key, defaultContent: '', className: options.className || '', width: options.width,
+                    render: function (data, type, row) {
+                        if (type !== 'display') { if (options.sortValue) return options.sortValue(row); return data == null ? '' : data; }
+                        if (options.display) return options.display(row);
+                        return emptyVal(data);
                     }
+                };
+            }
+            const checkboxCol = () => ({ title: '<input id="cmSelectPage" type="checkbox" aria-label="Select all rows on this page" />', data: null, orderable: false, searchable: false, width: '42px', className: 'cm-col-check', render: (d, type, r) => type === 'display' ? `<input type="checkbox" class="cm-row-checkbox" data-id="${attr(r.accountId)}" aria-label="Select ${attr(r.accountName)}" ${state.selected.has(s(r.accountId)) ? 'checked' : ''}/>` : '' });
+            const statusCol = () => fieldColumn('Status', 'status', { className: 'cm-col-status', width: '148px', display: statusDisplay });
+            const nameCol = () => fieldColumn('Customer Name', 'accountName', { className: 'cm-col-name', width: '235px', display: nameDisplay });
+            const idCol = () => fieldColumn('ID', 'accountId', { className: 'cm-col-id text-muted fw-bold', width: '58px' });
+            const ownerCol = () => fieldColumn('Owner', 'accountOwner');
+            const sourceCol = () => fieldColumn('Source', 'source');
+            const contactCol = () => fieldColumn('Contact Name', 'contactName');
+            const actionsCol = () => ({ title: 'Actions', data: null, orderable: false, searchable: false, className: 'cm-col-actions', width: '78px', render: (d, type, r) => type === 'display' ? actions(r) : '' });
+            function columnsForTab() {
+                if (state.tab === 'Activation') return [checkboxCol(), statusCol(), nameCol(), idCol(), contactCol(), fieldColumn('Phone', 'mobile'), fieldColumn('Email', 'email'), sourceCol(), ownerCol(), fieldColumn('Activation Status', 'readiness', { display: r => pills(r.readiness, 'activation') }), actionsCol()];
+                if (state.tab === 'Approval') return [checkboxCol(), statusCol(), nameCol(), idCol(), contactCol(), ownerCol(), sourceCol(), fieldColumn('Sent for Approval', 'activationSentAt', { display: r => dateLabel(r.activationSentAt), sortValue: r => s(r.activationSentAt) }), fieldColumn('Approval Status', 'accountStatusRaw', { display: r => '<span class="cm-pill cm-pill-review">Pending Approval</span>' }), actionsCol()];
+                return [checkboxCol(), statusCol(), nameCol(), idCol(), ownerCol(), fieldColumn('Account Status', 'accountStatus', { display: r => pills(r.accountStatus, 'account') }), sourceCol(), fieldColumn('12 Month Business', 'twelveMonthBusiness', { className: 'text-end', display: r => currency(r.twelveMonthBusiness) }), contactCol(), actionsCol()];
+            }
+            function matchFilters(row) {
+                const f = state.filter;
+                if (f.status.length && !f.status.includes(row.status)) return false;
+                if (f.accountStatus.length && !f.accountStatus.includes(row.accountStatus)) return false;
+                if (f.owner.length && !f.owner.includes(row.accountOwner)) return false;
+                if (f.source.length && !f.source.includes(row.source)) return false;
+                if (f.type.length && !f.type.includes(row.customerType)) return false;
+                if (f.start || f.end) { const day = toDateYmd(row.createdAt); if (!day || f.start && day < f.start || f.end && day > f.end) return false; }
+                return true;
+            }
+            // Register only one scoped filter; it leaves any other DataTables on the page untouched.
+            $.fn.dataTable.ext.search.push(function (settings, search, idx, rowData) {
+                return settings.nTable.id !== 'cmTable' || matchFilters(rowData || state.table?.row(idx).data() || {});
+            });
+            function tableRowsOnPage() { return state.table ? state.table.rows({ page: 'current', search: 'applied', order: 'applied' }).data().toArray() : []; }
+            function card(r) {
+                const details = state.tab === 'All' ? [
+                    ['Status', statusDisplay(r)], ['Account Status', pills(r.accountStatus, 'account')], ['Owner', esc(r.accountOwner)], ['Source', esc(r.source)], ['12 Month Business', currency(r.twelveMonthBusiness)], ['Contact Name', esc(r.contactName)]
+                ] : state.tab === 'Activation' ? [
+                    ['Activation Status', pills(r.readiness, 'activation')], ['Contact Name', esc(r.contactName)], ['Phone', emptyVal(r.mobile)], ['Email', emptyVal(r.email)], ['Source', esc(r.source)], ['Owner', esc(r.accountOwner)]
+                ] : [
+                    ['Approval Status', '<span class="cm-pill cm-pill-review">Pending Approval</span>'], ['Sent On', dateLabel(r.activationSentAt)], ['Contact Name', esc(r.contactName)], ['Owner', esc(r.accountOwner)], ['Source', esc(r.source)]
+                ];
+                return `<article class="cm-card" data-account-id="${attr(r.accountId)}"><div class="cm-card-top"><div class="cm-card-main"><div class="cm-card-id">ID #${esc(r.accountId)}</div><h3><a href="${attr(editUrl(r))}">${esc(r.accountName)}</a></h3><div class="cm-card-status">${statusDisplay(r)}</div></div><div class="cm-card-tools"><input class="cm-row-checkbox" type="checkbox" data-id="${attr(r.accountId)}" aria-label="Select ${attr(r.accountName)}" ${state.selected.has(s(r.accountId)) ? 'checked' : ''}/>${actions(r)}</div></div><dl class="cm-card-details">${details.filter(([key]) => key !== 'Status').map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join('')}</dl></article>`;
+            }
+            function renderCards() { const items = tableRowsOnPage(); document.getElementById('cmCardList').innerHTML = items.map(card).join(''); }
+            function renderFooter() {
+                const info = state.table?.page.info();
+                if (!info) return;
+                document.getElementById('cmShowing').textContent = info.recordsDisplay ? `Showing ${info.start + 1}–${info.end} of ${info.recordsDisplay} ${state.tab === 'All' ? 'accounts' : 'records'}` : 'Showing 0 records';
+                document.getElementById('cmEmptyState').classList.toggle('cm-hidden', info.recordsDisplay !== 0);
+                let html = '';
+                const pageCount = info.pages, curr = info.page, first = Math.max(0, Math.min(curr - 2, pageCount - 5)), last = Math.min(pageCount, first + 5);
+                html += `<button type="button" class="cm-page-btn" data-pg="${Math.max(0, curr - 1)}" ${curr === 0 ? 'disabled' : ''} aria-label="Previous page"><i class="bi bi-chevron-left"></i></button>`;
+                for (let p = first; p < last; p++)html += `<button type="button" class="cm-page-btn ${p === curr ? 'current' : ''}" data-pg="${p}" ${p === curr ? 'aria-current="page"' : ''}>${p + 1}</button>`;
+                html += `<button type="button" class="cm-page-btn" data-pg="${Math.min(pageCount - 1, curr + 1)}" ${curr >= pageCount - 1 ? 'disabled' : ''} aria-label="Next page"><i class="bi bi-chevron-right"></i></button>`;
+                document.getElementById('cmPagination').innerHTML = html;
+                const ids = tableRowsOnPage().map(r => s(r.accountId));
+                const selectPage = document.getElementById('cmSelectPage');
+                if (selectPage) { selectPage.checked = ids.length > 0 && ids.every(id => state.selected.has(id)); selectPage.indeterminate = ids.some(id => state.selected.has(id)) && !selectPage.checked; }
+                renderCards();
+                updateSelectionUI();
+            }
+            function updateSelectionUI() {
+                const quantity = state.selected.size;
+                const button = document.getElementById('cmDeleteSelected');
+                document.getElementById('cmSelectedCount').textContent = quantity;
+                button.classList.toggle('cm-hidden', quantity === 0);
+            }
+            function renderTable() {
+                closeActionPopover();
+                if (state.table) { state.table.destroy(); state.table = null; }
+                $table.empty();
+                const cols = columnsForTab();
+                const selectedSearch = document.getElementById('cmLocalSearch').value;
+                state.table = $table.DataTable({ data: viewRows(), columns: cols, autoWidth: false, ordering: true, order: [[3, 'asc']], pageLength: Number(document.getElementById('cmPageSize').value) || 16, paging: true, searching: true, info: false, lengthChange: false, dom: 't', deferRender: true, language: { emptyTable: 'No accounts to display', zeroRecords: 'No accounts match your search' }, drawCallback: renderFooter, initComplete: function () { renderFooter(); } });
+                if (selectedSearch) state.table.search(selectedSearch).draw();
+                renderFooter();
+                updateCounts();
+            }
+            function updateCounts() { const r = state.rows; const values = { All: r.length, Activation: r.filter(x => x.status === 'Potential' && !x.sent).length, Approval: r.filter(x => x.status === 'Potential' && x.sent).length }; for (const k in values) document.getElementById('cmCount' + k).textContent = values[k]; }
+            function changeTab(tab) {
+                if (!['All', 'Activation', 'Approval'].includes(tab)) return;
+                closeActionPopover();
+                state.tab = tab; state.selected.clear();
+                document.querySelectorAll('.cm-tab').forEach(btn => { const active = btn.dataset.tab === tab; btn.classList.toggle('active', active); btn.setAttribute('aria-selected', s(active)); });
+                const title = tab === 'All' ? 'All Accounts' : tab === 'Activation' ? 'Send for Activation' : 'Pending Approval';
+                document.getElementById('cmCurrentTitle').textContent = title;
+                document.getElementById('cmViewCaption').textContent = tab === 'All' ? 'Manage customer status, business, enquiries, and account activity.' : tab === 'Activation' ? 'Potential customers not yet submitted; Draft means additional business fields are filled.' : 'Potential customers whose activation requests have been submitted for approval.';
+                renderTable();
+            }
+            function notify(message, error = false) { const el = document.getElementById('cmToast'); el.textContent = message; el.classList.toggle('is-error', error); el.classList.add('is-visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('is-visible'), 4500); }
+            function request(url, opts) { return $.ajax({ url, ...opts, headers: { ...(opts?.headers || {}), ...(antiforgery ? { 'RequestVerificationToken': antiforgery } : {}) } }); }
+            async function loadRows(quiet = false) {
+                if (state.busy) return;
+                state.busy = true;
+                const refresh = document.getElementById('cmReload'); refresh.disabled = true;
+                const err = document.getElementById('cmDataError'); err.classList.add('cm-hidden');
+                if (!quiet) document.getElementById('cmShowing').textContent = 'Loading accounts...';
+                try {
+                    const payload = await request(E.list, { type: 'GET', dataType: 'json' });
+                    const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.accounts) ? payload.accounts : null;
+                    if (!rows) throw new Error('Expected a JSON array from GetAccountsList.');
+                    state.rows = rows.filter(x => x && typeof x === 'object').map(normalizeRow);
+                    populateDynamicFilters();
+                    updateAvailableFilterFields();
+                    changeTab(state.tab);
+                } catch (e) {
+                    err.textContent = `Unable to load accounts: ${s(e?.responseJSON?.message || e?.message || e?.statusText || 'Connection error')}. Confirm Account/GetAccountsList is available.`;
+                    err.classList.remove('cm-hidden');
+                    if (!quiet) { state.rows = []; renderTable(); }
+                    notify('Account list could not be refreshed.', true);
+                } finally { state.busy = false; refresh.disabled = false; }
+            }
+            function populateDynamicFilters() {
+                const groups = [['cmOwnerOptions', 'cmOwner', 'accountOwner'], ['cmSourceOptions', 'cmSource', 'source']];
+                for (const [container, name, field] of groups) {
+                    const options = [...new Set(state.rows.map(r => r[field]).filter(v => v && v !== '—'))].sort((a, b) => a.localeCompare(b));
+                    const html = options.length ? options.map(v => `<label class="cm-choice"><input type="checkbox" name="${name}" value="${attr(v)}" />${esc(v)}</label>`).join('') : '<span class="cm-ellipsis" style="font-size:11px">No values available</span>';
+                    document.getElementById(container).innerHTML = html;
+                }
+                reflectFilters();
+            }
+            function updateAvailableFilterFields() {
+                const typeAvailable = state.rows.some(r => !!r.customerType);
+                const datesAvailable = state.rows.some(r => !!r.createdAt);
+                const typeSection = document.getElementById('cmCustomerTypeSection');
+                const dateSection = document.getElementById('cmCreatedDateSection');
+                typeSection.classList.toggle('is-disabled', !typeAvailable);
+                typeSection.title = typeAvailable ? '' : 'Customer Type requires the customerType field from GetAccountsList.';
+                dateSection.classList.toggle('is-disabled', !datesAvailable);
+                dateSection.title = datesAvailable ? '' : 'Created Date requires the createdAt field from GetAccountsList.';
+                typeSection.querySelectorAll('input[name="cmCustomerType"]').forEach(x => { x.disabled = !typeAvailable; if (!typeAvailable) x.checked = false; });
+                for (const id of ['cmStartDate', 'cmEndDate']) { const input = document.getElementById(id); input.disabled = !datesAvailable; input.classList.toggle('cm-disabled-date', !datesAvailable); if (!datesAvailable) input.value = ''; }
+                document.getElementById('cmCustomerTypeHelp').hidden = true;
+                document.getElementById('cmCreatedDateHelp').hidden = true;
+                if (!typeAvailable) state.filter.type = [];
+                if (!datesAvailable) { state.filter.start = ''; state.filter.end = ''; }
+                updateFilterCount();
+            }
+            function readFilterUi() { const get = (name) => [...document.querySelectorAll(`#cmFilterPanel input[name="${name}"]:checked`)].map(i => i.value); return { status: get('cmStatus'), accountStatus: get('cmAccountStatus'), owner: get('cmOwner'), source: get('cmSource'), type: get('cmCustomerType'), start: document.getElementById('cmStartDate').value, end: document.getElementById('cmEndDate').value }; }
+            function reflectFilters() { const names = { status: 'cmStatus', accountStatus: 'cmAccountStatus', owner: 'cmOwner', source: 'cmSource', type: 'cmCustomerType' }; for (const [k, name] of Object.entries(names)) { document.querySelectorAll(`#cmFilterPanel input[name="${name}"]`).forEach(input => input.checked = state.filter[k].includes(input.value)); } document.getElementById('cmStartDate').value = state.filter.start; document.getElementById('cmEndDate').value = state.filter.end; updateFilterCount(); }
+            function updateFilterCount() { const f = state.filter; const total = f.status.length + f.accountStatus.length + f.owner.length + f.source.length + f.type.length + (f.start ? 1 : 0) + (f.end ? 1 : 0); document.getElementById('cmFilterCount').textContent = total; }
+            function clearFilter() { state.filter = { status: [], accountStatus: [], owner: [], source: [], type: [], start: '', end: '' }; reflectFilters(); state.table?.draw(); }
+            function openFilters(open, focusSearch = false) {
+                shell.classList.add('filters-ready');
+                shell.classList.toggle('filters-open', open);
+                document.getElementById('cmFilterPanel').hidden = !open;
+                document.getElementById('cmFilterBtn').setAttribute('aria-expanded', s(open));
+                if (open && focusSearch && window.matchMedia('(max-width:850px)').matches) document.getElementById('cmFilterFind').focus();
+                state.table?.columns.adjust();
+            }
+            function setMode(mode) { state.currentMode = mode; results.dataset.mode = mode; document.querySelectorAll('.cm-view-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode || (mode === 'auto' && b.dataset.mode === (window.matchMedia('(max-width:850px)').matches ? 'grid' : 'table')))); renderCards(); state.table?.columns.adjust(); }
+            function selectedForExport() { const filtered = state.table ? state.table.rows({ search: 'applied', order: 'applied' }).data().toArray() : viewRows().filter(matchFilters); return state.selected.size ? filtered.filter(r => state.selected.has(s(r.accountId))) : filtered; }
+            function exportCsv() {
+                const items = selectedForExport(); if (!items.length) { notify('No accounts available to export.', true); return; }
+                const fields = state.tab === 'All' ? [['ID', 'accountId'], ['Customer Name', 'accountName'], ['Status', 'status'], ['Owner', 'accountOwner'], ['Account Status', 'accountStatus'], ['Source', 'source'], ['12 Month Business', 'twelveMonthBusiness'], ['Contact Name', 'contactName']] : state.tab === 'Activation' ? [['ID', 'accountId'], ['Customer Name', 'accountName'], ['Contact Name', 'contactName'], ['Phone', 'mobile'], ['Email', 'email'], ['Source', 'source'], ['Owner', 'accountOwner'], ['Activation Status', 'readiness'], ['Updated At', 'updatedAt']] : [['ID', 'accountId'], ['Customer Name', 'accountName'], ['Contact Name', 'contactName'], ['Owner', 'accountOwner'], ['Source', 'source'], ['Sent for Approval', 'activationSentAt'], ['Approval Status', 'accountStatusRaw']];
+                const cell = value => { let v = s(value); if (/^[=+\x40\-\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
+                const csv = '\uFEFF' + [fields.map(x => cell(x[0])).join(','), ...items.map(r => fields.map(([, key]) => cell(r[key])).join(','))].join('\r\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const href = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = href; a.download = `Customers_${state.tab}_${new Date().toISOString().slice(0, 10)}.csv`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 1000); notify(`Exported ${items.length} ${items.length === 1 ? 'record' : 'records'}.`);
+            }
+            function panelAccount(id) { return state.rows.find(r => s(r.accountId) === s(id)); }
+            function logsOfResponse(payload, type) { const list = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.items) ? payload.items : Array.isArray(payload?.[type]) ? payload[type] : null; if (!list) throw new Error('Unexpected response format. An array of ' + type + ' is required.'); return list; }
+            function logHtml(item, type) { const date = first(item, ['createdAtUtc', 'CreatedAtUtc', 'createdAt', 'CreatedAt', 'createdOn', 'CreatedOn', 'creationDate', 'CreationDate']); const author = txt(item, ['createdBy', 'CreatedBy', 'author', 'Author', 'userName', 'UserName'], ''); const content = txt(item, type === 'remarks' ? ['remark', 'Remark', 'remarkText', 'RemarkText', 'text', 'Text', 'description', 'Description'] : ['issue', 'Issue', 'issueText', 'IssueText', 'description', 'Description', 'text', 'Text']); const status = txt(item, ['status', 'Status']); return `<div class="cm-log-item"><div class="cm-log-meta"><span><i class="bi bi-clock"></i> ${esc(dateLabel(date))}</span><span>${esc(author)}${type === 'issues' && status ? ' · ' + esc(status) : ''}</span></div><div class="cm-log-text">${esc(content || '(No description provided)')}</div></div>`; }
+            async function loadPanel(type, id) {
+                const container = document.getElementById(type === 'remarks' ? 'cmRemarksList' : 'cmIssuesList');
+                container.innerHTML = '<div class="cm-loading"><i class="bi bi-arrow-repeat"></i><div>Loading activity...</div></div>';
+                try {
+                    const url = type === 'remarks' ? E.remarksGet : E.issuesGet; const res = await request(urlWithId(url, id), { type: 'GET', dataType: 'json' }); let items = logsOfResponse(res, type);
+                    if (type === 'issues') items = items.filter(item => !['resolved', 'closed', 'completed'].includes(txt(item, ['status', 'Status']).toLowerCase()));
+                    items = items.slice().sort((a, b) => (toDate(first(b, ['createdAtUtc', 'createdAt', 'createdOn']))?.getTime() || 0) - (toDate(first(a, ['createdAtUtc', 'createdAt', 'createdOn']))?.getTime() || 0));
+                    container.innerHTML = items.length ? items.map(x => logHtml(x, type)).join('') : `<div class="cm-empty"><i class="bi bi-inbox" style="font-size:26px"></i><p class="mt-2 mb-0">${type === 'remarks' ? 'No remarks added yet.' : 'No pending issues.'}</p></div>`;
+                } catch (e) { container.innerHTML = `<div class="cm-panel-error"><strong>Could not load ${esc(type)}.</strong><p class="mb-0 mt-2">The corresponding Account controller endpoint must be implemented. ${esc(s(e?.responseJSON?.message || e?.statusText || e?.message))}</p></div>`; }
+            }
+            function openPanel(type, id) { const row = panelAccount(id); if (!row) return; state.panelAccountId = id; const title = type === 'remarks' ? 'cmRemarks' : 'cmIssues'; document.getElementById(title + 'Account').textContent = `#${row.accountId} · ${row.accountName}`; document.getElementById(type === 'remarks' ? 'cmRemarkText' : 'cmIssueText').value = ''; const el = document.getElementById(type === 'remarks' ? 'cmRemarksSlider' : 'cmIssuesSlider'); bootstrap.Offcanvas.getOrCreateInstance(el).show(); loadPanel(type, id); }
+            async function savePanel(type) {
+                const id = state.panelAccountId; if (id == null) return;
+                const isRemark = type === 'remarks'; const textbox = document.getElementById(isRemark ? 'cmRemarkText' : 'cmIssueText'); const button = document.getElementById(isRemark ? 'cmRemarkSubmit' : 'cmIssueSubmit'); const text = textbox.value.trim(); if (!text) { textbox.focus(); return; }
+                button.disabled = true;
+                try {
+                    const url = isRemark ? E.remarkAdd : E.issueAdd; const name = isRemark ? 'remark' : 'issue'; const data = { accountId: id, [name]: text }; if (antiforgery) data.__RequestVerificationToken = antiforgery;
+                    const res = await request(url, { type: 'POST', data, dataType: 'json' });
+                    if (res?.success === false) throw new Error(res.error || res.message || 'Server rejected the save.');
+                    textbox.value = ''; notify(isRemark ? 'Remark created.' : 'Issue created.'); await loadPanel(type, id); await loadRows(true);
+                } catch (e) { notify(s(e?.responseJSON?.message || e?.responseJSON?.error || e?.message || 'Could not save. Confirm the server endpoint.'), true); }
+                finally { button.disabled = false; }
+            }
+            // DOM event registration (delegated for rows regenerated by DataTables).
+            document.getElementById('cmTabs').addEventListener('click', e => { const tab = e.target.closest('[data-tab]'); if (tab) changeTab(tab.dataset.tab); });
+            document.getElementById('cmFilterBtn').addEventListener('click', () => openFilters(!shell.classList.contains('filters-open'), true));
+            document.getElementById('cmCloseFilters').addEventListener('click', () => openFilters(false));
+            document.getElementById('cmFilterScrim').addEventListener('click', () => openFilters(false));
+            document.getElementById('cmFilterApply').addEventListener('click', () => { state.filter = readFilterUi(); updateFilterCount(); state.table?.draw(); if (window.matchMedia('(max-width:850px)').matches) openFilters(false); else notify('Filters applied.'); });
+            document.getElementById('cmFilterReset').addEventListener('click', clearFilter);
+            document.getElementById('cmClearFilters').addEventListener('click', () => { clearFilter(); document.getElementById('cmLocalSearch').value = ''; state.table?.search('').draw(); });
+            document.getElementById('cmSaveFilter').addEventListener('click', () => { state.filter = readFilterUi(); updateFilterCount(); state.table?.draw(); try { localStorage.setItem('salesone.savedAccountFilters.v1', JSON.stringify(state.filter)); notify('Filter selections saved in this browser.'); } catch (_) { notify('Browser storage is unavailable.', true); } });
+            document.getElementById('cmFilterFind').addEventListener('input', e => {
+                const value = e.target.value.trim().toLowerCase();
+                document.querySelectorAll('.cm-filter-section').forEach(section => {
+                    const titleMatches = section.querySelector('summary')?.textContent.toLowerCase().includes(value) || false;
+                    const choices = [...section.querySelectorAll('.cm-choice')];
+                    let anyMatch = false;
+                    choices.forEach(choice => { const matched = !value || titleMatches || choice.textContent.toLowerCase().includes(value); choice.hidden = !matched; anyMatch ||= matched; });
+                    section.hidden = !!value && !titleMatches && !anyMatch;
+                    if (value && !section.hidden) section.open = true;
                 });
-
-                $(document).on('change', '.condition-select', function () {
-                    let wrapper = $(this).siblings('div');
-                    let op = $(this).val();
-                    if (op === 'is_empty' || op === 'is_not_empty') {
-                        wrapper.slideUp(200);
-                    } else {
-                        wrapper.slideDown(200);
-                    }
-                });
+            });
+            document.getElementById('cmLocalSearch').addEventListener('input', e => { clearTimeout(searchTimer); const q = e.target.value; searchTimer = setTimeout(() => state.table?.search(q).draw(), 180); });
+            document.getElementById('cmTableMode').addEventListener('click', () => setMode('table'));
+            document.getElementById('cmCardMode').addEventListener('click', () => setMode('grid'));
+            document.getElementById('cmViewListMenu').addEventListener('click', () => setMode('table'));
+            document.getElementById('cmViewGridMenu').addEventListener('click', () => setMode('grid'));
+            document.getElementById('cmViewSearchMenu').addEventListener('click', () => document.getElementById('cmSearchToggle').click());
+            document.getElementById('cmViewReloadMenu').addEventListener('click', () => document.getElementById('cmReload').click());
+            const cmInlineSearch = document.getElementById('cmInlineSearch');
+            const cmSearchToggle = document.getElementById('cmSearchToggle');
+            document.getElementById('cmSearchToggle').addEventListener('click', () => {
+                const open = !cmInlineSearch.classList.contains('is-open');
+                cmInlineSearch.classList.toggle('is-open', open);
+                cmSearchToggle.setAttribute('aria-expanded', String(open));
+                if (open) document.getElementById('cmLocalSearch').focus();
+            });
+            document.addEventListener('pointerdown', event => {
+                if (cmInlineSearch.classList.contains('is-open') && !cmInlineSearch.contains(event.target)) {
+                    cmInlineSearch.classList.remove('is-open');
+                    cmSearchToggle.setAttribute('aria-expanded', 'false');
+                }
             });
 
-            // Sidebar Actions
-            $('#searchFilterFields').on('input', function () {
-                let term = $(this).val().toLowerCase();
-                $('.filter-field-item').each(function () {
-                    let label = $(this).find('label').text().toLowerCase();
-                    $(this).toggle(label.includes(term));
-                });
+            document.getElementById('cmPageSize').addEventListener('change', e => state.table?.page.len(Number(e.target.value)).draw());
+            document.getElementById('cmPagination').addEventListener('click', e => { const btn = e.target.closest('[data-pg]'); if (btn && !btn.disabled) state.table?.page(Number(btn.dataset.pg)).draw('page'); });
+            document.getElementById('cmExportBtn').addEventListener('click', exportCsv);
+            document.getElementById('cmReload').addEventListener('click', () => loadRows(true));
+            document.getElementById('cmDeleteSelected').addEventListener('click', async function () {
+                const ids = [...state.selected].map(Number).filter(Number.isSafeInteger);
+                if (!ids.length) return;
+                if (!window.confirm(`Delete ${ids.length} selected account${ids.length === 1 ? '' : 's'}? This action cannot be undone.`)) return;
+                const button = this; button.disabled = true;
+                try {
+                    const data = await request(E.deleteBulk, { type: 'POST', contentType: 'application/json', data: JSON.stringify(ids), dataType: 'json' });
+                    if (data?.success !== true) throw new Error(data?.message || 'The server did not confirm deletion.');
+                    state.selected.clear(); updateSelectionUI(); notify(data.message || 'Selected accounts deleted.'); await loadRows(true);
+                } catch (e) { notify('Delete failed: ' + s(e?.responseJSON?.message || e?.responseJSON?.error || e?.message || 'Server error'), true); }
+                finally { button.disabled = false; }
             });
+            root.addEventListener('change', e => { const input = e.target.closest('.cm-row-checkbox'); if (input) { const id = s(input.dataset.id); if (input.checked) state.selected.add(id); else state.selected.delete(id); document.querySelectorAll('.cm-row-checkbox').forEach(cb => { if (cb.dataset.id === id) cb.checked = input.checked; }); renderFooter(); } });
+            $table.on('change', '#cmSelectPage', function () { for (const row of tableRowsOnPage()) { const id = s(row.accountId); if (this.checked) state.selected.add(id); else state.selected.delete(id); } renderFooter(); });
+            // Preserve the original full-row navigation without interfering with row actions.
+            $table.on('click', 'tbody tr', function (e) {
+                if ($(e.target).closest('a,button,input,label,select,textarea').length) return;
+                const record = state.table?.row(this).data(); if (record) window.location.assign(editUrl(record));
+            });
+            document.getElementById('cmCardList').addEventListener('click', e => {
+                if (e.target.closest('a,button,input,label,select,textarea')) return;
+                const card = e.target.closest('[data-account-id]');
+                const record = card && panelAccount(card.dataset.accountId); if (record) window.location.assign(editUrl(record));
+            });
+            root.addEventListener('click', e => {
+                const more = e.target.closest('[data-menu-id]');
+                if (more) { e.preventDefault(); e.stopPropagation(); toggleActionPopover(more); return; }
+                const btn = e.target.closest('[data-cm-action]');
+                if (btn) { e.preventDefault(); closeActionPopover(); openPanel(btn.dataset.cmAction, btn.dataset.id); }
+            });
+            document.addEventListener('pointerdown', e => {
+                if (!actionPopover.hidden && !actionPopover.contains(e.target) && !e.target.closest('[data-menu-id]')) closeActionPopover();
+            });
+            window.addEventListener('scroll', () => closeActionPopover(), true);
+            window.addEventListener('resize', () => closeActionPopover());
 
-            $('#applyFiltersBtn').on('click', function () {
-                table.draw();
-            });
-
-            $('#clearFiltersBtn').on('click', function () {
-                $('.field-checkbox').prop('checked', false).trigger('change');
-                table.draw();
-            });
-
-            $('table.dataTable tbody').on('click', 'tr', function (e) {
-                if ($(e.target).closest('a, button, input, select, .row-cb').length) return;
-                var editUrl = $(this).find('a').attr('href');
-                if (editUrl) window.location.href = editUrl;
-            });
-        });
+            document.getElementById('cmRemarkForm').addEventListener('submit', e => { e.preventDefault(); savePanel('remarks'); });
+            document.getElementById('cmIssueForm').addEventListener('submit', e => { e.preventDefault(); savePanel('issues'); });
+            document.getElementById('btnSyncBc').addEventListener('click', async function () { this.disabled = true; const original = this.innerHTML; this.innerHTML = '<i class="bi bi-arrow-repeat"></i> Syncing...'; try { const data = antiforgery ? { __RequestVerificationToken: antiforgery } : {}; const res = await request(E.sync, { type: 'POST', data, dataType: 'json' }); if (res?.success === false) throw new Error(res?.error || res?.message || 'Sync did not complete.'); notify('Business Central sync completed.'); await loadRows(true); } catch (e) { notify('BC sync failed: ' + s(e?.responseJSON?.error || e?.responseJSON?.message || e?.message || 'Server error'), true); } finally { this.disabled = false; this.innerHTML = original; } });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!actionPopover.hidden) { closeActionPopover(true); return; } if (window.matchMedia('(max-width:850px)').matches && shell.classList.contains('filters-open')) openFilters(false); } });
+            // Restore saved filters without automatically opening the filter panel.
+            try { const stored = JSON.parse(localStorage.getItem('salesone.savedAccountFilters.v1') || 'null'); if (stored && typeof stored === 'object') { for (const key of ['status', 'accountStatus', 'owner', 'source', 'type']) if (!Array.isArray(stored[key])) stored[key] = []; state.filter = { status: stored.status, accountStatus: stored.accountStatus, owner: stored.owner, source: stored.source, type: stored.type, start: stored.start || '', end: stored.end || '' }; } } catch (_) { /* use defaults */ }
+            reflectFilters();
+            const mobileQuery = window.matchMedia('(max-width:850px)');
+            openFilters(!mobileQuery.matches); // DESKTOP: open; MOBILE: closed by default.
+            mobileQuery.addEventListener('change', event => { closeActionPopover(); openFilters(!event.matches); if (state.currentMode === 'auto') setMode('auto'); });
+            setMode('auto');
+            loadRows();
+        })();
     </script>
 }

@@ -474,7 +474,7 @@
 
                 <div id="columns-btn-container" class="d-none d-md-block"></div>
                 
-                <a href="/Lead/Create" class="btn-saas btn-saas-primary shadow-sm text-white border-0 text-decoration-none">
+                <a href="@Url.Action("Create", "SalesCall")" class="btn-saas btn-saas-primary shadow-sm text-white border-0 text-decoration-none">
                     <i class="fa-solid fa-plus"></i> New Enquiry
                 </a>
             </div>
@@ -606,7 +606,7 @@
             // Initialize DataTable
             var table = $('#leadsTable').DataTable({
                 "ajax": {
-                    "url": '/Lead/GetLeadsList',
+                    "url": '@Url.Action("GetLeadsList", "Lead")',
                     "dataSrc": function (json) {
                         // Handle the API wrapping { data: [...] }
                         let data = json.data || json;
@@ -637,7 +637,7 @@
                     { 
                         "data": "enquiryId",
                         "render": function (data, type, row) {
-                            return `<a href="/Lead/Edit/${row.recordId}" class="text-primary fw-bold text-decoration-none">${data || '-'}</a>`;
+                            return `<a href="@Url.Action("Edit", "Lead")/${row.recordId}" class="text-primary fw-bold text-decoration-none">${data || '-'}</a>`;
                         }
                     },
                     { "data": "createdTime", "defaultContent": "-" },
@@ -680,7 +680,7 @@
                         "orderable": false,
                         "className": 'sticky-actions text-center',
                         "render": function (data, type, row) {
-                            return `<a href="/Lead/Edit/${row.recordId}" class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2 text-decoration-none"><i class="bi bi-pencil-square"></i></a>`;
+                            return `<a href="@Url.Action("Edit", "Lead")/${row.recordId}" class="btn btn-sm btn-light border text-amber-600 font-bold shadow-sm py-0 px-2 text-decoration-none"><i class="bi bi-pencil-square"></i></a>`;
                         }
                     }
                 ],
@@ -823,7 +823,7 @@
                     btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Deleting...');
 
                     $.ajax({
-                        url: '/Lead/DeleteBulk', 
+                        url: '@Url.Action("DeleteBulk", "Lead")',
                         type: 'POST',
                         contentType: 'application/json',
                         data: JSON.stringify(selectedIds),
@@ -850,7 +850,7 @@
             $('table.dataTable tbody').on('click', 'tr', function (e) {
                 if ($(e.target).closest('a, button, input, select, .row-cb').length) return;
                 var data = table.row(this).data();
-                if (data && data.recordId) window.location.href = '/Lead/Edit/' + data.recordId;
+                if (data && data.recordId) window.location.href = '@Url.Action("Edit", "Lead")/' + data.recordId;
             });
         });
     </script>
