@@ -1976,7 +1976,7 @@
             <div class="cm-footer">
                 <span id="cmShowing" aria-live="polite">Loading accounts...</span>
                 <div class="cm-pagination" id="cmPagination" aria-label="Accounts pagination"></div>
-                <label class="d-flex align-items-center gap-2">Show: <select id="cmPageSize" class="cm-page-size"><option value="10">10</option><option value="16" selected>16</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label>
+                <label class="d-flex align-items-center gap-2 m-0">Show: <select id="cmPageSize" class="form-select form-select-sm" style="width:65px; border-color:var(--cm-line); font-size:11.5px;"><option value="100" selected>100</option><option value="200">200</option><option value="300">300</option><option value="400">400</option><option value="500">500</option></select></label>
             </div>
         </section>
     </div>
@@ -2241,8 +2241,7 @@
                 $table.empty();
                 const cols = columnsForTab();
                 const selectedSearch = document.getElementById('cmLocalSearch').value;
-                state.table = $table.DataTable({ data: viewRows(), columns: cols, autoWidth: false, ordering: true, order: [[3, 'asc']], pageLength: Number(document.getElementById('cmPageSize').value) || 16, paging: true, searching: true, info: false, lengthChange: false, dom: 't', deferRender: true, language: { emptyTable: 'No accounts to display', zeroRecords: 'No accounts match your search' }, drawCallback: renderFooter, initComplete: function () { renderFooter(); } });
-                if (selectedSearch) state.table.search(selectedSearch).draw();
+                state.table = $table.DataTable({ data: viewRows(), columns: cols, autoWidth: false, ordering: true, order: [[3, 'asc']], pageLength: Number(document.getElementById('cmPageSize').value) || 100, paging: true, searching: true, info: false, lengthChange: false, dom: 't', deferRender: true, language: { emptyTable: 'No accounts to display', zeroRecords: 'No accounts match your search' }, drawCallback: renderFooter, initComplete: function () { renderFooter(); } }); if (selectedSearch) state.table.search(selectedSearch).draw();
                 renderFooter();
                 updateCounts();
             }
